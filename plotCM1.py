@@ -13,38 +13,269 @@ Plotting CM1 outputs
 from CM1utils import *
 
 
-#%% Load data
+#%% One big overview plot
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
-fnum = 42
+xlims = [[-70,10], [-62,18], [-54,26], [-46,34], [-38,42]]
+ylims = [[-140,-60], [-122,-42], [-104,-24], [-86,-6], [-68,12]]
 
-# Read output file
-ds = nc.Dataset(fp+f"cm1out_{fnum:06d}.nc")
-time = ds.variables['time'][:].data[0]/60
-xh = ds.variables['xh'][:].data
-xf = ds.variables['xf'][:].data
-yh = ds.variables['yh'][:].data
-yf = ds.variables['yf'][:].data
-z = ds.variables['z'][:].data
-zf = ds.variables['zf'][:].data
-if 'dbz2' in ds.variables:
-    dbz = ds.variables['dbz2'][:].data[0,:,:,:]
-else:
-    dbz = ds.variables['dbz'][:].data[0,:,:,:]
-# uinterp = ds.variables['uinterp'][:].data[0,:,:,:]
-# vinterp = ds.variables['vinterp'][:].data[0,:,:,:]
-winterp = ds.variables['winterp'][:].data[0,:,:,:]
-# xvort = ds.variables['xvort'][:].data[0,:,:,:]
-# yvort = ds.variables['yvort'][:].data[0,:,:,:]
-zvort = ds.variables['zvort'][:].data[0,:,:,:]
-# divh = np.gradient(uinterp, xh*1000, axis=2) + np.gradient(vinterp, yh*1000, axis=1)
-# OW = calc_OW(zvort, uinterp, vinterp, xh*1000, yh*1000)
-ds.close()
+w_lims = [-15,15]
+thr_lims = [-14,0]
+dbz_lims = [0,70]
 
-# Read dyn
-ds = nc.Dataset(fp+f"pp/dyn_{fnum:06d}.nc")
-thrpert = ds.variables['thrpert'][:].data
-ds.close()
+fnums = [13, 28, 43, 58, 73]
+
+fig1,axs1 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
+fig2,axs2 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
+fig3,axs3 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
+
+# MERGER data
+for i in np.arange(0,5):
+    if i == 0:
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/'
+    else:
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+    
+    print(f"MERGER - cm1out_{fnums[i]:06d}")
+    
+    ds = nc.Dataset(fp+f"cm1out_{fnums[i]:06d}.nc")
+    time = ds.variables['time'][:].data[0]/60
+    xh = ds.variables['xh'][:].data
+    xf = ds.variables['xf'][:].data
+    yh = ds.variables['yh'][:].data
+    yf = ds.variables['yf'][:].data
+    z = ds.variables['z'][:].data
+    zf = ds.variables['zf'][:].data
+    
+    xl = xlims[i]
+    yl = ylims[i]
+    ixw = np.where(xh >= xl[0])[0][0] # west bound
+    ixe = np.where(xh >= xl[1])[0][0] # east bound
+    iys = np.where(yh >= yl[0])[0][0] # south bound
+    iyn = np.where(yh >= yl[1])[0][0] # north bound
+    ix = slice(ixw,ixe+1)
+    iy = slice(iys,iyn+1)
+
+    iz1 = np.where(z >= 1)[0][0]
+    iz = slice(0,iz1+1)
+    
+    qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/60)*2)
+    
+    if i == 0:
+        dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
+        thr = ds.variables['th'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv'][:].data[0,0,iy,ix] - 
+                    (ds.variables['qc'][:].data[0,0,iy,ix] + ds.variables['qr'][:].data[0,0,iy,ix] + 
+                     ds.variables['qi'][:].data[0,0,iy,ix] + ds.variables['qs'][:].data[0,0,iy,ix] + 
+                     ds.variables['qg'][:].data[0,0,iy,ix] + ds.variables['qhl'][:].data[0,0,iy,ix]))
+        thr0 = ds.variables['th0'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv0'][:].data[0,0,iy,ix])
+        thrpert = thr - thr0
+        del thr,thr0
+    else:
+        dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
+    uinterp = ds.variables['uinterp'][:].data[0,iz,iy,ix]
+    vinterp = ds.variables['vinterp'][:].data[0,iz,iy,ix]
+    winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
+    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
+    S_N = np.gradient(uinterp, xh[ix]*1000, axis=2) - np.gradient(vinterp, yh[iy]*1000, axis=1)
+    S_S = np.gradient(vinterp, xh[ix]*1000, axis=2) + np.gradient(uinterp, yh[iy]*1000, axis=1)
+    OW = S_N**2 + S_S**2 - zvort**2
+    del S_N,S_S,zvort
+    ds.close()
+    
+    if i > 0:
+        ds = nc.Dataset(fp+f"pp/dyn_{fnums[i]:06d}.nc")
+        thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
+        ds.close()
+    
+    
+    c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[0,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False)
+    axs1[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+    # axs1[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    axs1[0,i].set_title(f"t={time:.0f} min", fontsize=14)
+    
+    c2 = plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[0,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False)
+    axs2[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+    axs2[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
+    axs2[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    axs2[0,i].set_title(f"t={time:.0f} min", fontsize=14)
+    
+    c3 = plot_cfill(xh[ix], yh[iy], winterp[iz1,:,:], 'w', axs3[0,i], datalims=w_lims, xlims=xl, ylims=yl, cbar=False)
+    axs3[0,i].contour(xh[ix], yh[iy], thrpert, levels=[-5], colors='g', linewidths=1, linestyles='-')
+    axs3[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='k', linewidths=1.25, linestyles='-')
+    axs3[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    axs3[0,i].set_title(f"t={time:.0f} min", fontsize=14)
+
+
+
+# QLCS data
+for i in np.arange(0,5):
+    if i == 0:
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/base/'
+    else:
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/'
+    
+    print(f"QLCS - cm1out_{fnums[i]:06d}")
+    
+    ds = nc.Dataset(fp+f"cm1out_{fnums[i]:06d}.nc")
+    time = ds.variables['time'][:].data[0]/60
+    xh = ds.variables['xh'][:].data
+    xf = ds.variables['xf'][:].data
+    yh = ds.variables['yh'][:].data
+    yf = ds.variables['yf'][:].data
+    z = ds.variables['z'][:].data
+    zf = ds.variables['zf'][:].data
+    
+    xl = xlims[i]
+    yl = ylims[i]
+    ixw = np.where(xh >= xl[0])[0][0] # west bound
+    ixe = np.where(xh >= xl[1])[0][0] # east bound
+    iys = np.where(yh >= yl[0])[0][0] # south bound
+    iyn = np.where(yh >= yl[1])[0][0] # north bound
+    ix = slice(ixw,ixe+1)
+    iy = slice(iys,iyn+1)
+
+    iz1 = np.where(z >= 1)[0][0]
+    iz = slice(0,iz1+1)
+    
+    if i == 0:
+        dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
+        thr = ds.variables['th'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv'][:].data[0,0,iy,ix] - 
+                    (ds.variables['qc'][:].data[0,0,iy,ix] + ds.variables['qr'][:].data[0,0,iy,ix] + 
+                     ds.variables['qi'][:].data[0,0,iy,ix] + ds.variables['qs'][:].data[0,0,iy,ix] + 
+                     ds.variables['qg'][:].data[0,0,iy,ix] + ds.variables['qhl'][:].data[0,0,iy,ix]))
+        thr0 = ds.variables['th0'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv0'][:].data[0,0,iy,ix])
+        thrpert = thr - thr0
+        del thr,thr0
+    else:
+        dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
+    uinterp = ds.variables['uinterp'][:].data[0,iz,iy,ix]
+    vinterp = ds.variables['vinterp'][:].data[0,iz,iy,ix]
+    winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
+    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
+    S_N = np.gradient(uinterp, xh[ix]*1000, axis=2) - np.gradient(vinterp, yh[iy]*1000, axis=1)
+    S_S = np.gradient(vinterp, xh[ix]*1000, axis=2) + np.gradient(uinterp, yh[iy]*1000, axis=1)
+    OW = S_N**2 + S_S**2 - zvort**2
+    del S_N,S_S,zvort
+    ds.close()
+    
+    if i > 0:
+        ds = nc.Dataset(fp+f"pp/dyn_{fnums[i]:06d}.nc")
+        thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
+        ds.close()
+    
+    
+    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[1,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False)
+    axs1[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+    # axs1[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    # axs1[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+    
+    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[1,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False)
+    axs2[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+    axs2[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
+    axs2[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    # axs2[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+    
+    plot_cfill(xh[ix], yh[iy], winterp[iz1,:,:], 'w', axs3[1,i], datalims=w_lims, xlims=xl, ylims=yl, cbar=False)
+    axs3[1,i].contour(xh[ix], yh[iy], thrpert, levels=[-5], colors='g', linewidths=1, linestyles='-')
+    axs3[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='k', linewidths=1.25, linestyles='-')
+    axs3[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    # axs3[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+
+
+
+# SUPERCELL data
+for i in np.arange(0,5):
+    if i == 0:
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/base/'
+    else:
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
+    
+    print(f"SUPERCELL - cm1out_{fnums[i]:06d}")
+    thr_lims = [-10,0]
+    
+    ds = nc.Dataset(fp+f"cm1out_{fnums[i]:06d}.nc")
+    time = ds.variables['time'][:].data[0]/60
+    xh = ds.variables['xh'][:].data
+    xf = ds.variables['xf'][:].data
+    yh = ds.variables['yh'][:].data
+    yf = ds.variables['yf'][:].data
+    z = ds.variables['z'][:].data
+    zf = ds.variables['zf'][:].data
+    
+    xl = xlims[i]
+    yl = ylims[i]
+    ixw = np.where(xh >= xl[0])[0][0] # west bound
+    ixe = np.where(xh >= xl[1])[0][0] # east bound
+    iys = np.where(yh >= yl[0])[0][0] # south bound
+    iyn = np.where(yh >= yl[1])[0][0] # north bound
+    ix = slice(ixw,ixe+1)
+    iy = slice(iys,iyn+1)
+
+    iz1 = np.where(z >= 1)[0][0]
+    iz = slice(0,iz1+1)
+    
+    if i == 0:
+        dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
+        thr = ds.variables['th'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv'][:].data[0,0,iy,ix] - 
+                    (ds.variables['qc'][:].data[0,0,iy,ix] + ds.variables['qr'][:].data[0,0,iy,ix] + 
+                     ds.variables['qi'][:].data[0,0,iy,ix] + ds.variables['qs'][:].data[0,0,iy,ix] + 
+                     ds.variables['qg'][:].data[0,0,iy,ix] + ds.variables['qhl'][:].data[0,0,iy,ix]))
+        thr0 = ds.variables['th0'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv0'][:].data[0,0,iy,ix])
+        thrpert = thr - thr0
+        del thr,thr0
+    else:
+        dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
+    uinterp = ds.variables['uinterp'][:].data[0,iz,iy,ix]
+    vinterp = ds.variables['vinterp'][:].data[0,iz,iy,ix]
+    winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
+    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
+    S_N = np.gradient(uinterp, xh[ix]*1000, axis=2) - np.gradient(vinterp, yh[iy]*1000, axis=1)
+    S_S = np.gradient(vinterp, xh[ix]*1000, axis=2) + np.gradient(uinterp, yh[iy]*1000, axis=1)
+    OW = S_N**2 + S_S**2 - zvort**2
+    del S_N,S_S,zvort
+    ds.close()
+    
+    if i > 0:
+        ds = nc.Dataset(fp+f"pp/dyn_{fnums[i]:06d}.nc")
+        thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
+        ds.close()
+    
+    
+    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[2,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False)
+    axs1[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+    # axs1[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    # axs1[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+    
+    if i == 4:
+        cb_flag = True
+    else:
+        cb_flag = False
+    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[2,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag)
+    axs2[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+    axs2[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
+    axs2[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    # axs2[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+    
+    plot_cfill(xh[ix], yh[iy], winterp[iz1,:,:], 'w', axs3[2,i], datalims=w_lims, xlims=xl, ylims=yl, cbar=False)
+    axs3[2,i].contour(xh[ix], yh[iy], thrpert, levels=[-5], colors='g', linewidths=1, linestyles='-')
+    axs3[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='k', linewidths=1.25, linestyles='-')
+    axs3[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    # axs3[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+
+
+
+cb1 = plt.colorbar(c1, ax=axs1[:,4], extend='min')
+cb1.set_label('DBZ', fontsize=18)
+cb2 = plt.colorbar(c2, ax=axs2[0:2,4], extend='min')
+cb2.set_label("\u03B8'\u1D68 (K)", fontsize=18)
+cb3 = plt.colorbar(c3, ax=axs3[:,4], extend='min')
+cb3.set_label("w (m s$^{-1}$)", fontsize=18)
+
+
+#%%
+
+fig1.savefig('/Users/morgan.schneider/Documents/merger/overview_dbz.png', dpi=300)
+fig2.savefig('/Users/morgan.schneider/Documents/merger/overview_thrpert.png', dpi=300)
+fig3.savefig('/Users/morgan.schneider/Documents/merger/overview_w.png', dpi=300)
 
 
 

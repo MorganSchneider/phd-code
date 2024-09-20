@@ -32,6 +32,9 @@ from scipy.ndimage import gaussian_filter
 ### Define classes ###
 ######################
 
+# Mimics the Matlab struct array
+# Literally just a dict that uses dot indexing instead of bracket indexing
+# so not actually useful but it took me far too long to discover dicts
 class struct():
     def __init__(self,**kwargs):
         self.Set(**kwargs)
@@ -54,7 +57,7 @@ cmaps = {
     'u':       {'cm': cmocean.cm.balance, 'label': "u (m s$^{-1}$)"},
     'v':       {'cm': cmocean.cm.balance, 'label': "v (m s$^{-1}$)"},
     'w':       {'cm': cmocean.cm.balance, 'label': "w (m s$^{-1}$)"},
-    'wspd':    {'cm': 'pyart_HomeyerRainbow', 'label': "wspd (m s$^{-1}$)"},
+    'wspd':    {'cm': 'pyart_HomeyerRainbow', 'label': "Wind speed (m s$^{-1}$)"},
     'th':      {'cm': 'pyart_HomeyerRainbow', 'label': "\u03B8 (K)"},
     'thpert':  {'cm': cmocean.cm.curl, 'label': "\u03B8' (K)"},
     'thr':     {'cm': 'pyart_HomeyerRainbow', 'label': "\u03B8\u1D68 (K)"},
@@ -83,26 +86,26 @@ cmaps = {
 }
 
 
-# Read CM1 output into struct object
-def read_cm1out(fname, dsvars=None):
-    # fname : full path to data file
-    # dsvars: list of the names of desired variables to load
+# # Read CM1 output into struct object
+# def read_cm1out(fname, dsvars=None):
+#     # fname : full path to data file
+#     # dsvars: list of the names of desired variables to load
     
-    # Open output file
-    ds = nc.Dataset(fname)
-    if dsvars is not None:
-        dsvars = np.array(dsvars)
-    else:
-        dsvars = np.array(list(ds.variables.keys()))
-    # Read data into a struct object (defined above)
-    df = struct()
-    #df = {}
-    for i in range(len(dsvars)):
-        df.SetAttr(dsvars[i], ds.variables[dsvars[i]][:].data)
-        #df.update({dsvars[i]: ds.variables[dsvars[i]][:].data})
-    ds.close()
+#     # Open output file
+#     ds = nc.Dataset(fname)
+#     if dsvars is not None:
+#         dsvars = np.array(dsvars)
+#     else:
+#         dsvars = np.array(list(ds.variables.keys()))
+#     # Read data into a struct object (defined above)
+#     df = struct()
+#     #df = {}
+#     for i in range(len(dsvars)):
+#         df.SetAttr(dsvars[i], ds.variables[dsvars[i]][:].data)
+#         #df.update({dsvars[i]: ds.variables[dsvars[i]][:].data})
+#     ds.close()
     
-    return df
+#     return df
 
 
 # Wrapper function for pcolormesh
@@ -164,7 +167,24 @@ def proj_winds(u, v, proj_angle):
     nv = U_proj * np.cos(proj_angle)
     
     return U_proj,nu,nv
+
+
+def save_to_pickle(data, pkl_fname, new_pkl=False):
+    if new_pkl is True:
+        dbfile = open(pkl_fname, 'wb')
+        pickle.dump(data, dbfile)
+        dbfile.close()
+    else:
+        dbfile = open(pkl_fname, 'rb')
+        save_data = pickle.load(dbfile)
+        dbfile.close()
+        
+        save_data.update(data)
+        dbfile = open(pkl_fname, 'wb')
+        pickle.dump(save_data, dbfile)
+        dbfile.close()
     
+
 
 # Calculate individual CM1 reflectivity contributions (NSSL 2-moment microphysics only)
 def calc_dbz_contributions(qx, cx, rho, field, plot=False, **kwargs):

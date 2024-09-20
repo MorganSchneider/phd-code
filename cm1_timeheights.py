@@ -385,7 +385,7 @@ if False:
 
 #%% Multi panel timeheight figures
 
-figsave = False
+figsave = True
 ztop = 4
 
 
@@ -428,51 +428,83 @@ dbfile.close()
 
 
 
-fig,((ax1),(ax2),(ax3)) = plt.subplots(3,1,figsize=(12,15))
+fig,((ax1),(ax2),(ax3)) = plt.subplots(3, 1, figsize=(8,7), sharex=True, sharey=True, layout='constrained')
 
-plot_cfill(times, zz, OW_min_m, 'OW', ax1, datalims=[-0.01,0], cmap='Blues_r')
-ax1.contour(times, zz, w_max_m, levels=[10,15,20], colors=['k','k','k'], linestyles=['--','-','-'], linewidths=[1,1,2])
+c = plot_cfill(times, zz, OW_min_m, 'OW', ax1, datalims=[-0.01,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax1.contour(times, zz, w_max_m, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1,1,2])
 ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
 # ax1.set_xlabel('Time (min)')
 ax1.set_ylabel('Height (km)')
-ax1.set_ylim([0,ztop])
-ax1.set_title('MERGER')
+# ax1.set_title('MERGER')
 
-plot_cfill(times, zz, OW_min_q, 'OW', ax2, datalims=[-0.01,0], cmap='Blues_r')
-ax2.contour(times, zz, w_max_q, levels=[10,15,20], colors=['k','k','k'], linestyles=['--','-','-'], linewidths=[1,1,2])
+plot_cfill(times, zz, OW_min_q, 'OW', ax2, datalims=[-0.01,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax2.contour(times, zz, w_max_q, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1,1,2])
 ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
 # ax2.set_xlabel('Time (min)')
 ax2.set_ylabel('Height (km)')
-ax2.set_ylim([0,ztop])
-ax2.set_title('QLCS')
+# ax2.set_title('QLCS')
 
-plot_cfill(times, zz, OW_min_s, 'OW', ax3, datalims=[-0.01,0], cmap='Blues_r')
-ax3.contour(times, zz, w_max_s, levels=[10,15,20], colors=['k','k','k'], linestyles=['--','-','-'], linewidths=[1,1,2])
+plot_cfill(times, zz, OW_min_s, 'OW', ax3, datalims=[-0.01,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax3.contour(times, zz, w_max_s, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1,1,2])
 ax3.axvline(210, color='k', linewidth=1.5, linestyle='--')
 ax3.set_xlabel('Time (min)')
 ax3.set_ylabel('Height (km)')
-ax3.set_ylim([0,ztop])
-ax3.set_title('SUPERCELL')
+# ax3.set_title('SUPERCELL')
+
+cb = plt.colorbar(c, ax=[ax1,ax2,ax3], extend='min')
+cb.set_label("OW (s$^{-2}$)", fontsize=14)
+
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeheights_s1_OW+w.png", dpi=300)
 
 
 
-fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(12,9))
+fig,((ax1),(ax2),(ax3)) = plt.subplots(3, 1, figsize=(8,7), sharex=True, sharey=True, layout='constrained')
 
-ax1.plot(times, uh02_max_q, linewidth=1.5)
-ax1.plot(times, uh02_max_m, linewidth=1.5)
-ax1.plot(times, uh02_max_s, linewidth=1.5)
+c = plot_cfill(times, zz, w_max_m, 'w', ax1, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax1.contour(times, zz, OW_min_m, levels=[-0.01,-0.005,-0.001], colors='k', linestyles=['-','-','--'], linewidths=[2,1,1])
 ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
-ax1.set_xlabel('Time (min)')
-ax1.set_xlim([180,240])
-ax1.set_ylim([0,1500])
-ax1.set_title(f"Maximum 0-2 km updraft helicity")
-plt.legend(['No merger', 'Merger', 'Supercell'])
+# ax1.set_xlabel('Time (min)')
+ax1.set_ylabel('Height (km)')
+# ax1.set_title('MERGER')
 
-ax2.plot(times, uh25_max_q, linewidth=1.5)
-ax2.plot(times, uh25_max_m, linewidth=1.5)
-ax2.plot(times, uh25_max_s, linewidth=1.5)
+plot_cfill(times, zz, w_max_q, 'w', ax2, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax2.contour(times, zz, OW_min_q, levels=[-0.01,-0.005,-0.001], colors='k', linestyles=['-','-','--'], linewidths=[2,1,1])
+ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
+# ax2.set_xlabel('Time (min)')
+ax2.set_ylabel('Height (km)')
+# ax2.set_title('QLCS')
+
+plot_cfill(times, zz, w_max_s, 'w', ax3, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax3.contour(times, zz, OW_min_s, levels=[-0.01,-0.005,-0.001], colors='k', linestyles=['-','-','--'], linewidths=[2,1,1])
+ax3.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax3.set_xlabel('Time (min)')
+ax3.set_ylabel('Height (km)')
+# ax3.set_title('SUPERCELL')
+
+cb = plt.colorbar(c, ax=[ax1,ax2,ax3], extend='min')
+cb.set_label("w (m s$^{-1}$)", fontsize=14)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeheights_s1_w+OW.png", dpi=300)
+
+
+
+fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,6), sharex=True, layout='constrained')
+
+ax1.plot(times, uh02_max_q, 'k', linewidth=1.5)
+ax1.plot(times, uh02_max_m, 'r', linewidth=1.5)
+ax1.plot(times, uh02_max_s, 'dodgerblue', linewidth=1.5)
+ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
+# ax1.set_xlabel('Time (min)')
+ax1.set_xlim([180,240])
+ax1.set_ylim([0,1600])
+ax1.set_title(f"Maximum 0-2 km updraft helicity")
+ax1.legend(['No merger', 'Merger', 'Supercell'], loc='upper left')
+
+ax2.plot(times, uh25_max_q, 'k', linewidth=1.5)
+ax2.plot(times, uh25_max_m, 'r', linewidth=1.5)
+ax2.plot(times, uh25_max_s, 'dodgerblue', linewidth=1.5)
 ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
 ax2.set_xlabel('Time (min)')
 ax2.set_xlim([180,240])
@@ -509,46 +541,70 @@ uh02_max_s2 = tmp['uh02_max']
 dbfile.close()
 
 
-fig,((ax1),(ax2),(ax3)) = plt.subplots(3,1,figsize=(12,15))
+fig,((ax1),(ax2)) = plt.subplots(2, 1, figsize=(8,5), sharex=True, sharey=True, layout='constrained')
 
-plot_cfill(times, zz, OW_min_m2, 'OW', ax1, datalims=[-0.01,0], cmap='Blues_r')
-ax1.contour(times, zz, w_max_m2, levels=[10,15,20], colors=['k','k','k'], linestyles=['--','-','-'], linewidths=[1,1,2])
+c = plot_cfill(times, zz, OW_min_m2, 'OW', ax1, datalims=[-0.01,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax1.contour(times, zz, w_max_m2, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1,1,2])
 ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
 # ax1.set_xlabel('Time (min)')
 ax1.set_ylabel('Height (km)')
-ax1.set_ylim([0,ztop])
-ax1.set_title('MERGER')
+# ax1.set_title('MERGER')
 
-plot_cfill(times, zz, OW_min_s2, 'OW', ax2, datalims=[-0.01,0], cmap='Blues_r')
-ax2.contour(times, zz, w_max_s2, levels=[10,15,20], colors=['k','k','k'], linestyles=['--','-','-'], linewidths=[1,1,2])
+plot_cfill(times, zz, OW_min_s2, 'OW', ax2, datalims=[-0.01,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax2.contour(times, zz, w_max_s2, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1,1,2])
 ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
-# ax2.set_xlabel('Time (min)')
+ax2.set_xlabel('Time (min)')
 ax2.set_ylabel('Height (km)')
-ax2.set_ylim([0,ztop])
-ax2.set_title('SUPERCELL')
+# ax2.set_title('SUPERCELL')
+
+cb = plt.colorbar(c, ax=[ax1,ax2], extend='min')
+cb.set_label("OW (s$^{-2}$)", fontsize=12)
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeheights_s2_OW+w.png", dpi=300)
 
 
 
-fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(12,9))
+fig,((ax1),(ax2)) = plt.subplots(2, 1, figsize=(8,5), sharex=True, sharey=True, layout='constrained')
 
-ax1.plot(times, uh02_max_m2, linewidth=1.5)
-ax1.plot(times, uh02_max_s2, linewidth=1.5)
+c = plot_cfill(times, zz, w_max_m2, 'w', ax1, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax1.contour(times, zz, OW_min_m2, levels=[-0.01,-0.005,-0.001], colors='k', linestyles=['-','-','--'], linewidths=[2,1,1])
 ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
-ax1.set_xlabel('Time (min)')
-ax1.set_xlim([180,240])
-ax1.set_ylim([0,1500])
-ax1.set_title(f"Maximum 0-2 km updraft helicity")
-plt.legend(['Merger', 'Supercell'])
+# ax1.set_xlabel('Time (min)')
+ax1.set_ylabel('Height (km)')
+# ax1.set_title('MERGER')
 
-ax2.plot(times, uh25_max_m2, linewidth=1.5)
-ax2.plot(times, uh25_max_s2, linewidth=1.5)
+plot_cfill(times, zz, w_max_s2, 'w', ax2, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
+ax2.contour(times, zz, OW_min_s2, levels=[-0.01,-0.005,-0.001], colors='k', linestyles=['-','-','--'], linewidths=[2,1,1])
+ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax2.set_xlabel('Time (min)')
+ax2.set_ylabel('Height (km)')
+# ax2.set_title('SUPERCELL')
+
+cb = plt.colorbar(c, ax=[ax1,ax2], extend='min')
+cb.set_label("w (m s$^{-1}$)", fontsize=12)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeheights_s2_w+OW.png", dpi=300)
+
+
+fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,6), sharex=True, layout='constrained')
+
+ax1.plot(times, uh02_max_m2, 'r', linewidth=1.5)
+ax1.plot(times, uh02_max_s2, 'dodgerblue', linewidth=1.5)
+ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
+# ax1.set_xlabel('Time (min)')
+ax1.set_xlim([180,240])
+ax1.set_ylim([0,1000])
+ax1.set_title(f"Maximum 0-2 km updraft helicity")
+ax1.legend(['Merger', 'Supercell'], loc='upper left')
+
+ax2.plot(times, uh25_max_m2, 'r', linewidth=1.5)
+ax2.plot(times, uh25_max_s2, 'dodgerblue', linewidth=1.5)
 ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
 ax2.set_xlabel('Time (min)')
 ax2.set_xlim([180,240])
-ax2.set_ylim([0,2000])
+ax2.set_ylim([0,1400])
 ax2.set_title(f"Maximum 2-5 km updraft helicity")
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_s2_UH.png", dpi=300)

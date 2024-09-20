@@ -428,8 +428,8 @@ iy = slice(swaths['iy'][0], swaths['iy'][1])
 wspd_sfc_m = swaths['wspd_sfc']
 w_1km_m = swaths['w_1km']
 OW_1km_m = swaths['OW_1km']
-# UH_25_m = swaths['UH_25km']
-# UH_02_m = swaths['UH_02km']
+UH_25_m = swaths['UH_25km']
+UH_02_m = swaths['UH_02km']
 # pp_1km_m = swaths['pp_1km']
 dbfile.close()
 
@@ -441,8 +441,8 @@ iy = slice(swaths['iy'][0], swaths['iy'][1])
 wspd_sfc_q = swaths['wspd_sfc']
 w_1km_q = swaths['w_1km']
 OW_1km_q = swaths['OW_1km']
-# UH_25_q = swaths['UH_25km']
-# UH_02_q = swaths['UH_02km']
+UH_25_q = swaths['UH_25km']
+UH_02_q = swaths['UH_02km']
 # pp_1km_q = swaths['pp_1km']
 dbfile.close()
 
@@ -454,45 +454,63 @@ iy = slice(swaths['iy'][0], swaths['iy'][1])
 wspd_sfc_s = swaths['wspd_sfc']
 w_1km_s = swaths['w_1km']
 OW_1km_s = swaths['OW_1km']
-# UH_25_s = swaths['UH_25km']
-# UH_02_s = swaths['UH_02km']
+UH_25_s = swaths['UH_25km']
+UH_02_s = swaths['UH_02km']
 # pp_1km_s = swaths['pp_1km']
 dbfile.close()
 
 
 
 
-figsave = False
+figsave = True
 
 xl = [-60,30]
 yl = [-110,-20]
 
 
-fig,((ax1,ax2,ax3),(ax4,ax5,ax6),(ax7,ax8,ax9)) = plt.subplots(3,3,figsize=(13,12))
+fig,axs = plt.subplots(3, 3, figsize=(8,7), subplot_kw=dict(box_aspect=1), sharex=True, sharey=True, layout='constrained')
 
-plot_cfill(xh[ix], yh[iy], np.ma.masked_array(w_1km_m, w_1km_m<5), 'w', ax1, datalims=[5,15], cmap='Reds', xlims=xl, ylims=yl, cbar=False)
-# ax1.set_title("MERGER")
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(w_1km_m, w_1km_m<5), 'w', axs[0,0], datalims=[5,15], cmap='Reds', xlims=xl, ylims=yl, cbar=False)
+# axs[0,0].set_title("MERGER")
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(w_1km_q, w_1km_q<5), 'w', axs[0,1], datalims=[5,15], cmap='Reds', xlims=xl, ylims=yl, cbar=False)
+# axs[0,1].set_title("QLCS")
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(w_1km_s, w_1km_s<5), 'w', axs[0,2], datalims=[5,15], cmap='Reds', xlims=xl, ylims=yl)
+# axs[0,2].set_title("SUPERCELL")
 
-plot_cfill(xh[ix], yh[iy], np.ma.masked_array(w_1km_q, w_1km_q<5), 'w', ax2, datalims=[5,15], cmap='Reds', xlims=xl, ylims=yl, cbar=False)
-# ax2.set_title("QLCS")
+plot_cfill(xh[ix], yh[iy], gaussian_filter(np.ma.masked_array(OW_1km_m, OW_1km_m>-0.001),1), 'OW', axs[1,0], datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], gaussian_filter(np.ma.masked_array(OW_1km_q, OW_1km_q>-0.001),1), 'OW', axs[1,1], datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], gaussian_filter(np.ma.masked_array(OW_1km_s, OW_1km_s>-0.001),1), 'OW', axs[1,2], datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl)
+axs[1,0].set_ylabel('y distance (km)')
 
-plot_cfill(xh[ix], yh[iy], np.ma.masked_array(w_1km_s, w_1km_s<5), 'w', ax3, datalims=[5,15], cmap='Reds', xlims=xl, ylims=yl)
-# ax3.set_title("SUPERCELL")
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_m, wspd_sfc_m<15), 'wspd', axs[2,0], datalims=[15,35], xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_q, wspd_sfc_q<15), 'wspd', axs[2,1], datalims=[15,35], xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_s, wspd_sfc_s<15), 'wspd', axs[2,2], datalims=[15,35], xlims=xl, ylims=yl)
+axs[2,1].set_xlabel('x distance (km)')
 
-plot_cfill(xh[ix], yh[iy], gaussian_filter(np.ma.masked_array(OW_1km_m, OW_1km_m>-0.001),1), 'OW', ax4, datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl, cbar=False)
-
-plot_cfill(xh[ix], yh[iy], gaussian_filter(np.ma.masked_array(OW_1km_q, OW_1km_q>-0.001),1), 'OW', ax5, datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl, cbar=False)
-
-plot_cfill(xh[ix], yh[iy], gaussian_filter(np.ma.masked_array(OW_1km_s, OW_1km_s>-0.001),1), 'OW', ax6, datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl)
-
-plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_m, wspd_sfc_m<15), 'wspd', ax7, datalims=[15,35], xlims=xl, ylims=yl, cbar=False)
-
-plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_q, wspd_sfc_q<15), 'wspd', ax8, datalims=[15,35], xlims=xl, ylims=yl, cbar=False)
-
-plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_s, wspd_sfc_s<15), 'wspd', ax9, datalims=[15,35], xlims=xl, ylims=yl)
+# plt.tight_layout()
 
 if figsave:
     plt.savefig('/Users/morgan.schneider/Documents/merger/swaths_w-OW-wspd.png', dpi=300)
+
+
+
+fig,axs = plt.subplots(2, 3, figsize=(9,5.5), subplot_kw=dict(box_aspect=1), sharex=True, sharey=True, layout='constrained')
+
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(UH_02_m, UH_02_m<50), 'uh', axs[0,0], datalims=[50,250], xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(UH_02_q, UH_02_q<50), 'uh', axs[0,1], datalims=[50,250], xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(UH_02_s, UH_02_s<50), 'uh', axs[0,2], datalims=[50,250], xlims=xl, ylims=yl)
+axs[0,0].set_ylabel('y distance (km)')
+
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(UH_25_m, UH_25_m<50), 'uh', axs[1,0], datalims=[50,500], xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(UH_25_q, UH_25_q<50), 'uh', axs[1,1], datalims=[50,500], xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], np.ma.masked_array(UH_25_s, UH_25_s<50), 'uh', axs[1,2], datalims=[50,500], xlims=xl, ylims=yl)
+axs[1,0].set_ylabel('y distance (km)')
+axs[1,1].set_xlabel('x distance (km)')
+
+
+if figsave:
+    plt.savefig('/Users/morgan.schneider/Documents/merger/swaths_UH.png', dpi=300)
+
 
 
 
