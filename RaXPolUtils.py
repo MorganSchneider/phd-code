@@ -19,10 +19,12 @@ import matplotlib.dates as mdates
 from glob import glob
 from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
-from utils import struct
 from datetime import datetime
 import cmocean
 # import cartopy.crs as ccrs
+
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 
 #%%
 ########################
@@ -37,8 +39,8 @@ cmaps = {
     'dbz': {'cm': 'pyart_NWSRef', 'label': "$Z_H$ (dBZ)"},
     'vel': {'cm': 'pyart_Carbone42', 'label': "$v$ (m s$^{-1}$)"},
     'sw':  {'cm': 'pyart_NWS_SPW', 'label': "SW (m s$^{-1}$)"},
-    'zdr': {'cm': 'nwsdmap', 'label': "$Z_{DR}$ (dB)"},
-    'rhv': {'cm': 'pyart_LangRainbow12', 'label': "\u03C1$_{HV}$"},
+    'zdr': {'cm': nwsdmap, 'label': "$Z_{DR}$ (dB)"},
+    'rhohv': {'cm': 'pyart_LangRainbow12', 'label': "\u03C1$_{HV}$"},
     'temp': {'cm': 'pyart_HomeyerRainbow', 'label': "$T$ (C)"},
     'dewpt': {'cm': cmocean.cm.algae, 'label': "$T_D$ (C)"},
     'theta': {'cm': 'pyart_HomeyerRainbow', 'label': "\u03B8 (K)"}
@@ -50,7 +52,6 @@ cmaps = {
 def movmean(data, npts):
     # data: 1-D vector of data
     # npts: number of points to average
-    
     data_mean = np.convolve(data, np.ones(npts), 'same')/npts
     return data_mean
 
@@ -142,31 +143,10 @@ def read_raxpol(fn):
     yy = r_mat * np.cos(az_mat) * np.cos(elev*np.pi/180)
     zz = r_mat * np.sin(elev*np.pi/180)
     
-    dat = struct()
-    
-    dat.SetAttr('dbz', Z)
-    dat.SetAttr('vel', vr)
-    dat.SetAttr('sw', sw)
-    dat.SetAttr('zdr', zdr)
-    dat.SetAttr('rhohv', rhohv)
-    dat.SetAttr('phidp', phidp)
-    dat.SetAttr('lat', lat)
-    dat.SetAttr('lon', lon)
-    dat.SetAttr('r', r_km)
-    dat.SetAttr('az', az)
-    dat.SetAttr('elev', elev)
-    dat.SetAttr('xx', xx)
-    dat.SetAttr('yy', yy)
-    dat.SetAttr('zz', zz)
-    dat.SetAttr('vol_num', vol_num)
-    dat.SetAttr('swp_start', swp_start)
-    dat.SetAttr('swp_num', swp_num)
-    dat.SetAttr('num_gates', num_gates)
-    dat.SetAttr('num_az', num_az)
-    dat.SetAttr('dr', dr)
-    dat.SetAttr('va', va)
-    dat.SetAttr('tau', pulse_width)
-    dat.SetAttr('prt', prt)
+    dat = {'dbz':Z, 'vel':vr, 'sw':sw, 'zdr':zdr, 'rhohv':rhohv, 'phidp':phidp,
+           'lat':lat, 'lon':lon, 'r':r_km, 'az':az, 'elev':elev, 'xx':xx, 'yy':yy, 'zz':zz,
+           'vol_num':vol_num, 'swp_start':swp_start, 'swp_num':swp_num, 'num_gates':num_gates,
+           'num_az':num_az, 'dr':dr, 'va':va, 'tau':pulse_width, 'prt':prt}
     
     return dat
 
@@ -192,12 +172,6 @@ def read_MM(fn):
     cols = [3,4,5,7,8,10,11,12,13,15,16,17,18,19]
     df = pd.read_fwf(fn, sep='\t', usecols=cols, engine='python')
     
-    dat = struct()
-    
-    # Time/location stuff
-    dat.SetAttr('date', df['GPSDate'].values)
-    dat.SetAttr('time', df['GPSTime'].values)
-    
     #datestr = [str(dat.date[i]) if len(str(dat.date[i]))==6 else '0'+str(dat.date[i]) for i in range(len(df))]
     #timestr = [str(dat.time[i]) if len(str(dat.time[i]))==6 else '0'+str(dat.time[i]) for i in range(len(df))]
     
@@ -208,60 +182,48 @@ def read_MM(fn):
     veh_dir = np.array([gps_dir[i] if gps_spd[i]>=1 else compass_dir[i] for i in range(len(df))])
     veh_spd = np.array([gps_spd[i] if gps_spd[i]>=1 else 0 for i in range(len(df))])
     
-    dat.SetAttr('veh_dir', veh_dir)
-    dat.SetAttr('veh_spd', veh_spd)
-    dat.SetAttr('lat', df['GPS_Lat'].values)
-    dat.SetAttr('lon', df['GPS_Lon'].values)
-    dat.SetAttr('alt', df['GPS_Alt'].values)
-    
     # Observations
-    dat.SetAttr('SlowT', df['SlowT'].values)
-    dat.SetAttr('Utube', df['UT_FastT'].values)
-    dat.SetAttr('Dewpt', df['Tdc'].values)
-    dat.SetAttr('Pres', df['Pressure'].values)
-    dat.SetAttr('wspd', df['Derived_WS'].values)
-    dat.SetAttr('wdir', df['Derived_WD'].values)
-    dat.SetAttr('uwind', dat.wspd*np.sin(dat.wdir*np.pi/180))
-    dat.SetAttr('vwind', dat.wspd*np.cos(dat.wdir*np.pi/180))
+    uwind = -df['Derived_WS'].values * np.sin(df['Derived_WD'].values*np.pi/180)
+    vwind = -df['Derived_WS'].values * np.cos(df['Derived_WD'].values*np.pi/180)
+    
+    dat = {'date':df['GPSDate'].values, 'time':df['GPSTime'].values, 'veh_dir':veh_dir,
+           'veh_spd':veh_spd, 'lat':df['GPS_Lat'].values, 'lon':df['GPS_Lon'].values,
+           'alt':df['GPS_Alt'].values, 'SlowT':df['SlowT'].values, 'Utube':df['UT_FastT'].values,
+           'Dewpt':df['Tdc'].values, 'Pres':df['Pressure'].values, 'wspd':df['Derived_WS'].values,
+           'wdir':df['Derived_WD'].values, 'uwind':uwind, 'vwind':vwind}
     
     if "Probe_1" in fn: # P1 Utube temp is biased high
-        dat.Utube = dat.Utube - 1.23
+        dat.update({'Utube':dat['Utube']-1.23})
         
     # Time averaging
     av_period = [3, 10, 60]
     for n in av_period:
-        dat.SetAttr(f"SlowT_{n}s", movmean(dat.SlowT, n))
-        dat.SetAttr(f"Utube_{n}s", movmean(dat.Utube, n))
-        dat.SetAttr(f"Dewpt_{n}s", movmean(dat.Dewpt, n))
-        dat.SetAttr(f"Pres_{n}s", movmean(dat.Pres, n))
-        dat.SetAttr(f"wspd_{n}s", movmean(dat.wspd, n))
-        dat.SetAttr(f"uwind_{n}s", movmean(dat.uwind, n))
-        dat.SetAttr(f"vwind_{n}s", movmean(dat.vwind, n))
+        dat.update({f"SlowT_{n}s":movmean(dat['SlowT'],n), f"Utube_{n}s":movmean(dat['Utube'],n),
+                    f"Dewpt_{n}s":movmean(dat['Dewpt'],n), f"Pres_{n}s":movmean(dat['Pres'],n),
+                    f"wspd_{n}s":movmean(dat['wspd'],n), f"uwind_{n}s":movmean(dat['uwind'],n),
+                    f"vwind_{n}s":movmean(dat['vwind'],n)})
     
-    # if False:
-    #     T_K = dat.Utube + 273.15
-    #     Td_K = dat.Dewpt + 273.15
-    #     e = 6.11*np.exp(2.5e6/461.5 * (1/273.15 - 1/Td_K))
-    #     qv = 0.622 * e/(dat.Pres - e)
+    if True:
+        T_K = dat['Utube'] + 273.15
+        Td_K = dat['Dewpt'] + 273.15
+        e = 6.11*np.exp(2.5e6/461.5 * (1/273.15 - 1/Td_K))
+        qv = 0.622 * e/(dat['Pres'] - e)
         
-    #     theta = T_K * (1000/dat.Pres)**0.286
-    #     theta_v = theta * (1 + 0.61*qv)
-    #     theta_e = (T_K + (2.5e6*qv)/(1004.5*T_K)) * (1000/dat.Pres)**0.286
+        theta = T_K * (1000/dat['Pres'])**0.286
+        theta_v = theta * (1 + 0.61*qv)
+        theta_e = (T_K + (2.5e6*qv)/(1004.5*T_K)) * (1000/dat['Pres'])**0.286
         
-    #     dat.SetAttr('Theta', theta)
-    #     dat.SetAttr('ThetaV', theta_v)
-    #     dat.SetAttr('ThetaE', theta_e)
-    #     for n in av_period:
-    #         dat.SetAttr(f"Theta_{n}s", movmean(dat.Theta, n))
-    #         dat.SetAttr(f"ThetaV_{n}s", movmean(dat.ThetaV, n))
-    #         dat.SetAttr(f"ThetaE_{n}s", movmean(dat.ThetaE, n))
+        dat.update({'Theta':theta, 'ThetaV':theta_v, 'ThetaE':theta_e})
+        for n in av_period:
+            dat.update({f"Theta_{n}s":movmean(theta,n), f"ThetaV_{n}s":movmean(theta_v,n),
+                        f"ThetaE_{n}s":movmean(theta_e,n)})
     
     return dat
 
 
 # Function to create 2D colorfill plots
 def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
-               cmap=None, **kwargs):
+               cmap=None, cbar=True, **kwargs):
     if cmap is None:
         cm, cb_label = cmaps[field]['cm'], cmaps[field]['label']
     else:
@@ -279,15 +241,16 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
 
     # Format the colorbar
     # c.cmap.set_bad('grey', 1.0)
-    cb = plt.colorbar(c, ax=ax)
-    cb.set_label(cb_label)
+    if cbar is True:
+        cb = plt.colorbar(c, ax=ax)
+        cb.set_label(cb_label)
     
     if xlims is not None:
         ax.set_xlim(xlims[0], xlims[1])
     if ylims is not None:
         ax.set_ylim(ylims[0], ylims[1])
     
-    return c,cb
+    return c
 
 
 

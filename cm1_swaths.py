@@ -13,8 +13,8 @@ from scipy.ndimage import gaussian_filter
 
 #%% Calculate swaths
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
+fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/qlcs-125m/'
 
 
 ds = nc.Dataset(fp+'cm1out_000014.nc')
@@ -33,6 +33,7 @@ iy2 = np.where(yh >= -20)[0][0]
 iz1 = np.where(z >= 1.0)[0][0]
 iz15 = np.where(z >= 1.5)[0][0]
 iz2 = np.where(z >= 2.0)[0][0]
+iz3 = np.where(z >= 3.0)[0][0]
 
 ix = slice(ix1,ix2)
 iy = slice(iy1,iy2)
@@ -45,6 +46,8 @@ iy = slice(iy1,iy2)
 # w_1km_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # max 1 km w
 # zvort_1km_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # max 1 km zvort
 # OW_1km_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # min 1 km OW
+# OW_2km_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # min 2 km OW
+OW_3km_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # min 3 km OW
 # wspd_1km_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # max 1 km wind speed
 # UH_25_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # max 2-5 km UH
 # UH_02_swath = np.zeros(shape=(len(yh[iy]),len(xh[ix])), dtype=float) # max 0-2 km UH
@@ -105,6 +108,33 @@ for fn in np.arange(14,74):
     # OW_1km_swath = np.minimum(OW_1km_swath, OW_1km)
     # wspd_1km_swath = np.maximum(wspd_1km_swath, wspd_1km)
     # del w_1km,zvort_1km,OW_1km,wspd_1km
+    
+    
+    # ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
+    # zvort_2km = ds.variables['zvort'][:].data[0,iz2,iy,ix]
+    # u_2km = ds.variables['uinterp'][:].data[0,iz2,iy,ix]
+    # v_2km = ds.variables['vinterp'][:].data[0,iz2,iy,ix]
+    # S_N = np.gradient(u_2km, xh[ix]*1000, axis=1) - np.gradient(v_2km, yh[iy]*1000, axis=0)
+    # S_S = np.gradient(v_2km, xh[ix]*1000, axis=1) + np.gradient(u_2km, yh[iy]*1000, axis=0)
+    # OW_2km = S_N**2 + S_S**2 - zvort_2km**2
+    # del u_2km,v_2km,S_N,S_S,zvort_2km
+    # ds.close()
+    
+    # OW_2km_swath = np.minimum(OW_2km_swath, OW_2km)
+    # del OW_2km
+    
+    ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
+    zvort_3km = ds.variables['zvort'][:].data[0,iz3,iy,ix]
+    u_3km = ds.variables['uinterp'][:].data[0,iz3,iy,ix]
+    v_3km = ds.variables['vinterp'][:].data[0,iz3,iy,ix]
+    S_N = np.gradient(u_3km, xh[ix]*1000, axis=1) - np.gradient(v_3km, yh[iy]*1000, axis=0)
+    S_S = np.gradient(v_3km, xh[ix]*1000, axis=1) + np.gradient(u_3km, yh[iy]*1000, axis=0)
+    OW_3km = S_N**2 + S_S**2 - zvort_3km**2
+    del u_3km,v_3km,S_N,S_S,zvort_3km
+    ds.close()
+    
+    OW_3km_swath = np.minimum(OW_3km_swath, OW_3km)
+    del OW_3km
     
     ### Updraft helicity ###
     # ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
@@ -185,8 +215,7 @@ if update_pkl:
     swaths = pickle.load(dbfile)
     dbfile.close()
     
-    new_vars = {'pp_sfc':pp_sfc_swath, 'pp_1km':pp_1km_swath, 
-                'vppga_max':vppga_max_swath, 'vppga_min':vppga_min_swath}
+    new_vars = {'OW_3km':OW_3km_swath}
     swaths.update(new_vars)
     dbfile = open(ip+'swaths.pkl', 'wb')
     pickle.dump(swaths, dbfile)
@@ -217,6 +246,8 @@ conv_sfc_swath = swaths['conv_sfc']
 w_1km_swath = swaths['w_1km']
 zvort_1km_swath = swaths['zvort_1km']
 OW_1km_swath = swaths['OW_1km']
+OW_2km_swath = swaths['OW_2km']
+OW_3km_swath = swaths['OW_3km']
 wspd_1km_swath = swaths['wspd_1km']
 UH_25_swath = swaths['UH_25km']
 UH_02_swath= swaths['UH_02km']
@@ -236,6 +267,7 @@ dbfile.close()
 
 #%% Plot swaths from saved pickle files
 
+
 figsave = False
 
 # xl = [-60,20]
@@ -243,6 +275,30 @@ figsave = False
 xl = [-60,30]
 yl = [-110,-20]
 
+
+if True:
+    cm = plt.get_cmap('Blues_r')
+    cm.set_over('white')
+    
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(OW_2km_swath, OW_2km_swath>-0.001), 'OW', ax, datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl)
+    # ax.contour(xh[ix], yh[iy], gaussian_filter(w_2km_swath,2.5), levels=[5,10], colors='k', linewidths=[1,1.5])
+    ax.set_title(f"{sim} - Minimum 2 km OW")
+    
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    plot_contourf(xh[ix], yh[iy], OW_2km_swath, 'OW', ax, levels=np.linspace(-0.001,0,21), datalims=[-0.001,-0.0001], cmap=cm, xlims=xl, ylims=yl, extend='min')
+    ax.set_title(f"{sim} - Minimum 2 km OW")
+    
+    
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(OW_3km_swath, OW_3km_swath>-0.001), 'OW', ax, datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl)
+    # ax.contour(xh[ix], yh[iy], gaussian_filter(w_2km_swath,2.5), levels=[5,10], colors='k', linewidths=[1,1.5])
+    ax.set_title(f"{sim} - Minimum 3 km OW")
+    
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    plot_contourf(xh[ix], yh[iy], OW_3km_swath, 'OW', ax, levels=np.linspace(-0.001,0,21), datalims=[-0.001,-0.0001], cmap=cm, xlims=xl, ylims=yl, extend='min')
+    ax.set_title(f"{sim} - Minimum 3 km OW")
+#%%
 
 if False:
     # 2 km max w
@@ -295,6 +351,14 @@ if False:
     if figsave:
         plt.savefig(ip+'imgs_swaths/swaths_OW_1km.png', dpi=300)
     
+    # 2 km min OW
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    plot_cfill(xh[ix], yh[iy], gaussian_filter(np.ma.masked_array(OW_2km_swath, OW_2km_swath>-0.001),1), 'OW', ax, datalims=[-0.003,0], cmap='Blues_r', xlims=xl, ylims=yl)
+    # ax.contour(xh[ix], yh[iy], gaussian_filter(w_1km_swath,2.5), levels=[5,10], colors='k', linewidths=[1,1.5])
+    ax.set_title(f"{sim} - Minimum 2 km OW")
+    if figsave:
+        plt.savefig(ip+'imgs_swaths/swaths_OW_2km.png', dpi=300)
+    
     # sfc max wind speed
     fig,ax = plt.subplots(1,1,figsize=(8,6))
     plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_swath, wspd_sfc_swath<15), 'wspd', ax, datalims=[15,35], xlims=xl, ylims=yl)
@@ -337,7 +401,7 @@ if False:
         plt.savefig(ip+'imgs_swaths/swaths_UH_0-2.png', dpi=300)
         
 
-if True:
+if False:
     # sfc min pressure perturbation
     fig,ax = plt.subplots(1,1,figsize=(8,6))
     plot_cfill(xh[ix], yh[iy], np.ma.masked_array(pp_sfc_swath/100, pp_sfc_swath>=0), 'prspert', ax, datalims=[-2,0], cmap='Blues_r', xlims=xl, ylims=yl)
@@ -430,7 +494,8 @@ w_1km_m = swaths['w_1km']
 OW_1km_m = swaths['OW_1km']
 UH_25_m = swaths['UH_25km']
 UH_02_m = swaths['UH_02km']
-# pp_1km_m = swaths['pp_1km']
+pp_1km_m = swaths['pp_1km']
+vppga_max_m = swaths['vppga_max']
 dbfile.close()
 
 dbfile = open('/Users/morgan.schneider/Documents/merger/qlcs-125m/swaths.pkl', 'rb')
@@ -443,7 +508,8 @@ w_1km_q = swaths['w_1km']
 OW_1km_q = swaths['OW_1km']
 UH_25_q = swaths['UH_25km']
 UH_02_q = swaths['UH_02km']
-# pp_1km_q = swaths['pp_1km']
+pp_1km_q = swaths['pp_1km']
+vppga_max_q = swaths['vppga_max']
 dbfile.close()
 
 dbfile = open('/Users/morgan.schneider/Documents/merger/supercell-125m/swaths.pkl', 'rb')
@@ -456,13 +522,14 @@ w_1km_s = swaths['w_1km']
 OW_1km_s = swaths['OW_1km']
 UH_25_s = swaths['UH_25km']
 UH_02_s = swaths['UH_02km']
-# pp_1km_s = swaths['pp_1km']
+pp_1km_s = swaths['pp_1km']
+vppga_max_s = swaths['vppga_max']
 dbfile.close()
 
 
 
 
-figsave = True
+figsave = False
 
 xl = [-60,30]
 yl = [-110,-20]
@@ -487,8 +554,6 @@ plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_q, wspd_sfc_q<15), 'wspd'
 plot_cfill(xh[ix], yh[iy], np.ma.masked_array(wspd_sfc_s, wspd_sfc_s<15), 'wspd', axs[2,2], datalims=[15,35], xlims=xl, ylims=yl)
 axs[2,1].set_xlabel('x distance (km)')
 
-# plt.tight_layout()
-
 if figsave:
     plt.savefig('/Users/morgan.schneider/Documents/merger/swaths_w-OW-wspd.png', dpi=300)
 
@@ -507,15 +572,26 @@ plot_cfill(xh[ix], yh[iy], np.ma.masked_array(UH_25_s, UH_25_s<50), 'uh', axs[1,
 axs[1,0].set_ylabel('y distance (km)')
 axs[1,1].set_xlabel('x distance (km)')
 
-
 if figsave:
     plt.savefig('/Users/morgan.schneider/Documents/merger/swaths_UH.png', dpi=300)
 
 
 
+fig,axs = plt.subplots(2, 3, figsize=(9,5.5), subplot_kw=dict(box_aspect=1), sharex=True, sharey=True, layout='constrained')
 
+plot_cfill(xh[ix], yh[iy], pp_1km_m/100, 'prspert', axs[0,0], datalims=[-3,0], cmap='Blues_r', xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], pp_1km_q/100, 'prspert', axs[0,1], datalims=[-3,0], cmap='Blues_r', xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], pp_1km_s/100, 'prspert', axs[0,2], datalims=[-3,0], cmap='Blues_r', xlims=xl, ylims=yl)
+axs[0,0].set_ylabel('y distance (km)')
 
+plot_cfill(xh[ix], yh[iy], vppga_max_m, 'pgfz', axs[1,0], datalims=[0,0.5], cmap='Reds', xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], vppga_max_q, 'pgfz', axs[1,1], datalims=[0,0.5], cmap='Reds', xlims=xl, ylims=yl, cbar=False)
+plot_cfill(xh[ix], yh[iy], vppga_max_s, 'pgfz', axs[1,2], datalims=[0,0.5], cmap='Reds', xlims=xl, ylims=yl)
+axs[1,1].set_xlabel('x distance (km)')
+axs[1,0].set_ylabel('y distance (km)')
 
+if figsave:
+    plt.savefig('/Users/morgan.schneider/Documents/merger/swaths_prspert+vppga.png', dpi=300)
 
 
 

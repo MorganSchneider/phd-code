@@ -271,15 +271,14 @@ cb3 = plt.colorbar(c3, ax=axs3[:,4], extend='min')
 cb3.set_label("w (m s$^{-1}$)", fontsize=18)
 
 
-#%%
-
-fig1.savefig('/Users/morgan.schneider/Documents/merger/overview_dbz.png', dpi=300)
-fig2.savefig('/Users/morgan.schneider/Documents/merger/overview_thrpert.png', dpi=300)
-fig3.savefig('/Users/morgan.schneider/Documents/merger/overview_w.png', dpi=300)
-
+if figsave:
+    fig1.savefig('/Users/morgan.schneider/Documents/merger/overview_dbz.png', dpi=300)
+    fig2.savefig('/Users/morgan.schneider/Documents/merger/overview_thrpert.png', dpi=300)
+    fig3.savefig('/Users/morgan.schneider/Documents/merger/overview_w.png', dpi=300)
 
 
-#%% Make overview plots (dBZ, w, thrpert, zvort)
+
+#%% Make single time overview plots (dBZ, w, thrpert, zvort)
 ######################
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
@@ -366,8 +365,8 @@ ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
 fn = 73
 # 181 min -> 14 | 195 min -> 28 | 210 min -> 43 | 225 min -> 58 | 240 min -> 73
 
-xlims = [-40,20] #[-55,25]
-ylims = [-50,10] #[-100,-20]
+xlims = [-38,42]
+ylims = [-68,12]
 
 # Read output file
 ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
@@ -411,18 +410,19 @@ zvort = ds.variables['zvort'][:].data[0,slice(0,iz1+1),iy,ix]
 S_N = np.gradient(uinterp, xh[ix]*1000, axis=2) - np.gradient(vinterp, yh[iy]*1000, axis=1)
 S_S = np.gradient(vinterp, xh[ix]*1000, axis=2) + np.gradient(uinterp, yh[iy]*1000, axis=1)
 OW = S_N**2 + S_S**2 - zvort**2
-del S_N,S_S,zvort,uinterp,vinterp
+del S_N,S_S,zvort
 
 ds.close()
 
 
 # Read dyn
-ds = nc.Dataset(fp+f"pp/dyn_{fn:06d}.nc")
-# p_dn = ds.variables['p_dn'][:].data[slice(0,iz1+1),iy,ix]
-# p_b = ds.variables['p_b'][:].data[slice(0,iz1+1),iy,ix]
-# p_dl = ds.variables['p_dl'][:].data[slice(0,iz1+1),iy,ix]
-thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
-ds.close()
+if fn > 13:
+    ds = nc.Dataset(fp+f"pp/dyn_{fn:06d}.nc")
+    # p_dn = ds.variables['p_dn'][:].data[slice(0,iz1+1),iy,ix]
+    # p_b = ds.variables['p_b'][:].data[slice(0,iz1+1),iy,ix]
+    # p_dl = ds.variables['p_dl'][:].data[slice(0,iz1+1),iy,ix]
+    thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
+    ds.close()
 
 
 # iz200 = np.where(z >= 0.2)[0][0]
@@ -443,23 +443,21 @@ ds.close()
 #%% Make zoomed overview plots (dBZ, w, thrpert, zvort)
 
 w_lims = [-15,15]
-thr_lims = [-14,0]
-pp_lims = [-2,2]
+thr_lims = [-10,0]
+pp_lims = [-4,4]
 vort_lims = [-0.1,0.1]
 dbz_lims = [0,70]
 
 
-xl = [-16.5,-6.5]
-yl = [-9.5,0.5]
-# xl = xlims
-# yl = ylims
+xl = xlims
+yl = ylims
 
 figsave = False
 
 
 
 # qix = 8
-qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/60)*2)
+qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/48)*2)
 
 
 # dbz, w and OW contoured
@@ -473,9 +471,9 @@ if True:
     # ax.contour(xh[ix], yh[iy], zvort[0,:,:], levels=[0.01,0.05,0.1], colors='k', linewidths=1)
     # ax.contour(xh[ix], yh[iy], np.min(OW[0:iz1,:,:],axis=0), levels=[-0.001], colors='silver', linewidths=1, linestyles='-')
     # ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    ax.set_xlabel('x (km)')
-    ax.set_ylabel('y (km)')
-    ax.set_title(f"$Z_{{sfc}}$, $w$ (black) \n t={time:.0f} min", fontsize=14)
+    # ax.set_xlabel('x (km)', fontsize=12)
+    # ax.set_ylabel('y (km)', fontsize=12)
+    ax.set_title(f"t={time:.0f} min", fontsize=20)
     ax.set_xlim(xl)
     ax.set_ylim(yl)
     if figsave:
@@ -525,13 +523,13 @@ if True:
     plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', ax, datalims=thr_lims, cmap='YlGnBu_r')
     ax.contour(xh[ix], yh[iy], np.max(winterp[0:iz1,:,:],axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
     ax.contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW[0:iz1,:,:],axis=0), winterp[iz1,:,:]<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
-    ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='gray', scale=600, width=0.002, pivot='tail')
-    ax.set_xlabel('x (km)')
-    ax.set_ylabel('y (km)')
+    ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=400, width=0.002, pivot='tail')
+    # ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='gray', scale=600, width=0.002, pivot='tail')
+    # ax.set_xlabel('x (km)', fontsize=12)
+    # ax.set_ylabel('y (km)', fontsize=12)
     ax.set_xlim(xl)
     ax.set_ylim(yl)
-    ax.set_title(f"\u03B8'\u1D68, $w$ (black), OW (pink) \n t={time:.0f} min", fontsize=14)
+    ax.set_title(f"t={time:.0f} min", fontsize=20)
     if figsave:
         plt.savefig(ip+f"imgs_overview/thrpert_sfc_{time:03.0f}min.png", dpi=300)
 
@@ -860,7 +858,7 @@ from CM1utils import *
 fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
-fn = 43
+fn = 72
 # 181 min -> 14 | 195 min -> 28 | 210 min -> 43 | 225 min -> 58 | 240 min -> 73
 
 
@@ -874,8 +872,8 @@ yf = ds.variables['yf'][:].data
 z = ds.variables['z'][:].data
 zf = ds.variables['zf'][:].data
 
-xlims = [-50,10] #[-55,25]
-ylims = [-90,-30] #[-100,-20]
+xlims = [-20,20] #[-55,25]
+ylims = [-60,20] #[-100,-20]
 
 ixw = np.where(xh >= xlims[0])[0][0] # west bound
 ixe = np.where(xh >= xlims[1])[0][0] # east bound
@@ -933,7 +931,7 @@ else:
 img_str = 's1'
 
 
-wlims = [-15,15]
+w_lims = [-15,15]
 thr_lims = [-15,15]
 pp_lims = [-20,20]
 vort_lims = [-0.1,0.1]
@@ -945,26 +943,26 @@ qiz = 3
 
 #%% Calculate and plot the diagonal cross sections
 
-# from CM1utils import *
+from CM1utils import *
 
 # Cross sections!
-x1 = -25 # cross section start point
-y1 = -81
-x2 = 0 # cross section end point
-y2 = -58
+x1 = 10 # cross section start point
+y1 = -50 # -85
+x2 = 0 # cross section end point -15
+y2 = -10 # -25
 
 
 proj_angle = np.arctan2(x2-x1, y2-y1) # angle of cross section surface
 U_proj,nu,nv = proj_winds(uinterp, vinterp, proj_angle) # horizontal wind projected onto cross section surface
 
-u_cross,x_cross = vert_cross_section(U_proj, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
-w_cross,x_cross = vert_cross_section(winterp, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
-thr_cross,x_cross = vert_cross_section(thrpert, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
-dbz_cross,x_cross = vert_cross_section(dbz, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
+u_cross,x_cross = vert_cross_section(U_proj, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2], gety=True)
+w_cross,x_cross = vert_cross_section(winterp, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2], gety=True)
+thr_cross,x_cross = vert_cross_section(thrpert, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2], gety=True)
+dbz_cross,x_cross = vert_cross_section(dbz, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2], gety=True)
 
 # zvort_cross,x_cross = vert_cross_section(zvort, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
 # OW_cross,x_cross = vert_cross_section(OW, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
-# pp_cross,x_cross = vert_cross_section(prspert, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
+pp_cross,x_cross = vert_cross_section(prspert, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2], gety=True)
 # hvort_proj,nvx,nvy = proj_winds(xvort, yvort, proj_angle) # horizontal vorticity along cross section
 # hvort_cross,x_cross = vert_cross_section(hvort_proj, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
 # B_cross,x_cross = vert_cross_section(B, xh[ix], yh[iy], start=[x1,y1], end=[x2,y2])
@@ -972,63 +970,84 @@ dbz_cross,x_cross = vert_cross_section(dbz, xh[ix], yh[iy], start=[x1,y1], end=[
 
 
 
+xl = [y1,y2]
+
+figsave = False
+
+qix = 15
 
 fig,ax = plt.subplots(1,1,figsize=(8,6))
 plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz[0,:,:], dbz[0,:,:]<1), 'dbz', ax, datalims=dbz_lims, xlims=xlims, ylims=ylims)
 # ax.contour(xh[ix], yh[iy], winterp[iz1,:,:], levels=[-10,-5,5,10], colors='k', linewidths=1)
 ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix], vinterp[iz1,::qix,::qix], scale=600, width=0.002, pivot='tail')
 ax.plot([x1,x2], [y1,y2], '-k', linewidth=1.5)
-plt.show()
+ax.set_title(f"dBZ, t = {time:.0f} min")
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/imgs_tmp/dbz_plan_{time:.0f}min.png", dpi=300)
+
+# fig,ax = plt.subplots(1,1,figsize=(8,6))
+# plot_cfill(xh[ix], yh[iy], thrpert[0,:,:], 'thrpert', ax, datalims=[-14,0], cmap='YlGnBu_r', xlims=xlims, ylims=ylims)
+# ax.contour(xh[ix], yh[iy], np.max(winterp[0:iz1+1,:,:], axis=0), levels=[5], colors='k', linewidths=1)
+# ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix], vinterp[0,::qix,::qix], scale=600, width=0.002, pivot='tail')
+# ax.plot([x1,x2], [y1,y2], '-k', linewidth=1.5)
 
 fig,ax = plt.subplots(1,1,figsize=(8,6))
-plot_cfill(xh[ix], yh[iy], thrpert[0,:,:], 'thrpert', ax, datalims=[-14,0], cmap='YlGnBu_r', xlims=xlims, ylims=ylims)
+plot_cfill(xh[ix], yh[iy], np.mean(prspert[iz1:iz2,:,:], axis=0), 'prspert', ax, datalims=[-4,4], cmap='RdBu_r', xlims=xlims, ylims=ylims)
 ax.contour(xh[ix], yh[iy], np.max(winterp[0:iz1+1,:,:], axis=0), levels=[5], colors='k', linewidths=1)
-ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix], vinterp[0,::qix,::qix], scale=600, width=0.002, pivot='tail')
+# ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix], vinterp[0,::qix,::qix], scale=600, width=0.002, pivot='tail')
 ax.plot([x1,x2], [y1,y2], '-k', linewidth=1.5)
-plt.show()
+ax.set_title(f"p', t = {time:.0f} min")
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/imgs_tmp/prspert_1-2km_plan_{time:.0f}min.png", dpi=300)
+
+ypgf = -1/1.1 * np.gradient(prspert[iz1:iz2+1,:,:], yh[iy]*1000, axis=1)
+
+fig,ax = plt.subplots(1,1,figsize=(8,6))
+plot_cfill(xh[ix], yh[iy], np.mean(ypgf, axis=0), 'pgf', ax, cmap='RdBu_r', xlims=xlims, ylims=ylims)
+ax.plot([x1,x2], [y1,y2], '-k', linewidth=1.5)
+ax.set_title(f"1-2 km mean y-direction PGF, t = {time:.0f} min")
+
 
 # fig,ax = plt.subplots(1,1,figsize=(8,6))
 # plot_cfill(xh[ix], yh[iy], winterp[iz1,:,:], 'w', ax, datalims=w_lims, xlims=xlims, ylims=ylims)
 # # ax.contour(xh[ix], yh[iy], winterp[iz1,:,:], levels=[-10,-5,5,10], colors='k', linewidths=1)
 # ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix], vinterp[iz1,::qix,::qix], scale=600, width=0.002, pivot='tail')
 # ax.plot([x1,x2], [y1,y2], '-k', linewidth=2)
-# plt.show()
 
-fig,ax = plt.subplots(1,1,figsize=(8,6))
-plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz[0,:,:], dbz[0,:,:]<1), 'dbz', ax, datalims=dbz_lims, xlims=xlims, ylims=ylims)
-# ax.contour(xh[ix], yh[iy], winterp[iz1,:,:], levels=[-10,-5,5,10], colors='k', linewidths=1)
-ax.quiver(xh[ix][::qix], yh[iy][::qix], nu[iz1,::qix,::qix], nv[iz1,::qix,::qix], scale=600, width=0.002, pivot='tail')
-ax.plot([x1,x2], [y1,y2], '-k', linewidth=1.5)
-plt.show()
+# fig,ax = plt.subplots(1,1,figsize=(8,6))
+# plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz[0,:,:], dbz[0,:,:]<1), 'dbz', ax, datalims=dbz_lims, xlims=xlims, ylims=ylims)
+# # ax.contour(xh[ix], yh[iy], winterp[iz1,:,:], levels=[-10,-5,5,10], colors='k', linewidths=1)
+# ax.quiver(xh[ix][::qix], yh[iy][::qix], nu[iz1,::qix,::qix], nv[iz1,::qix,::qix], scale=600, width=0.002, pivot='tail')
+# ax.plot([x1,x2], [y1,y2], '-k', linewidth=1.5)
 
+# fig,ax = plt.subplots(1,1,figsize=(8,4))
+# plot_cfill(x_cross, z[iz], w_cross, 'w', ax, datalims=w_lims, xlims=xl, ylims=[0,4])
+# ax.quiver(x_cross[::qih], z[iz][::qiz], u_cross[::qiz,::qih], w_cross[::qiz,::qih], scale=700, width=0.002, pivot='tail')
 
-xl = [x1+5,x2-5]
+# fig,ax = plt.subplots(1,1,figsize=(8,4))
+# plot_cfill(x_cross, z[iz], thr_cross, 'thrpert', ax, datalims=thr_lims, xlims=xl, ylims=[0,4])
+# ax.quiver(x_cross[::qih], z[iz][::qiz], u_cross[::qiz,::qih], w_cross[::qiz,::qih], scale=600, width=0.002, pivot='tail')
 
-qih = 6
-qiz = 3
-
-fig,ax = plt.subplots(1,1,figsize=(8,4))
-plot_cfill(x_cross, z[iz], w_cross, 'w', ax, datalims=w_lims, xlims=xl, ylims=[0,4])
-ax.quiver(x_cross[::qih], z[iz][::qiz], u_cross[::qiz,::qih], w_cross[::qiz,::qih], scale=600, width=0.002, pivot='tail')
-plt.show()
-
-fig,ax = plt.subplots(1,1,figsize=(8,4))
-plot_cfill(x_cross, z[iz], thr_cross, 'thrpert', ax, datalims=thr_lims, xlims=xl, ylims=[0,4])
-ax.quiver(x_cross[::qih], z[iz][::qiz], u_cross[::qiz,::qih], w_cross[::qiz,::qih], scale=600, width=0.002, pivot='tail')
-plt.show()
 
 fig,ax = plt.subplots(1,1,figsize=(8,4))
 plot_cfill(x_cross, z[iz], w_cross, 'w', ax, datalims=w_lims, xlims=xl, ylims=[0,4])
 ax.quiver(x_cross[::qih], z[iz][::qiz], 0*u_cross[::qiz,::qih], w_cross[::qiz,::qih], scale=250, width=0.0025, pivot='tail')
-plt.show()
+ax.set_title(f"w, t = {time:.0f} min")
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/imgs_tmp/w_cross_{time:.0f}min.png", dpi=300)
 
-qih = 5
-# qiz = 3
+
+# fig,ax = plt.subplots(1,1,figsize=(8,4))
+# plot_cfill(x_cross, z[iz], thr_cross, 'thrpert', ax, datalims=thr_lims, xlims=xl, ylims=[0,4])
+# ax.quiver(x_cross[::qih], z[iz][::qiz], 0*u_cross[::qiz,::qih], np.ma.masked_array(w_cross, w_cross<0)[::qiz,::qih], color='r', scale=250, width=0.0025, pivot='tail')
+# ax.quiver(x_cross[::qih], z[iz][::qiz], 0*u_cross[::qiz,::qih], np.ma.masked_array(w_cross, w_cross>-0)[::qiz,::qih], color='b', scale=250, width=0.0025, pivot='tail')
+
 fig,ax = plt.subplots(1,1,figsize=(8,4))
-plot_cfill(x_cross, z[iz], thr_cross, 'thrpert', ax, datalims=thr_lims, xlims=xl, ylims=[0,4])
-ax.quiver(x_cross[::qih], z[iz][::qiz], 0*u_cross[::qiz,::qih], np.ma.masked_array(w_cross, w_cross<0)[::qiz,::qih], color='r', scale=250, width=0.0025, pivot='tail')
-ax.quiver(x_cross[::qih], z[iz][::qiz], 0*u_cross[::qiz,::qih], np.ma.masked_array(w_cross, w_cross>-0)[::qiz,::qih], color='b', scale=250, width=0.0025, pivot='tail')
-plt.show()
+plot_cfill(x_cross, z[iz], pp_cross, 'prspert', ax, datalims=[-4,4], xlims=xl, ylims=[0,4])
+ax.quiver(x_cross[::qih], z[iz][::qiz], 0*u_cross[::qiz,::qih], w_cross[::qiz,::qih], scale=250, width=0.0025, pivot='tail')
+ax.set_title(f"p', t = {time:.0f} min")
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/imgs_tmp/prspert_cross_{time:.0f}min.png", dpi=300)
 
 
 #%% Separate cross sections
@@ -1301,6 +1320,8 @@ for fn in np.arange(14,74):
 
 #%% Base state profile and CI time series
 
+import metpy.calc as mc
+from metpy.units import units
 from metpy.plots import SkewT,Hodograph
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
@@ -1314,34 +1335,70 @@ if False:
         prs0 = ds.variables['prs0'][:].data[0,:,-1,-1]
         u0 = ds.variables['u0'][:].data[0,:,-1,-1]
         v0 = ds.variables['v0'][:].data[0,:,-1,-1]
+        z = ds.variables['z'][:].data
         ds.close()
         
         T0 = th0 * (prs0/100000)**0.286
         e0 = (qv0*prs0/100) / (0.622+qv0)
         Td0 = 243.5 / ((17.67 / (np.log(e0/6.112))) - 1) + 273.15
-        T0_parcel = mc.parcel_profile((prs0/100)*units.hPa, T0[0]*units.K, Td0[0]*units.K)
+    T0_parcel = mc.parcel_profile((prs0/100)*units.hPa, T0[0]*units.K, Td0[0]*units.K)
+    
+    u_barbs = []
+    v_barbs = []
+    p_barbs = []
+    for p in np.arange(1000,50,-50):
+        ip = np.where(np.abs(prs0/100-p) == np.min(np.abs(prs0/100-p)))[0][0]
+        u_barbs.append(u0[ip])
+        v_barbs.append(v0[ip])
+        p_barbs.append(prs0[ip])
+    u_barbs = (np.array(u_barbs)*units('m/s')).to('knots')
+    v_barbs = (np.array(v_barbs)*units('m/s')).to('knots')
+    p_barbs = np.array(p_barbs)
     
     
-    fig = plt.figure(figsize=(12,10))
+    
+    fig = plt.figure(figsize=(10,9))
     skew = SkewT(fig=fig)
     skew.plot(prs0/100, (T0-273.15), '-r', linewidth=2)
     skew.plot(prs0/100, (Td0-273.15), '-g', linewidth=2)
     skew.plot(prs0/100, np.array(T0_parcel.magnitude[:])-273.15, '-k', linewidth=2)
     skew.plot_dry_adiabats(linewidths=1)
     skew.plot_moist_adiabats(linewidths=1)
-    # skew.plot_mixing_lines()
+    skew.plot_mixing_lines()
+    skew.plot_barbs(p_barbs/100, u_barbs, v_barbs, xloc=1.0)
     skew.shade_cape(prs0/100, T0-273.15, T0_parcel.magnitude[:]-273.15)
     skew.ax.set_ylim(1000, 100)
-    skew.ax.set_xlim(-40, 30)
-    ax_hod = inset_axes(skew.ax, '42%', '42%', loc=1)
-    H = Hodograph(ax_hod, component_range=40.)
+    skew.ax.set_xlim(-50, 40)
+    skew.ax.set_xlabel('Temperature (C)', fontsize=16)
+    skew.ax.set_ylabel('Pressure (hPa)', fontsize=16)
+    skew.ax.tick_params(axis='both', which='major', labelsize=16)
+    
+    # ax_hod = inset_axes(skew.ax, '42%', '42%', loc=1)
+    # H = Hodograph(ax_hod, component_range=50.)
+    # H.add_grid(increment=10)
+    # hod = H.plot_colormapped(u0, v0, z, cmap='pyart_HomeyerRainbow', linewidth=1.5)
+    # H.ax.set_xlim([-20,50])
+    # H.ax.set_ylim([-20,50])
+    
+    ax_hod = skew.ax.inset_axes([0.53, 0.56, 0.42, 0.42])
+    ax_cb = skew.ax.inset_axes([1.0, 0.56, 0.025, 0.42])
+    H = Hodograph(ax_hod, component_range=50.)
     H.add_grid(increment=10)
-    H.plot(u0, v0, color='k', linewidth=1.5)
+    hod = H.plot_colormapped(u0, v0, z, cmap='pyart_HomeyerRainbow', linewidth=3)
+    H.ax.set_xlim([-20,50])
+    H.ax.set_ylim([-20,50])
+    H.ax.set_xticks(np.linspace(-20,50,8))
+    H.ax.set_xlabel("u (m s$^{-1}$)", fontsize=14)
+    H.ax.set_ylabel("v (m s$^{-1}$)", fontsize=14)
+    H.ax.tick_params(axis='both', which='major', labelsize=14)
+    cb = plt.colorbar(hod, cax=ax_cb)
+    cb.set_label('Height AGL (km)', fontsize=14)
+    cb.set_ticks(np.linspace(0,15,6))
+    cb.ax.tick_params(labelsize=14)
+    
     # skew.ax.set_title('Base state environment (1959 UTC 30 March 2022 PERiLS IOP2)')
-    skew.ax.set_xlabel('Temperature (C)', fontsize=14)
-    skew.ax.set_ylabel('Pressure (hPa)', fontsize=14)
     if figsave:
-        plt.savefig('/Users/morgan.schneider/Documents/merger/basestate.png', dpi=400)
+        plt.savefig('/Users/morgan.schneider/Documents/merger/basestate.png', dpi=300)
 
 if False:
     tmp1 = np.linspace(0,3600,3601)

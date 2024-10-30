@@ -76,7 +76,7 @@ cmaps = {
     'OW':      {'cm': cmocean.cm.balance, 'label': "OW (s$^{-2}$)"},
     'divh':    {'cm': cmocean.cm.balance, 'label': "\u25BD$_H$u (s$^{-1}$)"},
     'dbz':     {'cm': 'pyart_NWSRef', 'label': "$Z_H$ (dBZ)"},
-    'pgfz':    {'cm': cmocean.cm.balance, 'label': "VPPGA (m s$^{-2}$)"},
+    'pgf':     {'cm': cmocean.cm.balance, 'label': "PPGA (m s$^{-2}$)"},
     'cape':    {'cm': 'pyart_HomeyerRainbow', 'label': "CAPE (J kg$^{-1}$)"},
     'srh':     {'cm': 'pyart_HomeyerRainbow', 'label': "SRH (m$^{2}$ s$^{-2}$)"},
     'z':       {'cm': 'pyart_HomeyerRainbow', 'label': "Height (m)"},
@@ -129,8 +129,10 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
     # Format the colorbar
     # c.cmap.set_bad('grey', 1.0)
     if cbar:
-        cb = plt.colorbar(c, ax=ax, extend='min')
+        cb = plt.colorbar(c, ax=ax, extend='both')
         cb.set_label(cb_label)
+        if np.max(np.abs(datalims)) < 0.1:
+            cb.formatter.set_powerlimits((0,0))
     
     if xlims is not None:
         ax.set_xlim(xlims[0], xlims[1])
@@ -140,8 +142,50 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
     return c
 
 
+# Wrapper function for contourf?
+def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None, ylims=None,
+                  cmap=None, cbar=True, **kwargs):
+    if cmap is None:
+        cm, cb_label = cmaps[field]['cm'], cmaps[field]['label']
+    else:
+        cm, cb_label = cmap, cmaps[field]['label']
+    
+    if levels is None:
+        levs = None
+    else:
+        levs = levels
+    
+    if datalims is None:
+        datamin = None
+        datamax = None
+    else:
+        datamin = datalims[0]
+        datamax = datalims[1]
+    
+    c = ax.contourf(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    # ax.contour(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    # ax.contourf(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    # ax.contourf(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    c.set_edgecolor('face')
+    
+    if cbar:
+        cb = plt.colorbar(c, ax=ax, extend='both')
+        cb.set_label(cb_label)
+        if np.max(np.abs(datalims)) < 0.1:
+            cb.formatter.set_powerlimits((0,0))
+    
+    if xlims is not None:
+        ax.set_xlim(xlims[0], xlims[1])
+    if ylims is not None:
+        ax.set_ylim(ylims[0], ylims[1])
+    
+    return c
+
+
+
+
 # Get vertical cross-sections of 3D fields along any diagonal line, plus a 1D vector for the diagonal horizontal coordinate
-def vert_cross_section(field, x, y, start=[0,0], end=[-1,-1]):
+def vert_cross_section(field, x, y, start=[0,0], end=[-1,-1], gety=False):
     # start: xy coordinates of cross-section start point (array or tuple)
     # end: xy coordinates of cross-section end point (array or tuple)
     ix1 = np.where(x >= start[0])[0][0]
@@ -150,7 +194,10 @@ def vert_cross_section(field, x, y, start=[0,0], end=[-1,-1]):
     iy2 = np.where(y >= end[1])[0][0]
     
     xy = wrf.xy(field, start_point=(ix1,iy1), end_point=(ix2,iy2))
-    x_cross = wrf.interp2dxy(np.tile(x, (field.shape[0],field.shape[1],1)), xy)
+    if gety:
+        x_cross = wrf.interp2dxy(np.moveaxis(np.tile(y, (field.shape[0],field.shape[2],1)), 2, 1), xy)
+    else:
+        x_cross = wrf.interp2dxy(np.tile(x, (field.shape[0],field.shape[1],1)), xy)
     field_cross = wrf.interp2dxy(field, xy)
     
     return field_cross.data, x_cross[0].data
