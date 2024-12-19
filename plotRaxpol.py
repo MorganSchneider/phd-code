@@ -177,8 +177,10 @@ for vn in range(len(vol_nums)):
     xx_tmp = np.zeros(shape=(len(f),360,1246,), dtype=float)
     yy_tmp = np.zeros(shape=(len(f),360,1246,), dtype=float)
     zz_tmp = np.zeros(shape=(len(f),360,1246,), dtype=float)
-    el_tmp = np.zeros(shape=(len(f),), dtype=float)
+    azvort_tmp = np.zeros(shape=(len(f),360,1246,), dtype=float) # vertical pseudovorticity
+    elvort_tmp = np.zeros(shape=(len(f),360,1246,), dtype=float) # horizontal pseudovorticity
     az_tmp = np.zeros(shape=(len(f),360,), dtype=float)
+    el_tmp = np.zeros(shape=(len(f),), dtype=float)
     time_tmp = []
     fname_tmp = []
     
@@ -204,15 +206,32 @@ for vn in range(len(vol_nums)):
                 xx_tmp[ii,int(ix),:] = d['xx'][ind,:]
                 yy_tmp[ii,int(ix),:] = d['yy'][ind,:]
                 zz_tmp[ii,int(ix),:] = d['zz'][ind,:]
+                
+                if ix == 0:
+                    v1 = d['vel'][-1,:]
+                    v2 = d['vel'][ind+1,:]
+                elif ix == 359:
+                    v1 = d['vel'][ind-1,:]
+                    v2 = d['vel'][0,:]
+                else:
+                    v1 = d['vel'][ind-1,:]
+                    v2 = d['vel'][ind+1,:]
+                azvort_tmp[ii,int(ix),:] = 1/(r*1000) * (v2-v1)/2
             else:
                 az_tmp[ii,int(ix)] = ix
                 xx_tmp[ii,int(ix),:] = r * np.sin(ix*np.pi/180) * np.cos(d['elev']*np.pi/180)
                 yy_tmp[ii,int(ix),:] = r * np.cos(ix*np.pi/180) * np.cos(d['elev']*np.pi/180)
                 zz_tmp[ii,int(ix),:] = r * np.sin(d['elev']*np.pi/180)
     
+    elvort_tmp = 1/(r*1000) * np.gradient(vel_tmp, el_tmp, axis=0)
+    
     vol[vn].update({'dbz':dbz_tmp, 'vel':vel_tmp, 'sw':sw_tmp, 'zdr':zdr_tmp, 'rhohv':rhohv_tmp,
                     'xx':xx_tmp, 'yy':yy_tmp, 'zz':zz_tmp, 'az':az_tmp, 'elev':el_tmp,
+                    'zvort':azvort_tmp, 'hvort':elvort_tmp,
                     'scan_time':time_tmp, 'vol_num':vol_nums[vn], 'filename':fname_tmp})
+    
+    
+    
 
 r = d['r']
 rax_lat = d['lat']
@@ -237,13 +256,13 @@ P2.update({'xx':xx2, 'yy':yy2})
 
 figsave = False
 
-rlim = 6
-zlim = 2.5
+rlim = 4 # was 6
+zlim = 1.4 # was 2.5
 
 vi = 9
 eli = 1
 filetime = vol[vi]['scan_time'][eli]
-azimuth = 310
+azimuth = 290
 azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
 rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
 
@@ -253,6 +272,7 @@ rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
 T_lims = [18,21] # Temperature
 Td_lims = [17,19] # Dewpoint
 datalims = T_lims
+vort_lim = 0.003
 
 # 082100
 if vi == 9:
@@ -266,7 +286,7 @@ if vi == 9:
               1.67, 1.68, 1.68, 1.68, 1.69,
               1.70, 1.70, 1.72, 1.72, 1.72,
               1.73, 1.74, 1.74])
-    z_rot = np.array([0., 0., 0., 0.03, 0.04, 0.06, 0.08, 0.13,
+    z_rot = np.array([0., 0., 0., 0., 0.03, 0.04, 0.06, 0.08, 0.13,
               0.16, 0.17, 0.18, 0.21, 0.22,
               0.23, 0.26, 0.30, 0.33, 0.39,
               0.41, 0.44, 0.46, 0.49, 0.53,
@@ -274,7 +294,7 @@ if vi == 9:
 
 # 082000
 if vi == 7:
-    az_rot = np.array([290, 291, 292, 293, 294, 295,
+    az_rot = np.array([291, 292, 293, 294, 295,
                        296, 297, 298, 299, 300,
                        301, 302, 303, 304, 305,
                        306, 307, 308, 309, 310,
@@ -295,13 +315,16 @@ y_rot = r_rot * np.cos(az_rot*np.pi/180)
 
 # irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
+plot_flag = [0,0,1,0,0,1]
+# dbz/vel PPIs, dbz/vel RHIs, dbz/vel cross sections, vort PPIs, vort RHIs, vort cross sections
 
-if False:
-    fig,(ax1,ax2) = plt.subplots(1,2,figsize=(9,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+
+if plot_flag[0]:
+    fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][eli,:,:], 'dbz', ax1, datalims=[0,70], xlims=[-rlim/2,0], ylims=[0,rlim/2])
-    ax1.scatter(x_rot, y_rot, s=5, c='k', marker='.')
-    ax1.set_title(f"{vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} reflectivity", fontsize=14)
+    ax1.scatter(x_rot, y_rot, s=25, c='k', marker='.')
+    ax1.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} reflectivity", fontsize=14)
     ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
     # s1 = ax1.scatter(P1['xx'][i1], P1['yy'][i1], s=50, c=P1['Utube'][i1], cmap=cmaps['temp']['cm'],
@@ -314,8 +337,8 @@ if False:
     # plt.legend([s1,s2], ['Probe 1', 'Probe 2'], loc='upper right')
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2, datalims=[-va,va], xlims=[-rlim/2,0], ylims=[0,rlim/2])
-    ax2.scatter(x_rot, y_rot, s=5, c='k', marker='.')
-    ax2.set_title(f"{vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=14)
+    ax2.scatter(x_rot, y_rot, s=25, c='k', marker='.')
+    ax2.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=14)
     ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
     # s1 = ax2.scatter(P1['xx'][i1], P1['yy'][i1], s=50, c=P1['Utube'][i1], cmap=cmaps['temp']['cm'],
@@ -332,11 +355,11 @@ if False:
     if figsave:
         plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/rhis/vol{vi}_{filetime}_az{azimuth}_PPI.png", dpi=300)
         # plt.savefig(f"/Users/morgan.schneider/Documents/conferences/perilsmeeting/iop2_vol{vi}_{filetime}_az{azimuth}_PPI.png", dpi=300)
+    
 
 
 
-
-if True:
+if plot_flag[1]:
     fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,6), sharex=True, sharey=True, layout='constrained')
     
     plot_cfill(rr, vol[vi]['zz'][:,azi,:], vol[vi]['dbz'][:,azi,:], 'dbz', ax1, datalims=[0,70], xlims=[0,rlim], ylims=[0,zlim])
@@ -345,7 +368,7 @@ if True:
     ax1.set_title(f"{filetime} UTC (Azimuth = {azimuth}\N{DEGREE SIGN})\n Reflectivity", fontsize=14, fontweight='bold')
     ax1.invert_xaxis()
     ax1_ppi = inset_axes(ax1, '20%', '52%', loc=1)
-    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][0,:,:], 'dbz', ax1_ppi, datalims=[0,70], xlims=[-rlim,rlim], ylims=[-rlim,rlim], cbar=False)
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][eli,:,:], 'dbz', ax1_ppi, datalims=[0,70], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
     ax1_ppi.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     ax1_ppi.set_xticks([])
     ax1_ppi.set_yticks([])
@@ -357,7 +380,7 @@ if True:
     ax2.set_title(f"Radial velocity", fontsize=14, fontweight='bold')
     ax2.invert_xaxis()
     ax2_ppi = inset_axes(ax2, '20%', '52%', loc=1)
-    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2_ppi, datalims=[-va,va], xlims=[-rlim,rlim], ylims=[-rlim,rlim], cbar=False)
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2_ppi, datalims=[-va,va], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
     ax2_ppi.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     ax2_ppi.set_xticks([])
     ax2_ppi.set_yticks([])
@@ -411,24 +434,11 @@ if False:
     if figsave:
         plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_r{d['r'][ri]:.1f}km_cross-section.png", dpi=300, bbox_inches='tight')
         # plt.savefig(f"/Users/morgan.schneider/Documents/conferences/perilsmeeting/vol{vi}_{filetime}_az{azimuth}_RHI.png", dpi=300)
-    
-    
-    # fig,(ax1,ax2) = plt.subplots(2,1,figsize=(9,6), sharex=True, sharey=True, layout='constrained')
-    
-    # plot_cfill(vol[vi]['az'][0,azs], vol[vi]['zz'][:,315,ri], vol[vi]['zdr'][:,azs,ri]-3.5, 'zdr', ax1, datalims=[-5,5], xlims=[285,320], ylims=[0,0.8])
-    # ax1.set_title(f"{filetime} UTC Differential reflectivity at r = {d['r'][ri]:.3} km", fontsize=14, fontweight='bold')
-    # # ax1.set_xlabel('Azimuth (deg)', fontsize=12)
-    # ax1.set_ylabel('Height ARL (km)', fontsize=12)
-    
-    # plot_cfill(vol[vi]['az'][0,azs], vol[vi]['zz'][:,315,ri], vol[vi]['rhohv'][:,azs,ri], 'rhohv', ax2, datalims=[0.4,1], xlims=[285,320], ylims=[0,0.8])
-    # ax2.set_title(f"{filetime} UTC Correlation coefficient at r = {d['r'][ri]:.3} km", fontsize=14, fontweight='bold')
-    # ax2.set_xlabel('Azimuth (deg)', fontsize=12)
-    # ax2.set_ylabel('Height ARL (km)', fontsize=12)
 
 
-figsave = False
 
-if True:
+
+if plot_flag[2]:
     ir = np.where(np.isclose(np.mean(r_rot), rr[eli,:], rtol=0.01))[0][0]
     ir1 = np.where(np.isclose(r_rot[0], rr[eli,:], rtol=0.01))[0][0]
     ir2 = np.where(np.isclose(r_rot[-1], rr[eli,:], rtol=0.01))[0][0]
@@ -453,7 +463,7 @@ if True:
     ax1.set_title(f"{filetime} UTC Reflectivity cross-section", fontsize=14, fontweight='bold')
     ax1.set_ylabel('Height ARL (km)', fontsize=12)
     ax1_ppi = inset_axes(ax1, '21%', '52%', loc=2) # 21, 52 OR 23, 56
-    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][eli,:,:], 'dbz', ax1_ppi, datalims=[0,70], xlims=[-3,1], ylims=[-1,3], cbar=False)
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][eli,:,:], 'dbz', ax1_ppi, datalims=[0,70], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
     ax1_ppi.scatter(x_rot, y_rot, s=4, c='k', marker='.')
     # ax1_ppi.plot([vol[vi]['xx'][eli,ia1,ir1], vol[vi]['xx'][eli,ia2,ir2]], [vol[vi]['yy'][eli,ia1,ir1], vol[vi]['yy'][eli,ia2,ir2]], '-k', linewidth=1.25)
     ax1_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--k', linewidth=1)
@@ -466,7 +476,7 @@ if True:
     ax2.set_xlabel('Azimuth (deg)', fontsize=12)
     ax2.set_ylabel('Height ARL (km)', fontsize=12)
     ax2_ppi = inset_axes(ax2, '21%', '52%', loc=2)
-    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2_ppi, datalims=[-va,va], xlims=[-3,1], ylims=[-1,3], cbar=False)
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2_ppi, datalims=[-va,va], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
     ax2_ppi.scatter(x_rot, y_rot, s=4, c='k', marker='.')
     ax2_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--k', linewidth=1)
     ax2_ppi.plot([0,x_rot[-1]], [0,y_rot[-1]], '--k', linewidth=1)
@@ -476,6 +486,112 @@ if True:
     if figsave:
         plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_rotor-cross-section.png", dpi=300, bbox_inches='tight')
     
+
+
+
+
+# Pseudovorticity plots
+if plot_flag[3]:
+    # Column max PPIs
+    fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    
+    plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(vol[vi]['zvort'][2:,:,:],axis=0), 'vort', ax1, datalims=[0,vort_lim], xlims=[-rlim/2,0], ylims=[0,rlim/2])
+    ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    ax1.set_title(f"{filetime} UTC Max vertical pseudovorticity", fontsize=14)
+    ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
+    ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
+    
+    plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2, datalims=[0,vort_lim], xlims=[-rlim/2,0], ylims=[0,rlim/2])
+    ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    ax2.set_title(f"{filetime} UTC Max horizontal pseudovorticity", fontsize=14)
+    ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
+    ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
+    
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_PPI_vort.png", dpi=300)
+    
+    
+    
+if plot_flag[4]:
+    # Reconstructed PPIs
+    # Positive hvort is LEFT OF RADIAL, negative hvort is RIGHT OF RADIAL
+    fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,6), sharex=True, sharey=True, layout='constrained')
+    
+    plot_cfill(rr, vol[vi]['zz'][:,azi,:], vol[vi]['zvort'][:,azi,:], 'vort', ax1, datalims=[-vort_lim,vort_lim], xlims=[0,rlim], ylims=[0,zlim])
+    # ax1.scatter(r_rot[irot], z_rot[irot], s=10, c='k', marker='x')
+    ax1.set_ylabel('Height ARL (km)', fontsize=14)
+    ax1.set_title(f"{filetime} UTC (Azimuth = {azimuth}\N{DEGREE SIGN})\n Vertical pseudovorticity", fontsize=14, fontweight='bold')
+    ax1.invert_xaxis()
+    ax1_ppi = inset_axes(ax1, '20%', '52%', loc=1)
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(vol[vi]['zvort'][2:,:,:],axis=0), 'vort', ax1_ppi, datalims=[0,vort_lim], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
+    ax1_ppi.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
+    ax1_ppi.set_xticks([])
+    ax1_ppi.set_yticks([])
+    
+    plot_cfill(rr, vol[vi]['zz'][:,azi,:], vol[vi]['hvort'][:,azi,:], 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=[0,rlim], ylims=[0,zlim])
+    # ax2.scatter(r_rot[irot], z_rot[irot], s=10, c='k', marker='x')
+    ax2.set_xlabel('Range from radar (km)', fontsize=14)
+    ax2.set_ylabel('Height ARL (km)', fontsize=14)
+    ax2.set_title(f"Horizontal pseudovorticity", fontsize=14, fontweight='bold')
+    ax2.invert_xaxis()
+    ax2_ppi = inset_axes(ax2, '20%', '52%', loc=1)
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2_ppi, datalims=[0,vort_lim], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
+    ax2_ppi.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
+    ax2_ppi.set_xticks([])
+    ax2_ppi.set_yticks([])
+    
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_RHI_az{azimuth}_vort.png", dpi=300, bbox_inches='tight')
+    
+    
+if plot_flag[5]:
+    # Along-radial cross sections
+    ir = np.where(np.isclose(np.mean(r_rot), rr[eli,:], rtol=0.01))[0][0]
+    ir1 = np.where(np.isclose(r_rot[0], rr[eli,:], rtol=0.01))[0][0]
+    ir2 = np.where(np.isclose(r_rot[-1], rr[eli,:], rtol=0.01))[0][0]
+    ia1 = np.where(np.isclose(az_rot[0], vol[vi]['az'][eli,:], atol=0.1))[0][0]
+    ia2 = np.where(np.isclose(az_rot[-1], vol[vi]['az'][eli,:], atol=0.1))[0][0]
+    
+    raz = wrf.xy(vol[vi]['hvort'], start_point=(ir,ia1), end_point=(ir,ia2))
+    hvort_cs = wrf.interp2dxy(vol[vi]['hvort'], raz)
+    raz = wrf.xy(vol[vi]['zvort'], start_point=(ir,ia1), end_point=(ir,ia2))
+    zvort_cs = wrf.interp2dxy(vol[vi]['zvort'], raz)
+    hvort_cross = hvort_cs.data
+    zvort_cross = zvort_cs.data
+    
+    zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+    
+    if az_rot.shape[0] < dbz_cross.shape[1]:
+        az_rot = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
+    
+    fig,(ax1,ax2) = plt.subplots(2,1, figsize=(9,7), sharex=True, layout='constrained')
+    
+    plot_cfill(az_rot, zz_rot, zvort_cross, 'vort', ax1, datalims=[-vort_lim,vort_lim], xlims=[az_rot[0],az_rot[-1]], ylims=[0,0.6])
+    ax1.set_title(f"{filetime} UTC Vertical pseudovorticity cross-section", fontsize=14, fontweight='bold')
+    ax1.set_ylabel('Height ARL (km)', fontsize=12)
+    ax1_ppi = inset_axes(ax1, '21%', '52%', loc=2) # 21, 52 OR 23, 56
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(vol[vi]['zvort'][2:,:,:],axis=0), 'vort', ax1_ppi, datalims=[0,vort_lim], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
+    ax1_ppi.scatter(x_rot, y_rot, s=4, c='k', marker='.')
+    # ax1_ppi.plot([vol[vi]['xx'][eli,ia1,ir1], vol[vi]['xx'][eli,ia2,ir2]], [vol[vi]['yy'][eli,ia1,ir1], vol[vi]['yy'][eli,ia2,ir2]], '-k', linewidth=1.25)
+    ax1_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--k', linewidth=1)
+    ax1_ppi.plot([0,x_rot[-1]], [0,y_rot[-1]], '--k', linewidth=1)
+    ax1_ppi.set_xticks([])
+    ax1_ppi.set_yticks([])
+    
+    plot_cfill(az_rot, zz_rot, hvort_cross, 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=[az_rot[0],az_rot[-1]], ylims=[0,0.6])
+    ax2.set_title(f"{filetime} UTC Horizontal pseudovorticity cross-section", fontsize=14, fontweight='bold')
+    ax2.set_xlabel('Azimuth (deg)', fontsize=12)
+    ax2.set_ylabel('Height ARL (km)', fontsize=12)
+    ax2_ppi = inset_axes(ax2, '21%', '52%', loc=2)
+    c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2_ppi, datalims=[0,vort_lim], xlims=[-rlim/2,0], ylims=[0,rlim/2], cbar=False)
+    ax2_ppi.scatter(x_rot, y_rot, s=4, c='k', marker='.')
+    ax2_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--k', linewidth=1)
+    ax2_ppi.plot([0,x_rot[-1]], [0,y_rot[-1]], '--k', linewidth=1)
+    ax2_ppi.set_xticks([])
+    ax2_ppi.set_yticks([])
+    
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_rotor-cross-section_vort.png", dpi=300, bbox_inches='tight')
     
     
 #%%

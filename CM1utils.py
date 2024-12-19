@@ -73,6 +73,8 @@ cmaps = {
     'xvort':   {'cm': cmocean.cm.balance, 'label': "\u03BE (s$^{-1}$)"},
     'yvort':   {'cm': cmocean.cm.balance, 'label': "\u03B7 (s$^{-1}$)"},
     'zvort':   {'cm': cmocean.cm.balance, 'label': "\u03B6 (s$^{-1}$)"},
+    'hvort':   {'cm': 'pyart_HomeyerRainbow', 'label': "\u03c9$_H$ (s$^{-1}$)"},
+    'vort':    {'cm': 'pyart_HomeyerRainbow', 'label': "\u03c9 (s$^{-1}$)"},
     'OW':      {'cm': cmocean.cm.balance, 'label': "OW (s$^{-2}$)"},
     'divh':    {'cm': cmocean.cm.balance, 'label': "\u25BD$_H$u (s$^{-1}$)"},
     'dbz':     {'cm': 'pyart_NWSRef', 'label': "$Z_H$ (dBZ)"},
@@ -107,10 +109,17 @@ cmaps = {
     
 #     return df
 
+# Calculate a moving-block average
+def movmean(data, npts):
+    # data: 1-D vector of data
+    # npts: number of points to average
+    data_mean = np.convolve(data, np.ones(npts), 'same')/npts
+    return data_mean
+
 
 # Wrapper function for pcolormesh
 def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
-               cmap=None, cbar=True, **kwargs):
+               cmap=None, cbar=True, cbfs=None, **kwargs):
     if cmap is None:
         cm, cb_label = cmaps[field]['cm'], cmaps[field]['label']
     else:
@@ -133,6 +142,10 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
         cb.set_label(cb_label)
         if np.max(np.abs(datalims)) < 0.1:
             cb.formatter.set_powerlimits((0,0))
+        if cbfs is None:
+            cb.set_label(cb_label)
+        else:
+            cb.set_label(cb_label, fontsize=cbfs)
     
     if xlims is not None:
         ax.set_xlim(xlims[0], xlims[1])
@@ -144,7 +157,7 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
 
 # Wrapper function for contourf?
 def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None, ylims=None,
-                  cmap=None, cbar=True, **kwargs):
+                  cmap=None, cbar=True, cbfs=None, **kwargs):
     if cmap is None:
         cm, cb_label = cmaps[field]['cm'], cmaps[field]['label']
     else:
@@ -173,6 +186,10 @@ def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None,
         cb.set_label(cb_label)
         if np.max(np.abs(datalims)) < 0.1:
             cb.formatter.set_powerlimits((0,0))
+        if cbfs is None:
+            cb.set_label(cb_label)
+        else:
+            cb.set_label(cb_label, fontsize=cbfs)
     
     if xlims is not None:
         ax.set_xlim(xlims[0], xlims[1])
@@ -332,8 +349,6 @@ def calc_dbz(ds):
     return dbz
 
 
-    
-    
 
 
 

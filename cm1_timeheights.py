@@ -22,7 +22,7 @@ z = ds.variables['z'][:].data
 zf = ds.variables['zf'][:].data
 ds.close()
 
-dbfile = open(ip+'boxes_q.pkl', 'rb')
+dbfile = open(ip+'boxes_s1.pkl', 'rb')
 box = pickle.load(dbfile)
 x1 = box['x1_pp']
 x2 = box['x2_pp']
@@ -42,10 +42,11 @@ iz200 = np.where(z >= 0.2)[0][0]
 # wspd_max = np.zeros(shape=(60,len(z[iz])), dtype=float)
 # uh25_max = np.zeros(shape=(60,), dtype=float)
 # uh02_max = np.zeros(shape=(60,), dtype=float)
-uh13_max = np.zeros(shape=(60,), dtype=float)
-uh01_max = np.zeros(shape=(60,), dtype=float)
-# pp_min = np.zeros(shape=(60,len(z[iz])), dtype=float)
-# vppga_1km_max = np.zeros(shape=(60,), dtype=float)
+# uh13_max = np.zeros(shape=(60,), dtype=float)
+# uh01_max = np.zeros(shape=(60,), dtype=float)
+pp_min = np.zeros(shape=(60,len(z[iz])), dtype=float)
+pp_mean = np.zeros(shape=(60,len(z[iz])), dtype=float)
+vppga_1km_max = np.zeros(shape=(60,), dtype=float)
 # p_dn_min = np.zeros(shape=(60,len(z[iz])), dtype=float)
 # vppga_dn_max = np.zeros(shape=(60,), dtype=float)
 # vppga_b_max = np.zeros(shape=(60,), dtype=float)
@@ -101,38 +102,39 @@ for fn in np.arange(14,74):
     # del uh_25km,uh_02km
     
     
+    # ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
+    # u = ds.variables['uinterp'][:].data[0,:,iy,ix]
+    # v = ds.variables['vinterp'][:].data[0,:,iy,ix]
+    # w = ds.variables['w'][:].data[0,:,iy,ix]
+    # ds.close()
+    
+    # zf3d = np.tile(np.expand_dims(zf,(1,2)), (1,len(yh[iy]),len(xh[ix])))
+    # mapfct = np.ones(shape=(len(yh[iy]),len(xh[ix])), dtype=float)
+    # uh_13km = wrf.to_np(wrf.udhel(zf3d*1000, mapfct, u, v, w, 125, 125, bottom=1000., top=3000.))
+    # uh_01km = wrf.to_np(wrf.udhel(zf3d*1000, mapfct, u, v, w, 125, 125, bottom=0., top=1000.))
+    # del u,v,w,zf3d,mapfct
+    # uh_13km = np.asarray(uh_13km.data)
+    # uh_01km = np.asarray(uh_01km.data)
+    # uh13_max[i] = np.max(uh_13km)
+    # uh01_max[i] = np.max(uh_01km)
+    # del uh_13km,uh_01km
+    
+    
+    ds = nc.Dataset(fp+'base/cm1out_000013.nc')
+    prs0 = ds.variables['prs0'][:].data[0,iz,iy,ix]
+    ds.close()
     ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
-    u = ds.variables['uinterp'][:].data[0,:,iy,ix]
-    v = ds.variables['vinterp'][:].data[0,:,iy,ix]
-    w = ds.variables['w'][:].data[0,:,iy,ix]
+    prspert = ds.variables['prs'][:].data[0,iz,iy,ix] - prs0
+    del prs0
     ds.close()
     
-    zf3d = np.tile(np.expand_dims(zf,(1,2)), (1,len(yh[iy]),len(xh[ix])))
-    mapfct = np.ones(shape=(len(yh[iy]),len(xh[ix])), dtype=float)
-    uh_13km = wrf.to_np(wrf.udhel(zf3d*1000, mapfct, u, v, w, 125, 125, bottom=1000., top=3000.))
-    uh_01km = wrf.to_np(wrf.udhel(zf3d*1000, mapfct, u, v, w, 125, 125, bottom=0., top=1000.))
-    del u,v,w,zf3d,mapfct
-    uh_13km = np.asarray(uh_13km.data)
-    uh_01km = np.asarray(uh_01km.data)
-    uh13_max[i] = np.max(uh_13km)
-    uh01_max[i] = np.max(uh_01km)
-    del uh_13km,uh_01km
-    
-    
-    # ds = nc.Dataset(fp+'base/cm1out_000013.nc')
-    # prs0 = ds.variables['prs0'][:].data[0,iz,iy,ix]
-    # ds.close()
-    # ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
-    # prspert = ds.variables['prs'][:].data[0,iz,iy,ix] - prs0
-    # del prs0
-    # ds.close()
-    
-    # dp_1km = prspert[iz1,:,:] - prspert[0,:,:]
-    # dz = (z[iz1] - z[0])*1000
-    # vppga_1km = -1/1.1 * dp_1km / dz
-    # pp_min[i,:] = np.min(prspert, axis=(1,2))
-    # vppga_1km_max[i] = np.max(vppga_1km)
-    # del prspert,dp_1km,vppga_1km
+    dp_1km = prspert[iz1,:,:] - prspert[0,:,:]
+    dz = (z[iz1] - z[0])*1000
+    vppga_1km = -1/1.1 * dp_1km / dz
+    pp_min[i,:] = np.min(prspert, axis=(1,2))
+    pp_mean[i,:] = np.mean(prspert, axis=(1,2))
+    vppga_1km_max[i] = np.max(vppga_1km)
+    del prspert,dp_1km,vppga_1km
     
     
     # ds = nc.Dataset(fp+f"pp/dyn_{fn:06d}.nc")
@@ -163,7 +165,7 @@ for fn in np.arange(14,74):
 
 new_pkl = False
 update_pkl = False
-fn = 'timeheight_q.pkl'
+fn = 'timeheight_s1.pkl'
 
 if new_pkl:
     timeheight = {'times':times, 'z':z[iz], 'w_max':w_max.transpose(), 'zvort_max':zvort_max.transpose(), 
@@ -178,7 +180,7 @@ if update_pkl:
     timeheight = pickle.load(dbfile)
     dbfile.close()
     
-    new_vars = {'uh13_max':uh13_max, 'uh01_max':uh01_max}
+    new_vars = {'pp_mean':pp_mean.transpose()}
     timeheight.update(new_vars)
     dbfile = open(ip+fn, 'wb')
     pickle.dump(timeheight, dbfile)
@@ -488,7 +490,7 @@ figsave = False
 
 
 # OW timeheights with w contoured
-if False:
+if True:
     fig,((ax1),(ax2),(ax3)) = plt.subplots(3, 1, figsize=(8,7), sharex=True, sharey=True, layout='constrained')
     
     # c = plot_cfill(times, zz, OW_min_m, 'OW', ax1, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
@@ -606,12 +608,12 @@ if False:
 
 
 # w timeheights with OW contoured
-if False:
+if True:
     fig,((ax1),(ax2),(ax3)) = plt.subplots(3, 1, figsize=(8,7), sharex=True, sharey=True, layout='constrained')
     
     # c = plot_cfill(times, zz, w_max_m, 'w', ax1, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
     c = plot_contourf(times, zz, w_max_m, 'w', ax1, levels=np.linspace(0,20,41), datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop], extend='max')
-    ax1.contour(times, zz, OW_min_m, levels=[-0.01,-0.005], colors='w', linestyles=['-','-'], linewidths=[2,1])
+    ax1.contour(times, zz, OW_min_m, levels=[-0.01,-0.005,-0.0025], colors='w', linestyles=['-','-','--'], linewidths=[2,1,1])
     ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax1.set_xlabel('Time (min)')
     ax1.set_ylabel('Height (km)')
@@ -619,7 +621,7 @@ if False:
     
     # plot_cfill(times, zz, w_max_q, 'w', ax2, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
     plot_contourf(times, zz, w_max_q, 'w', ax2, levels=np.linspace(0,20,41), datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
-    ax2.contour(times, zz, OW_min_q, levels=[-0.01,-0.005], colors='w', linestyles=['-','-'], linewidths=[2,1])
+    ax2.contour(times, zz, OW_min_q, levels=[-0.01,-0.005,-0.0025], colors='w', linestyles=['-','-','--'], linewidths=[2,1,1])
     ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax2.set_xlabel('Time (min)')
     ax2.set_ylabel('Height (km)')
@@ -627,7 +629,7 @@ if False:
     
     # plot_cfill(times, zz, w_max_s, 'w', ax3, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
     plot_contourf(times, zz, w_max_s, 'w', ax3, levels=np.linspace(0,25,51), datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
-    ax3.contour(times, zz, OW_min_s, levels=[-0.01,-0.005], colors='w', linestyles=['-','-'], linewidths=[2,1])
+    ax3.contour(times, zz, OW_min_s, levels=[-0.01,-0.005,-0.0025], colors='w', linestyles=['-','-','--'], linewidths=[2,1,1])
     ax3.axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax3.set_xlabel('Time (min)')
     ax3.set_ylabel('Height (km)')
@@ -722,74 +724,75 @@ if figsave:
 
 
 
-# UH 0-1 and 1-3 time series split by supercell and qlcs
-fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
-
-ax1.plot(times[ti:], uh13_max_q[ti:], 'k', linewidth=2)
-ax1.plot(times, uh13_max_s, 'dodgerblue', linewidth=2)
-ax1.plot(times, uh13_max_m, 'r', linewidth=2)
-ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
-# ax1.set_xlabel('Time (min)')
-ax1.set_xlim([180,240])
-ax1.set_ylim([0,2000])
-ax1.set_title(f"Maximum 1-3 km updraft helicity (supercell)")
-ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-
-ax2.plot(times, uh13_max_q, 'k', linewidth=2)
-ax2.plot(times[ti:], uh13_max_s[ti:], 'dodgerblue', linewidth=2)
-ax2.plot(times, np.append(uh13_max_mq[0:ti], uh13_max_m[ti:]), 'r', linewidth=2)
-ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
-ax2.set_xlabel('Time (min)')
-ax2.set_xlim([180,240])
-ax2.set_ylim([0,2000])
-ax2.set_title(f"Maximum 1-3 km updraft helicity (qlcs)")
-ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH13.png", dpi=300)
+if False:
+    # UH 0-1 and 1-3 time series split by supercell and qlcs
+    fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
     
-
-fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
-
-ax1.plot(times[ti:], uh01_max_q[ti:], 'k', linewidth=2)
-ax1.plot(times, uh01_max_s, 'dodgerblue', linewidth=2)
-ax1.plot(times, uh01_max_m, 'r', linewidth=2)
-ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
-# ax1.set_xlabel('Time (min)')
-ax1.set_xlim([180,240])
-ax1.set_ylim([0,1000])
-ax1.set_title(f"Maximum 0-1 km updraft helicity (supercell)")
-ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-
-ax2.plot(times, uh01_max_q, 'k', linewidth=2)
-ax2.plot(times[ti:], uh01_max_s[ti:], 'dodgerblue', linewidth=2)
-ax2.plot(times, np.append(uh01_max_mq[0:ti], uh01_max_m[ti:]), 'r', linewidth=2)
-ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
-ax2.set_xlabel('Time (min)')
-ax2.set_xlim([180,240])
-ax2.set_ylim([0,1000])
-ax2.set_title(f"Maximum 0-1 km updraft helicity (qlcs)")
-ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH01.png", dpi=300)
+    ax1.plot(times[ti:], uh13_max_q[ti:], 'k', linewidth=2)
+    ax1.plot(times, uh13_max_s, 'dodgerblue', linewidth=2)
+    ax1.plot(times, uh13_max_m, 'r', linewidth=2)
+    ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    # ax1.set_xlabel('Time (min)')
+    ax1.set_xlim([180,240])
+    ax1.set_ylim([0,2000])
+    ax1.set_title(f"Maximum 1-3 km updraft helicity (supercell)")
+    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    
+    ax2.plot(times, uh13_max_q, 'k', linewidth=2)
+    ax2.plot(times[ti:], uh13_max_s[ti:], 'dodgerblue', linewidth=2)
+    ax2.plot(times, np.append(uh13_max_mq[0:ti], uh13_max_m[ti:]), 'r', linewidth=2)
+    ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax2.set_xlabel('Time (min)')
+    ax2.set_xlim([180,240])
+    ax2.set_ylim([0,2000])
+    ax2.set_title(f"Maximum 1-3 km updraft helicity (qlcs)")
+    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH13.png", dpi=300)
+        
+    
+    fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
+    
+    ax1.plot(times[ti:], uh01_max_q[ti:], 'k', linewidth=2)
+    ax1.plot(times, uh01_max_s, 'dodgerblue', linewidth=2)
+    ax1.plot(times, uh01_max_m, 'r', linewidth=2)
+    ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    # ax1.set_xlabel('Time (min)')
+    ax1.set_xlim([180,240])
+    ax1.set_ylim([0,1000])
+    ax1.set_title(f"Maximum 0-1 km updraft helicity (supercell)")
+    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    
+    ax2.plot(times, uh01_max_q, 'k', linewidth=2)
+    ax2.plot(times[ti:], uh01_max_s[ti:], 'dodgerblue', linewidth=2)
+    ax2.plot(times, np.append(uh01_max_mq[0:ti], uh01_max_m[ti:]), 'r', linewidth=2)
+    ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax2.set_xlabel('Time (min)')
+    ax2.set_xlim([180,240])
+    ax2.set_ylim([0,1000])
+    ax2.set_title(f"Maximum 0-1 km updraft helicity (qlcs)")
+    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH01.png", dpi=300)
 
 
 # p' timeheights with w (or OW) contoured
 if False:
     fig,((ax1),(ax2),(ax3)) = plt.subplots(3,1,figsize=(8,7), sharex=True, layout='constrained')
     
-    c = plot_contourf(times, zz, pp_min_m/100, 'prspert', ax1, levels=np.linspace(-5,0,41), datalims=[-5,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop], extend='min', alpha=0.8)
+    c = plot_contourf(times, zz, pp_min_m/100, 'prspert', ax1, levels=np.linspace(-5,0,41), datalims=[-5,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop], extend='min')
     ax1.contour(times, zz, w_max_m, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1.25,1.25,2.5])
     # ax1.contour(times, zz, OW_min_m, levels=[-0.01,-0.005], colors='purple', linestyles=['-','-'], linewidths=[2,1])
     ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax1.set_ylabel('Height (km)')
     
-    c = plot_contourf(times, zz, pp_min_q/100, 'prspert', ax2, levels=np.linspace(-5,0,41), datalims=[-5,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop], alpha=0.8)
+    c = plot_contourf(times, zz, pp_min_q/100, 'prspert', ax2, levels=np.linspace(-5,0,41), datalims=[-5,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop])
     ax2.contour(times, zz, w_max_q, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1.25,1.25,2.5])
     # ax2.contour(times, zz, OW_min_q, levels=[-0.01,-0.005], colors='purple', linestyles=['-','-'], linewidths=[2,1])
     ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax2.set_ylabel('Height (km)')
     
-    c = plot_contourf(times, zz, pp_min_s/100, 'prspert', ax3, levels=np.linspace(-5,0,41), datalims=[-5,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop], alpha=0.8)
+    c = plot_contourf(times, zz, pp_min_s/100, 'prspert', ax3, levels=np.linspace(-5,0,41), datalims=[-5,0], cmap='Blues_r', cbar=False, xlims=[180,240], ylims=[0,ztop])
     ax3.contour(times, zz, w_max_s, levels=[10,15,20], colors='k', linestyles=['--','-','-'], linewidths=[1.25,1.25,2.5])
     # ax3.contour(times, zz, OW_min_s, levels=[-0.01,-0.005], colors='purple', linestyles=['-','-'], linewidths=[2,1])
     ax3.axvline(210, color='k', linewidth=1.5, linestyle='--')
@@ -805,18 +808,18 @@ if False:
     
     
     
-    fig,ax = plt.subplots(1,1,figsize=(8,4), layout='constrained')
-    ax.plot(times, vppga_1km_max_q, 'k', linewidth=1.5)
-    ax.plot(times, vppga_1km_max_m, 'r', linewidth=1.5)
-    ax.plot(times, vppga_1km_max_s, 'dodgerblue', linewidth=1.5)
-    ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
-    ax.set_xlabel('Time (min)')
-    ax.set_xlim([180,240])
-    ax.set_ylim([0,0.6])
-    # ax.set_title('Maximum 0-1 km VPPGA')
-    ax.legend(['QLCSONLY', 'MERGER', 'SUPERCELL'], loc='upper right')
-    if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_s1_vppga.png", dpi=300)
+    # fig,ax = plt.subplots(1,1,figsize=(8,4), layout='constrained')
+    # ax.plot(times, vppga_1km_max_q, 'k', linewidth=1.5)
+    # ax.plot(times, vppga_1km_max_m, 'r', linewidth=1.5)
+    # ax.plot(times, vppga_1km_max_s, 'dodgerblue', linewidth=1.5)
+    # ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    # ax.set_xlabel('Time (min)')
+    # ax.set_xlim([180,240])
+    # ax.set_ylim([0,0.6])
+    # # ax.set_title('Maximum 0-1 km VPPGA')
+    # ax.legend(['QLCSONLY', 'MERGER', 'SUPERCELL'], loc='upper right')
+    # if figsave:
+    #     plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_s1_vppga.png", dpi=300)
 
 
 #%% ### SUPERCELL 2 ###

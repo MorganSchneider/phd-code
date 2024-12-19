@@ -21,6 +21,7 @@ from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
 from datetime import datetime
 import cmocean
+import wrf
 # import cartopy.crs as ccrs
 
 import warnings
@@ -43,7 +44,8 @@ cmaps = {
     'rhohv': {'cm': 'pyart_LangRainbow12', 'label': "\u03C1$_{HV}$"},
     'temp': {'cm': 'pyart_HomeyerRainbow', 'label': "$T$ (C)"},
     'dewpt': {'cm': cmocean.cm.algae, 'label': "$T_D$ (C)"},
-    'theta': {'cm': 'pyart_HomeyerRainbow', 'label': "\u03B8 (K)"}
+    'theta': {'cm': 'pyart_HomeyerRainbow', 'label': "\u03B8 (K)"},
+    'vort': {'cm': 'pyart_ChaseSpectral', 'label': "Pseudovorticity (s$^{-1}$)"}
 }
 
 #%%
