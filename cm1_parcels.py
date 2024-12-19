@@ -17,8 +17,8 @@ from matplotlib import patches
 
 # Parcel data dimensions (time, pid)
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
+fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
 # Read parcel data
 ds = nc.Dataset(fp+'cm1out_pdata.nc')
@@ -29,7 +29,7 @@ y = ds.variables['y'][:].data
 z = ds.variables['z'][:].data
 # u = ds.variables['u'][:].data
 # v = ds.variables['v'][:].data
-# w = ds.variables['w'][:].data
+w = ds.variables['w'][:].data
 # th = ds.variables['th'][:].data
 # prs = ds.variables['prs'][:].data
 # qv = ds.variables['qv'][:].data
@@ -43,16 +43,16 @@ z = ds.variables['z'][:].data
 # qg = ds.variables['qg'][:].data
 # qhl = ds.variables['qhl'][:].data
 # dbz = ds.variables['dbz'][:].data
-# b = ds.variables['b'][:].data
+b = ds.variables['b'][:].data
 # vpg = ds.variables['vpg'][:].data
-# zvort = ds.variables['zvort'][:].data
+zvort = ds.variables['zvort'][:].data
 ds.close()
 
 
 #%% Load data and filter trajectories
 
 # Read gridded output
-fnum = 43
+fnum = 58
 ds = nc.Dataset(fp+f"cm1out_{fnum:06d}.nc")
 stime = ds.variables['time'][:].data[0]
 xh = ds.variables['xh'][:].data
@@ -63,13 +63,13 @@ yf = ds.variables['yf'][:].data
 zf = ds.variables['zf'][:].data
 
 iz1 = np.where(zh >= 1)[0][0]
-dbz = ds.variables['dbz'][:].data[0,0,:,:]
+# dbz = ds.variables['dbz'][:].data[0,0,:,:]
 # winterp = ds.variables['winterp'][:].data[0,iz1,:,:]
 ds.close()
 
-ds = nc.Dataset(fp+"base/cm1out_000013.nc")
-dbz0 = ds.variables['dbz2'][:].data[0,0,:,:]
-ds.close()
+# ds = nc.Dataset(fp+"base/cm1out_000013.nc")
+# dbz0 = ds.variables['dbz2'][:].data[0,0,:,:]
+# ds.close()
 
 # Filter trajectories
 
@@ -79,7 +79,7 @@ ds.close()
 
 ti = np.where(ptime == stime)[0][0]
 
-box_name = 'SUPERCELL'
+box_name = 'MERGER (MV1)'
 
 dbfile = open(ip+'boxes_s1.pkl', 'rb')
 box = pickle.load(dbfile)
@@ -106,6 +106,8 @@ w_mv = w[:, wvort_cond]
 zvort_mv = zvort[:, wvort_cond]
 b_mv = b[:, wvort_cond]
 # vpg_mv = vpg[:, wvort_cond]
+# u_mv = u[:, wvort_cond]
+# v_mv = v[:, wvort_cond]
 
 # cond_str = wvort_cond_str
 
@@ -222,7 +224,7 @@ if False:
 
 
 if False:
-    img_str = 'S1'
+    img_str = 'MV1'
     if fnum == 28:
         dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_{img_str}.pkl", 'wb')
         traj_vars = {'pids':pids, 'x':x_mv, 'y':y_mv, 'z':z_mv, 'w':w_mv, 'zvort':zvort_mv,
@@ -235,9 +237,11 @@ if False:
         traj = pickle.load(dbfile)
         dbfile.close()
         
-        traj_vars = {'pids':pids, 'x':x_mv, 'y':y_mv, 'z':z_mv, 'w':w_mv, 'zvort':zvort_mv,
-                     'b':b_mv}
-        traj.update({f"{stime/60:.0f}min":traj_vars})
+        # traj_time = traj[f"{stime/60:.0f}min"]
+        # traj_time.update({'u':u_mv, 'v':v_mv})
+        # traj.update({f"{stime/60:.0f}min":traj_time})
+        
+        traj[f"{stime/60:.0f}min"].update({'u':u_mv, 'v':v_mv})
         dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_{img_str}.pkl", 'wb')
         pickle.dump(traj, dbfile)
         dbfile.close()
