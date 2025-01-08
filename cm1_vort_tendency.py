@@ -438,6 +438,8 @@ for fn in np.arange(28,59):
     ix = slice(np.where(xh >= xlims[0])[0][0], np.where(xh >= xlims[1])[0][1])
     iy = slice(np.where(yh >= ylims[0])[0][0], np.where(yh >= ylims[1])[0][1])
     
+    zz,yy,xx = np.meshgrid(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000, indexing='ij')
+    
     u = ds.variables['uinterp'][:].data[0,iz,iy,ix]
     v = ds.variables['vinterp'][:].data[0,iz,iy,ix]
     w = ds.variables['winterp'][:].data[0,iz,iy,ix]
@@ -455,11 +457,12 @@ for fn in np.arange(28,59):
     ws_sr = np.sqrt(u_sr**2 + v_sr**2)
     hvort = np.sqrt(xvort**2 + yvort**2)
     
+    # Stretching
     if calc_stretching:
         print('...stretching...')
-        dudx = mc.gradient(u, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=2)
-        dvdy = mc.gradient(v, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=1)
-        dwdz = mc.gradient(w, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=0)
+        dudx = mc.gradient(u, coordinates=(zz, yy, xx))[2]
+        dvdy = mc.gradient(v, coordinates=(zz, yy, xx))[1]
+        dwdz = mc.gradient(w, coordinates=(zz, yy, xx))[0]
         
         stretch_x = xvort * dudx
         stretch_y = yvort * dvdy
@@ -476,20 +479,21 @@ for fn in np.arange(28,59):
         save_to_pickle(dat, ip+f"plan{stime/60:.0f}_stretch.pkl")
         del dat,stretch_x,stretch_y,stretch_z,stretch_h,stretch_sw,stretch_cw
     
+    # Tilting
     if calc_tilting:
         print('...tilting...')
-        dudy = mc.gradient(u, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=1)
-        dudz = mc.gradient(u, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=0)
+        dudy = mc.gradient(u, coordinates=(zz, yy, xx))[1]
+        dudz = mc.gradient(u, coordinates=(zz, yy, xx))[0]
         tilt_x = yvort * dudy + zvort * dudz
         del dudy,dudz
         
-        dvdx = mc.gradient(v, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=2)
-        dvdz = mc.gradient(v, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=0)
+        dvdx = mc.gradient(v, coordinates=(zz, yy, xx))[2]
+        dvdz = mc.gradient(v, coordinates=(zz, yy, xx))[0]
         tilt_y = xvort * dvdx + zvort * dvdz
         del dvdx,dvdz
         
-        dwdx = mc.gradient(w, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=2)
-        dwdy = mc.gradient(w, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=1)
+        dwdx = mc.gradient(w, coordinates=(zz, yy, xx))[2]
+        dwdy = mc.gradient(w, coordinates=(zz, yy, xx))[1]
         tilt_z = xvort * dwdx + yvort * dwdy
         del dwdx,dwdy
         
@@ -503,14 +507,15 @@ for fn in np.arange(28,59):
         save_to_pickle(dat, ip+f"plan{stime/60:.0f}_tilt.pkl")
         del dat,tilt_x,tilt_y,tilt_z,tilt_h,tilt_sw,tilt_cw
     
+    # Baroclinic
     if calc_baroclinic:
         print('...baroclinic...')
-        drdx = mc.gradient(rho, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=2)
-        drdy = mc.gradient(rho, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=1)
-        drdz = mc.gradient(rho, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=0)
-        dpdx = mc.gradient(prs, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=2)
-        dpdy = mc.gradient(prs, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=1)
-        dpdz = mc.gradient(prs, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000), axes=0)
+        drdx = mc.gradient(rho, coordinates=(zz, yy, xx))[2]
+        drdy = mc.gradient(rho, coordinates=(zz, yy, xx))[1]
+        drdz = mc.gradient(rho, coordinates=(zz, yy, xx))[0]
+        dpdx = mc.gradient(prs, coordinates=(zz, yy, xx))[2]
+        dpdy = mc.gradient(prs, coordinates=(zz, yy, xx))[1]
+        dpdz = mc.gradient(prs, coordinates=(zz, yy, xx))[0]
         del rho,prs
         
         bcl_x = (1/1.1)**2 * (drdy * dpdz - drdz * dpdy)
@@ -527,14 +532,15 @@ for fn in np.arange(28,59):
                'bcl_h':bcl_h, 'bcl_sw':bcl_sw, 'bcl_cw':bcl_cw}
         save_to_pickle(dat, ip+f"plan{stime/60:.0f}_baroclinic.pkl")
         del dat,bcl_x,bcl_y,bcl_z,bcl_h,bcl_sw,bcl_cw
-        
+    
+    # Friction
     if calc_friction:
         print('...friction...')
         nu = 1.46e-5
         
-        del2xvort = mc.laplacian(xvort, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000))
-        del2yvort = mc.laplacian(yvort, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000))
-        del2zvort = mc.laplacian(zvort, coordinates=(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000))
+        del2xvort = mc.laplacian(xvort, coordinates=(zz, yy, xx))
+        del2yvort = mc.laplacian(yvort, coordinates=(zz, yy, xx))
+        del2zvort = mc.laplacian(zvort, coordinates=(zz, yy, xx))
         
         fric_x = nu * del2xvort
         fric_y = nu * del2yvort
