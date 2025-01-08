@@ -26,6 +26,7 @@ import pickle
 # from glob import glob
 import wrf
 from scipy.ndimage import gaussian_filter
+from os.path import exists
 
 #%%
 ######################
@@ -234,7 +235,7 @@ def proj_winds(u, v, proj_angle):
 
 
 def save_to_pickle(data, pkl_fname, new_pkl=False):
-    if new_pkl is True:
+    if ~exists(pkl_fname) | new_pkl:
         dbfile = open(pkl_fname, 'wb')
         pickle.dump(data, dbfile)
         dbfile.close()
