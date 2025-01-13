@@ -235,11 +235,7 @@ def proj_winds(u, v, proj_angle):
 
 
 def save_to_pickle(data, pkl_fname, new_pkl=False):
-    if ~exists(pkl_fname) | new_pkl:
-        dbfile = open(pkl_fname, 'wb')
-        pickle.dump(data, dbfile)
-        dbfile.close()
-    else:
+    if exists(pkl_fname) | (not new_pkl):
         dbfile = open(pkl_fname, 'rb')
         save_data = pickle.load(dbfile)
         dbfile.close()
@@ -248,6 +244,11 @@ def save_to_pickle(data, pkl_fname, new_pkl=False):
         dbfile = open(pkl_fname, 'wb')
         pickle.dump(save_data, dbfile)
         dbfile.close()
+    elif (not exists(pkl_fname)) | new_pkl:
+        dbfile = open(pkl_fname, 'wb')
+        pickle.dump(data, dbfile)
+        dbfile.close()
+        
     
 
 

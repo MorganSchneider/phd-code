@@ -24,8 +24,8 @@ zh = ds.variables['z'][:].data
 iz = np.where(zh >= 4)[0][1]
 ds.close()
 
-xlims = [-45,25]
-ylims = [-120,-50]
+xlims = [-25,5]
+ylims = [-90,-40]
 zlims = [0,4]
 
 ix1 = np.where(xh >= xlims[0])[0][0]
@@ -86,14 +86,14 @@ if 'u_storm' not in locals():
     v_storm[1:-1] = movmean(v_s,3)[1:-1]
 
 
-times = [210, 225]
-n = np.where(ptime/60 == 225)[0][0]
-fnums = [43, 58]
+times = [210]
+# n = np.where(ptime/60 == 225)[0][0]
+fnums = [43]
 
 calc_stretching = False
 calc_tilting = False
-calc_baroclinic = False
-calc_friction = True
+calc_baroclinic = True
+calc_friction = False
 
 
 for i in range(len(times)):
@@ -131,6 +131,8 @@ for i in range(len(times)):
     svort_term = np.zeros(shape=(16,len(pids_ml)), dtype=float)
     cvort_term = np.zeros(shape=(16,len(pids_ml)), dtype=float)
     
+    pkl_fn = f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_{t:.0f}min.pkl"
+    
     for k in np.arange(fnums[i]-15,fnums[i]+1):
         m = k-13-(i+1)*15
         print(f"cm1out_{k:06d}")
@@ -155,12 +157,7 @@ for i in range(len(times)):
             ds.close()
             
             if calc_stretching:
-                xvarname = 'stretch_x'
-                yvarname = 'stretch_y'
-                zvarname = 'stretch_z'
-                hvarname = 'stretch_h'
-                svarname = 'stretch_sw'
-                cvarname = 'stretch_cw'
+                print('...stretching...')
                 
                 dudx = np.gradient(u, xh*1000, axis=2)
                 dvdy = np.gradient(v, yh*1000, axis=1)
@@ -184,16 +181,13 @@ for i in range(len(times)):
                     hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
                     svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
                     cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                    
+                    del dudx_ml,dvdy_ml,dwdz_ml
                 #end for p in range(len(pids_ml))
             #end if calc_stretching
             
             if calc_tilting:
-                xvarname = 'tilt_x'
-                yvarname = 'tilt_y'
-                zvarname = 'tilt_z'
-                hvarname = 'tilt_h'
-                svarname = 'tilt_sw'
-                cvarname = 'tilt_cw'
+                print('...tilting...')
                 
                 dudy = np.gradient(u, yh*1000, axis=1)
                 dudz = np.gradient(u, zh[0:iz]*1000, axis=0)
@@ -228,17 +222,14 @@ for i in range(len(times)):
                     hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
                     svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
                     cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                    
+                    del dudy_ml,dudz_ml,dvdx_ml,dvdz_ml,dwdx_ml,dwdy_ml
                 #end for p in range(len(pids_ml))
             #end if calc_tilting
         #end if calc_stretching | calc_tilting
             
         if calc_baroclinic:
-            xvarname = 'baroclinic_x'
-            yvarname = 'baroclinic_y'
-            zvarname = 'baroclinic_z'
-            hvarname = 'baroclinic_h'
-            svarname = 'baroclinic_sw'
-            cvarname = 'baroclinic_cw'
+            print('...baroclinic...')
             
             ds = nc.Dataset(fp+f"cm1out_{k:06d}.nc")
             stime = ds.variables['time'][:].data[0]
@@ -278,16 +269,13 @@ for i in range(len(times)):
                 hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
                 svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
                 cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                
+                del drdx_ml,drdy_ml,drdz_ml,dpdx_ml,dpdy_ml,dpdz_ml
             #end for p in range(len(pids_ml))
         #end if calc_baroclinic
         
         if calc_friction:
-            xvarname = 'fric_x'
-            yvarname = 'fric_y'
-            zvarname = 'fric_z'
-            hvarname = 'fric_h'
-            svarname = 'fric_sw'
-            cvarname = 'fric_cw'
+            print('...friction...')
             
             ds = nc.Dataset(fp+f"cm1out_{k:06d}.nc")
             stime = ds.variables['time'][:].data[0]
@@ -321,56 +309,100 @@ for i in range(len(times)):
                 hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
                 svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
                 cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                
+                del del2xvort_ml,del2yvort_ml,del2zvort_ml
             #end for p in range(len(pids_ml))
         #end if calc_friction
     #end for k in np.arange(fnums[i]-15,fnums[i]+1)
     
-    if ~exists(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_{t:.0f}min.pkl"):
-        dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_{t:.0f}min.pkl", 'wb')
-        ten = {xvarname:xvort_term, yvarname:yvort_term, zvarname:zvort_term,
-               hvarname:hvort_term, svarname:svort_term, cvarname:cvort_term}
-        pickle.dump(ten, dbfile)
-        dbfile.close()
-    else:
-        dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_{t:.0f}min.pkl", 'rb')
-        ten = pickle.load(dbfile)
-        dbfile.close()
-        
-        ten.update({xvarname:xvort_term, yvarname:yvort_term, zvarname:zvort_term,
-                    hvarname:hvort_term, svarname:svort_term, cvarname:cvort_term})
-        dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_{t:.0f}min.pkl", 'wb')
-        pickle.dump(ten, dbfile)
-        dbfile.close()
-    #end if ~exists
+    if calc_stretching:
+        data = {'stretch_x':xvort_term, 'stretch_y':yvort_term, 'stretch_z':zvort_term,
+                'stretch_h':hvort_term, 'stretch_sw':svort_term, 'stretch_cw':cvort_term}
+    elif calc_tilting:
+        data = {'tilt_x':xvort_term, 'tilt_y':yvort_term, 'tilt_z':zvort_term,
+                'tilt_h':hvort_term, 'tilt_sw':svort_term, 'tilt_cw':cvort_term}
+    elif calc_baroclinic:
+        data = {'bcl_x':xvort_term, 'bcl_y':yvort_term, 'bcl_z':zvort_term,
+                'bcl_h':hvort_term, 'bcl_sw':svort_term, 'bcl_cw':cvort_term}
+    elif calc_friction:
+        data = {'fric_x':xvort_term, 'fric_y':yvort_term, 'fric_z':zvort_term,
+                'fric_h':hvort_term, 'fric_sw':svort_term, 'fric_cw':cvort_term}
+    #end if calc_stretching
+    save_to_pickle(data, pkl_fn)
+    
 #end for i in range(len(times))
 
 
 #%%
 
-times = np.arange(195,226)
+mvtime = 210
+# times = np.arange(195,226)
+t = np.linspace(mvtime-15, mvtime, 16)
 
-fig,ax = plt.subplots(1, 1, figsize=(8,5), layout='constrained')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_{mvtime}min.pkl", 'rb')
+vten = pickle.load(dbfile)
+dbfile.close()
 
-ax.fill_between(times[15:], np.percentile(svort_term, 25, axis=1),
-                np.percentile(svort_term, 75, axis=1), color='deepskyblue', alpha=0.2)
-ax.fill_between(times[15:], np.percentile(cvort_term, 25, axis=1),
-                np.percentile(cvort_term, 75, axis=1), color='gold', alpha=0.3)
-ax.fill_between(times[15:], np.percentile(zvort_term, 25, axis=1),
-                np.percentile(zvort_term, 75, axis=1), color='red', alpha=0.2)
 
-s1, = ax.plot(times[15:], np.median(svort_term, axis=1), 'deepskyblue', linewidth=2)
-s2, = ax.plot(times[15:], np.median(cvort_term, axis=1), 'gold', linewidth=2)
-s3, = ax.plot(times[15:], np.median(zvort_term, axis=1), 'red', linewidth=2)
+tilt_z = vten['tilt_z']; stretch_z = vten['stretch_z']; bcl_z = vten['bcl_z']; fric_z = vten['fric_z']
+tilt_h = vten['tilt_h']; stretch_h = vten['stretch_h']; bcl_h = vten['bcl_h']; fric_h = vten['fric_h']
+tilt_sw = vten['tilt_sw']; stretch_sw = vten['stretch_sw']; bcl_sw = vten['bcl_sw']; fric_sw = vten['fric_sw']
+tilt_cw = vten['tilt_cw']; stretch_cw = vten['stretch_cw']; bcl_cw = vten['bcl_cw']; fric_cw = vten['fric_cw']
 
-ax.set_xlabel('Time (min)')
-ax.set_ylabel('Friction term')
-ax.set_xlim([210,225])
-ax.legend(handles=[s1,s2,s3], labels=['sw','cw','z'], loc=1)
+
+
+
+fig,ax = plt.subplots(4, 1, figsize=(15,11), sharex=True, layout='constrained')
+
+s1, = ax[0].plot(t, np.median(tilt_z, axis=1), 'mediumblue', linewidth=2)
+s2, = ax[0].plot(t, np.median(stretch_z, axis=1), 'deepskyblue', linewidth=2)
+s3, = ax[0].plot(t, np.median(bcl_z, axis=1), 'red', linewidth=2)
+s4, = ax[0].plot(t, np.median(fric_z, axis=1), 'gold', linewidth=2)
+ax[0].set_title("Parcel \u03B6 tendency")
+
+ax[1].plot(t, np.median(tilt_h, axis=1), 'mediumblue', linewidth=2)
+ax[1].plot(t, np.median(stretch_h, axis=1), 'deepskyblue', linewidth=2)
+ax[1].plot(t, np.median(bcl_h, axis=1), 'red', linewidth=2)
+ax[1].plot(t, np.median(fric_h, axis=1), 'gold', linewidth=2)
+ax[1].set_title("Parcel \u03c9$_H$ tendency")
+
+ax[2].plot(t, np.median(tilt_sw, axis=1), 'mediumblue', linewidth=2)
+ax[2].plot(t, np.median(stretch_sw, axis=1), 'deepskyblue', linewidth=2)
+ax[2].plot(t, np.median(bcl_sw, axis=1), 'red', linewidth=2)
+ax[2].plot(t, np.median(fric_sw, axis=1), 'gold', linewidth=2)
+ax[2].set_title("Parcel \u03c9$_{SW}$ tendency")
+
+ax[3].plot(t, np.median(tilt_cw, axis=1), 'mediumblue', linewidth=2)
+ax[3].plot(t, np.median(stretch_cw, axis=1), 'deepskyblue', linewidth=2)
+ax[3].plot(t, np.median(bcl_cw, axis=1), 'red', linewidth=2)
+ax[3].plot(t, np.median(fric_cw, axis=1), 'gold', linewidth=2)
+ax[3].set_title("Parcel \u03c9$_{CW}$ tendency")
 
 plt.show()
 
 
-#%% Tendency plan views
+# fig,ax = plt.subplots(1, 1, figsize=(8,5), layout='constrained')
+
+# ax.fill_between(times[15:], np.percentile(svort_term, 25, axis=1),
+#                 np.percentile(svort_term, 75, axis=1), color='deepskyblue', alpha=0.2)
+# ax.fill_between(times[15:], np.percentile(cvort_term, 25, axis=1),
+#                 np.percentile(cvort_term, 75, axis=1), color='gold', alpha=0.3)
+# ax.fill_between(times[15:], np.percentile(zvort_term, 25, axis=1),
+#                 np.percentile(zvort_term, 75, axis=1), color='red', alpha=0.2)
+
+# s1, = ax.plot(times[15:], np.median(svort_term, axis=1), 'deepskyblue', linewidth=2)
+# s2, = ax.plot(times[15:], np.median(cvort_term, axis=1), 'gold', linewidth=2)
+# s3, = ax.plot(times[15:], np.median(zvort_term, axis=1), 'red', linewidth=2)
+
+# ax.set_xlabel('Time (min)')
+# ax.set_ylabel('Friction term')
+# ax.set_xlim([210,225])
+# ax.legend(handles=[s1,s2,s3], labels=['sw','cw','z'], loc=1)
+
+# plt.show()
+
+
+#%% Calculate tendency plan views
 
 # Calculate storm motion for streamwise/crosswise vorticity
 if 'u_storm' not in locals():
@@ -413,49 +445,52 @@ if 'u_storm' not in locals():
 
 
 
-calc_stretching = True
-calc_tilting = True
-calc_baroclinic = True
-calc_friction = True
+calc_stretching = False
+calc_tilting = False
+calc_baroclinic = False
+calc_friction = False
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
 for fn in np.arange(28,59):
     print(f"cm1out_{fn:06d}")
+    
     # Read output file
-    ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_{fn:06d}.nc")
-    stime = ds.variables['time'][:].data[0]
-    xh = ds.variables['xh'][:].data
-    yh = ds.variables['yh'][:].data
-    zh = ds.variables['z'][:].data
-    
-    iz4 = np.where(zh >= 4)[0][1]
-    iz = slice(0,iz4)
-    
-    xlims = [-30,10] #[-55,25]
-    ylims = [-90,-40]
-    
-    ix = slice(np.where(xh >= xlims[0])[0][0], np.where(xh >= xlims[1])[0][1])
-    iy = slice(np.where(yh >= ylims[0])[0][0], np.where(yh >= ylims[1])[0][1])
-    
-    zz,yy,xx = np.meshgrid(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000, indexing='ij')
-    
-    u = ds.variables['uinterp'][:].data[0,iz,iy,ix]
-    v = ds.variables['vinterp'][:].data[0,iz,iy,ix]
-    w = ds.variables['winterp'][:].data[0,iz,iy,ix]
-    xvort = ds.variables['xvort'][:].data[0,iz,iy,ix]
-    yvort = ds.variables['yvort'][:].data[0,iz,iy,ix]
-    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
-    if calc_baroclinic:
-        rho = ds.variables['rho'][:].data[0,iz,iy,ix]
-        prs = ds.variables['prs'][:].data[0,iz,iy,ix]
-    
-    ds.close()
-    
-    u_sr = u - u_storm[fn-13]
-    v_sr = v - v_storm[fn-13]
-    ws_sr = np.sqrt(u_sr**2 + v_sr**2)
-    hvort = np.sqrt(xvort**2 + yvort**2)
+    if np.any(calc_stretching, calc_tilting, calc_baroclinic, calc_friction):
+        ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_{fn:06d}.nc")
+        stime = ds.variables['time'][:].data[0]
+        xh = ds.variables['xh'][:].data
+        yh = ds.variables['yh'][:].data
+        zh = ds.variables['z'][:].data
+        
+        iz4 = np.where(zh >= 4)[0][1]
+        iz = slice(0,iz4)
+        
+        xlims = [-30,10] #[-55,25]
+        ylims = [-90,-40]
+        
+        ix = slice(np.where(xh >= xlims[0])[0][0], np.where(xh >= xlims[1])[0][1])
+        iy = slice(np.where(yh >= ylims[0])[0][0], np.where(yh >= ylims[1])[0][1])
+        
+        zz,yy,xx = np.meshgrid(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000, indexing='ij')
+        
+        u = ds.variables['uinterp'][:].data[0,iz,iy,ix]
+        v = ds.variables['vinterp'][:].data[0,iz,iy,ix]
+        w = ds.variables['winterp'][:].data[0,iz,iy,ix]
+        xvort = ds.variables['xvort'][:].data[0,iz,iy,ix]
+        yvort = ds.variables['yvort'][:].data[0,iz,iy,ix]
+        zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
+        if calc_baroclinic:
+            rho = ds.variables['rho'][:].data[0,iz,iy,ix]
+            prs = ds.variables['prs'][:].data[0,iz,iy,ix]
+        
+        ds.close()
+        
+        u_sr = u - u_storm[fn-13]
+        v_sr = v - v_storm[fn-13]
+        ws_sr = np.sqrt(u_sr**2 + v_sr**2)
+        hvort = np.sqrt(xvort**2 + yvort**2)
+    #end if np.any(calc_stretching, calc_tilting, calc_baroclinic, calc_friction)
     
     # Stretching
     if calc_stretching:
@@ -560,18 +595,191 @@ for fn in np.arange(28,59):
     del u,v,w,xvort,yvort,zvort,u_sr,v_sr,ws_sr,hvort
 
 
+#%% Plot plan views of tendency
+
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
+
+t = 210
+mvtime = 210
+
+dbfile = open(ip+f"plan{t}_tilt.pkl", 'rb')
+tmp = pickle.load(dbfile)
+xh = tmp['x']
+yh = tmp['y']
+zh = tmp['z']
+tilt_h = tmp['tilt_h']
+tilt_z = tmp['tilt_z']
+dbfile.close()
+
+dbfile = open(ip+f"plan{t}_stretch.pkl", 'rb')
+tmp = pickle.load(dbfile)
+stretch_h = tmp['stretch_h']
+stretch_z = tmp['stretch_z']
+dbfile.close()
+
+dbfile = open(ip+f"plan{t}_baroclinic.pkl", 'rb')
+tmp = pickle.load(dbfile)
+bcl_h = tmp['bcl_h']
+bcl_z = tmp['bcl_z']
+bcl_sw = tmp['bcl_sw']
+bcl_cw = tmp['bcl_cw']
+dbfile.close()
+
+dbfile = open(ip+f"plan{t}_friction.pkl", 'rb')
+tmp = pickle.load(dbfile)
+fric_h = tmp['fric_h']
+fric_z = tmp['fric_z']
+fric_sw = tmp['fric_sw']
+fric_cw = tmp['fric_cw']
+dbfile.close()
 
 
+# Read parcel data
+ds = nc.Dataset(fp+'cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+# xp = ds.variables['x'][:].data
+# yp = ds.variables['y'][:].data
+# zp = ds.variables['z'][:].data
+ds.close()
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+x_mv = traj[f"{mvtime}min"]['x']/1000
+y_mv = traj[f"{mvtime}min"]['y']/1000
+z_mv = traj[f"{mvtime}min"]['z']/1000
+# w_mv = traj[f"{mvtime}min"]['w']
+# zvort_mv = traj[f"{mvtime}min"]['zvort']
+dbfile.close()
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime}min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+# Mid-level source
+x_ml = x_mv[:,(cc==1)]
+y_ml = y_mv[:,(cc==1)]
+z_ml = z_mv[:,(cc==1)]
+
+it = np.where(ptime/60 == t)[0][0]
+iz = np.where(zh >= np.median(z_ml[it,:]))[0][0]
+iz1 = np.where(zh >= 1)[0][0]
+
+ix = np.where(xh >= np.median(x_ml[it,:]))[0][0]
+iy = np.where(yh >= np.median(y_ml[it,:]))[0][0]
 
 
+### zvort lims (208 min)
+# tilting max/min: 0.0023, -0.0024
+# stretching max/min: 0.0026, -0.0031
+# baroclinic max/min: 0.00001, -0.00002
+# friction max/min: tiny, tiny
+
+### hvort lims (223 min)
+# tilting max/min: 0.0035, -0.0029
+# stretching max/min: 0.0032, -0.0021
+# baroclinic max/min: 0.00089, -0.00057
+# friction max/min: tiny, tiny
+
+print(f"...zvort limits, {t} min, {zh[iz]*1000:.0f} m...")
+print(f"Tilting: {np.min(tilt_z[iz,:,:]):.6f}, {np.max(tilt_z[iz,:,:]):.6f}")
+print(f"Stretching: {np.min(stretch_z[iz,:,:]):.6f}, {np.max(stretch_z[iz,:,:]):.6f}")
+print(f"Baroclinic: {np.min(bcl_z[iz,:,:])}, {np.max(bcl_z[iz,:,:])}")
+print(f"Friction: {np.min(fric_z[iz,:,:])}, {np.max(fric_z[iz,:,:])}\n")
+
+print(f"...hvort limits, {t} min, {zh[iz]*1000:.0f} m...")
+print(f"Tilting: {np.min(tilt_h[iz,:,:]):.6f}, {np.max(tilt_h[iz,:,:]):.6f}")
+print(f"Stretching: {np.min(stretch_h[iz,:,:]):.6f}, {np.max(stretch_h[iz,:,:]):.6f}")
+print(f"Baroclinic: {np.min(bcl_h[iz,:,:])}, {np.max(bcl_h[iz,:,:])}")
+print(f"Friction: {np.min(fric_h[iz,:,:])}, {np.max(fric_h[iz,:,:])}")
 
 
+#%%
+
+# def find_power(x):
+#     if x < 0:
+#         logx = np.log10(np.abs(x))
+#     else:
+#         logx = np.log10(x)
+#     ex = np.floor(logx)
+#     c = x / 10**ex
+    
+#     return c,ex
 
 
+xlims = [-20,0]
+ylims = [-60,-40]
+
+sz = 100
+
+# 220 min: [-0.0020, 0.0026], [-0.0017, 0.0019], [-4.56e-6, 7.97e-6], [-2.07e-10, 2.23e-10]
+# 221 min: [-0.0035, 0.0048], [-0.0030, 0.0019], [-1.27e-5, 1.99e-5], [-3.01e-10, 3.14e-10]
+# 222 min: [-0.0029, 0.0046], [-0.0038, 0.0020], [-1.31e-5, 1.06e-5], [-4.21e-10, 3.99e-10]
+# 223 min: [-0.0023, 0.0027], [-0.0023, 0.0020], [-9.02e-6, 1.03e-5], [-3.03e-10, 2.77e-10]
+# 224 min: [-0.0035, 0.0063], [-0.0030, 0.0033], [-1.74e-5, 1.53e-5], [-5.34e-10, 7.52e-10]
+# 225 min: [-0.0034, 0.0022], [-0.0023, 0.0020], [-1.45e-5, 1.38e-5], [-3.47e-10, 2.49e-10]
+
+tlims = [-0.004, 0.004]; tlevs = np.linspace(tlims[0], tlims[1], 21)
+slims = [-0.003, 0.003]; slevs = np.linspace(slims[0], slims[1], 21)
+blims = [-2e-5, 2e-5]; blevs = np.linspace(blims[0], blims[1], 21)
+flims = [-3e-10, 3e-10]; flevs = np.linspace(flims[0], flims[1], 21)
 
 
+fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh, yh, tilt_z[iz,:,:], 'zvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims)
+ax[0,0].set_title(f"Tilting")
+ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plot_contourf(xh, yh, stretch_z[iz,:,:], 'zvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims)
+ax[0,1].set_title(f"Stretching")
+ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plot_contourf(xh, yh, bcl_z[iz,:,:], 'zvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims)
+ax[1,0].set_title(f"Baroclinic")
+ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plot_contourf(xh, yh, fric_z[iz,:,:], 'zvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims)
+ax[1,1].set_title(f"Friction")
+ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plt.suptitle(f"\u03B6 tendency - {t} min, {zh[iz]*1000:.0f} m")
 
 
+# 220 min: [-0.0023, 0.0037], [-0.0023, 0.0024], [-4.60e-4, 5.81e-4], [-4.92e-10, 2.29e-10]
+# 221 min: [-0.0019, 0.0030], [-0.0027, 0.0062], [-7.38e-4, 1.00e-3], [-1.04e-9, 4.89e-10]
+# 222 min: [-0.0040, 0.0039], [-0.0022, 0.0055], [-6.17e-4, 1.02e-3], [-1.44e-9, 8.17e-10]
+# 223 min: [-0.0029, 0.0035], [-0.0021, 0.0032], [-5.71e-4, 8.95e-4], [-7.56e-10, 4.57e-10]
+# 224 min: [-0.0039, 0.0041], [-0.0027, 0.0052], [-9.75e-4, 1.03e-3], [-2.83e-9, 2.03e-9]
+# 225 min: [-0.0030, 0.0034], [-0.0027, 0.0044], [-5.80e-4, 8.77e-4], [-7.13e-10, 3.98e-10]
+
+tlims = [-0.003, 0.003]; tlevs = np.linspace(tlims[0], tlims[1], 21)
+slims = [-0.006, 0.006]; slevs = np.linspace(slims[0], slims[1], 21)
+blims = [-10e-4, 10e-4]; blevs = np.linspace(blims[0], blims[1], 21)
+flims = [-10e-10, 10e-10]; flevs = np.linspace(flims[0], flims[1], 21)
+
+
+fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh, yh, tilt_h[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+ax[0,0].set_title(f"Tilting")
+ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plot_contourf(xh, yh, stretch_h[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+ax[0,1].set_title(f"Stretching")
+ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plot_contourf(xh, yh, bcl_h[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+ax[1,0].set_title(f"Baroclinic")
+ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plot_contourf(xh, yh, fric_h[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+ax[1,1].set_title(f"Friction")
+ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+
+plt.suptitle(f"\u03c9$_H$ tendency - {t} min, {zh[iz]*1000:.0f} m")
+
+plt.show()
 
 
 
