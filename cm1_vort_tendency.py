@@ -86,13 +86,13 @@ if 'u_storm' not in locals():
     v_storm[1:-1] = movmean(v_s,3)[1:-1]
 
 
-times = [210]
+times = [225]
 # n = np.where(ptime/60 == 225)[0][0]
-fnums = [43]
+fnums = [58]
 
 calc_stretching = False
 calc_tilting = False
-calc_baroclinic = True
+calc_baroclinic = False
 calc_friction = False
 
 
@@ -134,7 +134,7 @@ for i in range(len(times)):
     pkl_fn = f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_{t:.0f}min.pkl"
     
     for k in np.arange(fnums[i]-15,fnums[i]+1):
-        m = k-13-(i+1)*15
+        m = k-13-(i+2)*15
         print(f"cm1out_{k:06d}")
         
         if k == 13:
@@ -333,9 +333,11 @@ for i in range(len(times)):
 #end for i in range(len(times))
 
 
-#%%
+#%% Parcel vorticity tendency time series
 
-mvtime = 210
+from matplotlib.ticker import MultipleLocator
+
+mvtime = 225
 # times = np.arange(195,226)
 t = np.linspace(mvtime-15, mvtime, 16)
 
@@ -352,31 +354,60 @@ tilt_cw = vten['tilt_cw']; stretch_cw = vten['stretch_cw']; bcl_cw = vten['bcl_c
 
 
 
-fig,ax = plt.subplots(4, 1, figsize=(15,11), sharex=True, layout='constrained')
+fig,ax = plt.subplots(4, 1, figsize=(8,10), sharex=True, layout='constrained')
 
+ax[0].axhline(0, color='gray', linewidth=1, linestyle='--')
+# ax.fill_between(t, np.percentile(svort_term, 25, axis=1),
+#                 np.percentile(svort_term, 75, axis=1), color='deepskyblue', alpha=0.2)
 s1, = ax[0].plot(t, np.median(tilt_z, axis=1), 'mediumblue', linewidth=2)
 s2, = ax[0].plot(t, np.median(stretch_z, axis=1), 'deepskyblue', linewidth=2)
 s3, = ax[0].plot(t, np.median(bcl_z, axis=1), 'red', linewidth=2)
 s4, = ax[0].plot(t, np.median(fric_z, axis=1), 'gold', linewidth=2)
 ax[0].set_title("Parcel \u03B6 tendency")
+# ax[0].set_ylim([-0.0001, 0.0003])
+ax[0].set_ylim([-0.0004, 0.0004])
+ax[0].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+ax[0].grid(visible=True, which='major', linestyle='-')
+ax[0].grid(visible=True, which='minor', linestyle='--')
 
+ax[1].axhline(0, color='gray', linewidth=1, linestyle='--')
 ax[1].plot(t, np.median(tilt_h, axis=1), 'mediumblue', linewidth=2)
 ax[1].plot(t, np.median(stretch_h, axis=1), 'deepskyblue', linewidth=2)
 ax[1].plot(t, np.median(bcl_h, axis=1), 'red', linewidth=2)
 ax[1].plot(t, np.median(fric_h, axis=1), 'gold', linewidth=2)
 ax[1].set_title("Parcel \u03c9$_H$ tendency")
+# ax[1].set_ylim([-0.0002, 0.0002])
+ax[1].set_ylim([-0.0004, 0.0008])
+ax[1].grid(visible=True, which='major', linestyle='-')
+ax[1].grid(visible=True, which='minor', linestyle='--')
 
+ax[2].axhline(0, color='gray', linewidth=1, linestyle='--')
 ax[2].plot(t, np.median(tilt_sw, axis=1), 'mediumblue', linewidth=2)
 ax[2].plot(t, np.median(stretch_sw, axis=1), 'deepskyblue', linewidth=2)
 ax[2].plot(t, np.median(bcl_sw, axis=1), 'red', linewidth=2)
 ax[2].plot(t, np.median(fric_sw, axis=1), 'gold', linewidth=2)
 ax[2].set_title("Parcel \u03c9$_{SW}$ tendency")
+# ax[2].set_ylim([-0.0004, 0.0003])
+ax[2].set_ylim([-0.0008, 0.0006])
+ax[2].grid(visible=True, which='major', linestyle='-')
+ax[2].grid(visible=True, which='minor', linestyle='--')
 
+ax[3].axhline(0, color='gray', linewidth=1, linestyle='--')
 ax[3].plot(t, np.median(tilt_cw, axis=1), 'mediumblue', linewidth=2)
 ax[3].plot(t, np.median(stretch_cw, axis=1), 'deepskyblue', linewidth=2)
 ax[3].plot(t, np.median(bcl_cw, axis=1), 'red', linewidth=2)
 ax[3].plot(t, np.median(fric_cw, axis=1), 'gold', linewidth=2)
 ax[3].set_title("Parcel \u03c9$_{CW}$ tendency")
+ax[3].set_xlabel('Time (min)', fontsize=12)
+ax[3].set_xlim([t[0], t[-1]])
+# ax[3].set_ylim([-0.0002, 0.0002])
+ax[3].set_ylim([-0.0006, 0.0003])
+ax[3].xaxis.set_major_locator(MultipleLocator(5))
+ax[3].xaxis.set_minor_locator(MultipleLocator(1))
+ax[3].grid(visible=True, which='major', linestyle='-')
+ax[3].grid(visible=True, which='minor', linestyle='--')
+
+plt.suptitle(f"Parcel vorticity tendency at {mvtime} min", fontsize=12)
 
 plt.show()
 
@@ -400,6 +431,429 @@ plt.show()
 # ax.legend(handles=[s1,s2,s3], labels=['sw','cw','z'], loc=1)
 
 # plt.show()
+
+
+
+
+
+
+#%%
+
+from matplotlib.ticker import MultipleLocator
+
+t = np.linspace(195, 225, 31)
+
+# load parcel times
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+it1 = np.where(ptime/60 == 195)[0][0]
+it2 = np.where(ptime/60 == 210)[0][0]
+it3 = np.where(ptime/60 == 225)[0][0]
+
+# load 210 min tendencies
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_210min.pkl", 'rb')
+vten1 = pickle.load(dbfile)
+dbfile.close()
+tilt_z1 = vten1['tilt_z']; stretch_z1 = vten1['stretch_z']; bcl_z1 = vten1['bcl_z']; fric_z1 = vten1['fric_z']
+tilt_h1 = vten1['tilt_h']; stretch_h1 = vten1['stretch_h']; bcl_h1 = vten1['bcl_h']; fric_h1 = vten1['fric_h']
+tilt_sw1 = vten1['tilt_sw']; stretch_sw1 = vten1['stretch_sw']; bcl_sw1 = vten1['bcl_sw']; fric_sw1 = vten1['fric_sw']
+tilt_cw1 = vten1['tilt_cw']; stretch_cw1 = vten1['stretch_cw']; bcl_cw1 = vten1['bcl_cw']; fric_cw1 = vten1['fric_cw']
+# load 225 min tendencies
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_vten_225min.pkl", 'rb')
+vten2 = pickle.load(dbfile)
+dbfile.close()
+tilt_z2 = vten2['tilt_z']; stretch_z2 = vten2['stretch_z']; bcl_z2 = vten2['bcl_z']; fric_z2 = vten2['fric_z']
+tilt_h2 = vten2['tilt_h']; stretch_h2 = vten2['stretch_h']; bcl_h2 = vten2['bcl_h']; fric_h2 = vten2['fric_h']
+tilt_sw2 = vten2['tilt_sw']; stretch_sw2 = vten2['stretch_sw']; bcl_sw2 = vten2['bcl_sw']; fric_sw2 = vten2['fric_sw']
+tilt_cw2 = vten2['tilt_cw']; stretch_cw2 = vten2['stretch_cw']; bcl_cw2 = vten2['bcl_cw']; fric_cw2 = vten2['fric_cw']
+
+# load 210 min source regions
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_210min_v2.pkl", 'rb')
+cc = pickle.load(dbfile)
+cc1 = cc['mv1']
+dbfile.close()
+# load 225 min source regions
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_225min_v2.pkl", 'rb')
+cc = pickle.load(dbfile)
+cc2 = cc['mv1']
+dbfile.close()
+
+# load parcel vertical vorticity
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+zvort1 = np.median(traj[f"210min"]['zvort'][it1:it2+1,(cc1 == 1)], axis=1)
+zvort2 = np.median(traj[f"225min"]['zvort'][it2:it3+1,(cc2 == 1)], axis=1)
+# load 210 min parcel horizontal vorticity
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_210min.pkl", 'rb')
+vort_traj = pickle.load(dbfile)
+hvort1 = np.median(vort_traj['hvort_ml'][it1:it2+1,:], axis=1)
+svort1 = np.median(vort_traj['vort_sw_ml'][it1:it2+1,:], axis=1)
+cvort1 = np.median(vort_traj['vort_cw_ml_signed'][it1:it2+1,:], axis=1)
+dbfile.close()
+# load 225 min parcel horizontal vorticity
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_225min.pkl", 'rb')
+vort_traj = pickle.load(dbfile)
+hvort2 = np.median(vort_traj['hvort_ml'][it2:it3+1,:], axis=1)
+svort2 = np.median(vort_traj['vort_sw_ml'][it2:it3+1,:], axis=1)
+cvort2 = np.median(vort_traj['vort_cw_ml_signed'][it2:it3+1,:], axis=1)
+dbfile.close()
+
+
+
+if True:
+    fig,ax = plt.subplots(4, 1, figsize=(9,10), sharex=True, layout='constrained')
+    
+    ax[0].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    s1, = ax[0].plot(t[:16], np.median(tilt_z1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[0].plot(t[:16], np.median(stretch_z1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[0].plot(t[:16], np.median(bcl_z1, axis=1), 'red', linewidth=2)
+    s4, = ax[0].plot(t[:16], np.median(fric_z1, axis=1), 'goldenrod', linewidth=2)
+    ax[0].plot(t[15:], np.median(tilt_z2, axis=1), 'mediumblue', linewidth=2)
+    ax[0].plot(t[15:], np.median(stretch_z2, axis=1), 'deepskyblue', linewidth=2)
+    ax[0].plot(t[15:], np.median(bcl_z2, axis=1), 'red', linewidth=2)
+    ax[0].plot(t[15:], np.median(fric_z2, axis=1), 'goldenrod', linewidth=2)
+    ax[0].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[0].set_title("Parcel \u03B6 tendency")
+    ax[0].set_ylim([-0.0004, 0.0004])
+    ax[0].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[0].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[0].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[0].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    ax[1].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    s1, = ax[1].plot(t[:16], np.median(tilt_h1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[1].plot(t[:16], np.median(stretch_h1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[1].plot(t[:16], np.median(bcl_h1, axis=1), 'red', linewidth=2)
+    s4, = ax[1].plot(t[:16], np.median(fric_h1, axis=1), 'goldenrod', linewidth=2)
+    ax[1].plot(t[15:], np.median(tilt_h2, axis=1), 'mediumblue', linewidth=2)
+    ax[1].plot(t[15:], np.median(stretch_h2, axis=1), 'deepskyblue', linewidth=2)
+    ax[1].plot(t[15:], np.median(bcl_h2, axis=1), 'red', linewidth=2)
+    ax[1].plot(t[15:], np.median(fric_h2, axis=1), 'goldenrod', linewidth=2)
+    ax[1].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[1].set_title("Parcel \u03c9$_H$ tendency")
+    ax[1].set_ylim([-0.0004, 0.0008])
+    ax[1].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[1].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[1].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[1].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    ax[2].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    s1, = ax[2].plot(t[:16], np.median(tilt_sw1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[2].plot(t[:16], np.median(stretch_sw1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[2].plot(t[:16], np.median(bcl_sw1, axis=1), 'red', linewidth=2)
+    s4, = ax[2].plot(t[:16], np.median(fric_sw1, axis=1), 'goldenrod', linewidth=2)
+    ax[2].plot(t[15:], np.median(tilt_sw2, axis=1), 'mediumblue', linewidth=2)
+    ax[2].plot(t[15:], np.median(stretch_sw2, axis=1), 'deepskyblue', linewidth=2)
+    ax[2].plot(t[15:], np.median(bcl_sw2, axis=1), 'red', linewidth=2)
+    ax[2].plot(t[15:], np.median(fric_sw2, axis=1), 'goldenrod', linewidth=2)
+    ax[2].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[2].set_title("Parcel \u03c9$_{SW}$ tendency")
+    ax[2].set_ylim([-0.0008, 0.0006])
+    ax[2].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[2].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[2].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[2].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    ax[3].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    s1, = ax[3].plot(t[:16], np.median(tilt_cw1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[3].plot(t[:16], np.median(stretch_cw1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[3].plot(t[:16], np.median(bcl_cw1, axis=1), 'red', linewidth=2)
+    s4, = ax[3].plot(t[:16], np.median(fric_cw1, axis=1), 'goldenrod', linewidth=2)
+    ax[3].plot(t[15:], np.median(tilt_cw2, axis=1), 'mediumblue', linewidth=2)
+    ax[3].plot(t[15:], np.median(stretch_cw2, axis=1), 'deepskyblue', linewidth=2)
+    ax[3].plot(t[15:], np.median(bcl_cw2, axis=1), 'red', linewidth=2)
+    ax[3].plot(t[15:], np.median(fric_cw2, axis=1), 'goldenrod', linewidth=2)
+    ax[3].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[3].set_title("Parcel \u03c9$_{CW}$ tendency")
+    ax[3].set_xlabel('Time (min)', fontsize=12)
+    ax[3].set_xlim([195, 225])
+    ax[3].set_ylim([-0.0006, 0.0004])
+    ax[3].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[3].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[3].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[3].xaxis.set_major_locator(MultipleLocator(5))
+    ax[3].xaxis.set_minor_locator(MultipleLocator(1))
+    ax[3].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    plt.show()
+
+
+
+#%%
+
+from matplotlib.ticker import MultipleLocator
+
+# actual vorticity
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(np.linspace(195, 210, 16), zvort1[::4], 'goldenrod', linewidth=2)
+s3, = ax.plot(np.linspace(195, 210, 16), svort1[::4], 'deepskyblue', linewidth=2)
+s4, = ax.plot(np.linspace(195, 210, 16), cvort1[::4], 'mediumblue', linewidth=2)
+s2, = ax.plot(np.linspace(195, 210, 16), hvort1[::4], 'red', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), zvort2[::4], 'goldenrod', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), svort2[::4], 'deepskyblue', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), cvort2[::4], 'mediumblue', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), hvort2[::4], 'red', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel vorticity")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.04, 0.08])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Vertical','Horizontal','Streamwise','Crosswise'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+
+
+# fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+# ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+# s1, = ax.plot(np.linspace(195, 210, 61), zvort1, 'goldenrod', linewidth=2)
+# s3, = ax.plot(np.linspace(195, 210, 61), svort1, 'deepskyblue', linewidth=2)
+# s4, = ax.plot(np.linspace(195, 210, 61), cvort1, 'mediumblue', linewidth=2)
+# s2, = ax.plot(np.linspace(195, 210, 61), hvort1, 'red', linewidth=2)
+# ax.plot(np.linspace(210, 225, 61), zvort2, 'goldenrod', linewidth=2)
+# ax.plot(np.linspace(210, 225, 61), svort2, 'deepskyblue', linewidth=2)
+# ax.plot(np.linspace(210, 225, 61), cvort2, 'mediumblue', linewidth=2)
+# ax.plot(np.linspace(210, 225, 61), hvort2, 'red', linewidth=2)
+# ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+# ax.set_title("Parcel vorticity")
+# ax.set_xlim([195, 225])
+# ax.set_ylim([-0.06, 0.08])
+# ax.legend(handles=[s1,s2,s3,s4], labels=['Vertical','Horizontal','Streamwise','Crosswise'], loc=2)
+
+
+
+# vertical tendency
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(tilt_z1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(stretch_z1, axis=1), 'deepskyblue', linewidth=2)
+s3, = ax.plot(t[:16], np.median(bcl_z1, axis=1), 'red', linewidth=2)
+s4, = ax.plot(t[:16], np.median(fric_z1, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(tilt_z2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(stretch_z2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(bcl_z2, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(fric_z2, axis=1), 'goldenrod', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel vertical vorticity tendency")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.0004, 0.0004])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+
+# horizontal tendency
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(tilt_h1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(stretch_h1, axis=1), 'deepskyblue', linewidth=2)
+s3, = ax.plot(t[:16], np.median(bcl_h1, axis=1), 'red', linewidth=2)
+s4, = ax.plot(t[:16], np.median(fric_h1, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(tilt_h2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(stretch_h2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(bcl_h2, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(fric_h2, axis=1), 'goldenrod', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel horizontal vorticity tendency")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.0004, 0.0008])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+
+
+# streamwise tendency
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(tilt_sw1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(stretch_sw1, axis=1), 'deepskyblue', linewidth=2)
+s3, = ax.plot(t[:16], np.median(bcl_sw1, axis=1), 'red', linewidth=2)
+s4, = ax.plot(t[:16], np.median(fric_sw1, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(tilt_sw2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(stretch_sw2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(bcl_sw2, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(fric_sw2, axis=1), 'goldenrod', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel streamwise vorticity tendency")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.0008, 0.0006])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+
+
+# crosswise tendency
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(tilt_cw1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(stretch_cw1, axis=1), 'deepskyblue', linewidth=2)
+s3, = ax.plot(t[:16], np.median(bcl_cw1, axis=1), 'red', linewidth=2)
+s4, = ax.plot(t[:16], np.median(fric_cw1, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(tilt_cw2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(stretch_cw2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(bcl_cw2, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(fric_cw2, axis=1), 'goldenrod', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel crosswise vorticity tendency")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.0006, 0.0004])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+
+plt.show()
+
+#%%
+
+from matplotlib.ticker import MultipleLocator
+
+# actual vorticity
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(np.linspace(195, 210, 16), zvort1[::4], 'goldenrod', linewidth=2)
+s3, = ax.plot(np.linspace(195, 210, 16), svort1[::4], 'deepskyblue', linewidth=2)
+s4, = ax.plot(np.linspace(195, 210, 16), cvort1[::4], 'mediumblue', linewidth=2)
+s2, = ax.plot(np.linspace(195, 210, 16), hvort1[::4], 'red', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), zvort2[::4], 'goldenrod', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), svort2[::4], 'deepskyblue', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), cvort2[::4], 'mediumblue', linewidth=2)
+ax.plot(np.linspace(210, 225, 16), hvort2[::4], 'red', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel vorticity")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.04, 0.08])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Vertical','Horizontal','Streamwise','Crosswise'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+ax.yaxis.set_major_locator(MultipleLocator(0.02))
+ax.yaxis.set_minor_locator(MultipleLocator(0.01))
+
+
+# tilting term
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(tilt_z1, axis=1), 'goldenrod', linewidth=2)
+s3, = ax.plot(t[:16], np.median(tilt_sw1, axis=1), 'deepskyblue', linewidth=2)
+s4, = ax.plot(t[:16], np.median(tilt_cw1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(tilt_h1, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(tilt_z2, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(tilt_sw2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(tilt_cw2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(tilt_h2, axis=1), 'red', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel vorticity tendency - Tilting term")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.0008, 0.0004])
+# ax.set_ylim([-0.0004, 0.0003])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Vertical','Horizontal','Streamwise','Crosswise'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+ax.yaxis.set_minor_locator(MultipleLocator(0.0001))
+
+
+# stretching term
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(stretch_z1, axis=1), 'goldenrod', linewidth=2)
+s3, = ax.plot(t[:16], np.median(stretch_sw1, axis=1), 'deepskyblue', linewidth=2)
+s4, = ax.plot(t[:16], np.median(stretch_cw1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(stretch_h1, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(stretch_z2, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(stretch_sw2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(stretch_cw2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(stretch_h2, axis=1), 'red', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel vorticity tendency - Stretching term")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.0006, 0.0008])
+# ax.set_ylim([-0.0002, 0.0002])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Vertical','Horizontal','Streamwise','Crosswise'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+ax.yaxis.set_minor_locator(MultipleLocator(0.0001))
+
+
+# baroclinic term
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(bcl_z1, axis=1), 'goldenrod', linewidth=2)
+s3, = ax.plot(t[:16], np.median(bcl_sw1, axis=1), 'deepskyblue', linewidth=2)
+s4, = ax.plot(t[:16], np.median(bcl_cw1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(bcl_h1, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(bcl_z2, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(bcl_sw2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(bcl_cw2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(bcl_h2, axis=1), 'red', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel vorticity tendency - Baroclinic term")
+ax.set_xlim([195, 225])
+ax.set_ylim([-0.0002, 0.0003])
+# ax.set_ylim([-0.00005, 0.00005])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Vertical','Horizontal','Streamwise','Crosswise'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+ax.yaxis.set_minor_locator(MultipleLocator(0.000025))
+
+
+# friction term
+fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
+
+ax.axhline(0, color='gray', linewidth=1.5, linestyle='--')
+s1, = ax.plot(t[:16], np.median(fric_z1, axis=1), 'goldenrod', linewidth=2)
+s3, = ax.plot(t[:16], np.median(fric_sw1, axis=1), 'deepskyblue', linewidth=2)
+s4, = ax.plot(t[:16], np.median(fric_cw1, axis=1), 'mediumblue', linewidth=2)
+s2, = ax.plot(t[:16], np.median(fric_h1, axis=1), 'red', linewidth=2)
+ax.plot(t[15:], np.median(fric_z2, axis=1), 'goldenrod', linewidth=2)
+ax.plot(t[15:], np.median(fric_sw2, axis=1), 'deepskyblue', linewidth=2)
+ax.plot(t[15:], np.median(fric_cw2, axis=1), 'mediumblue', linewidth=2)
+ax.plot(t[15:], np.median(fric_h2, axis=1), 'red', linewidth=2)
+ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
+ax.set_title("Parcel vorticity tendency - Friction term")
+ax.set_xlim([195, 225])
+ax.set_ylim([-1.5e-10, 2e-10])
+# ax.set_ylim([-0.5e-10, 0.5e-10])
+ax.legend(handles=[s1,s2,s3,s4], labels=['Vertical','Horizontal','Streamwise','Crosswise'], loc=2)
+ax.grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+ax.xaxis.set_major_locator(MultipleLocator(5))
+ax.xaxis.set_minor_locator(MultipleLocator(1))
+ax.yaxis.set_minor_locator(MultipleLocator(0.25e-10))
+
+plt.show()
+
+
+
+
+
 
 
 #%% Calculate tendency plan views
@@ -599,8 +1053,8 @@ for fn in np.arange(28,59):
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
-t = 210
-mvtime = 210
+t = 223
+mvtime = 225
 
 dbfile = open(ip+f"plan{t}_tilt.pkl", 'rb')
 tmp = pickle.load(dbfile)
@@ -707,22 +1161,17 @@ print(f"Friction: {np.min(fric_h[iz,:,:])}, {np.max(fric_h[iz,:,:])}")
 #     return c,ex
 
 
-xlims = [-20,0]
-ylims = [-60,-40]
+xlims = [-11,-6] # [-19,-14] for 210 min
+ylims = [-51,-46] # [-70,-65] for 210 min
 
 sz = 100
 
-# 220 min: [-0.0020, 0.0026], [-0.0017, 0.0019], [-4.56e-6, 7.97e-6], [-2.07e-10, 2.23e-10]
-# 221 min: [-0.0035, 0.0048], [-0.0030, 0.0019], [-1.27e-5, 1.99e-5], [-3.01e-10, 3.14e-10]
-# 222 min: [-0.0029, 0.0046], [-0.0038, 0.0020], [-1.31e-5, 1.06e-5], [-4.21e-10, 3.99e-10]
-# 223 min: [-0.0023, 0.0027], [-0.0023, 0.0020], [-9.02e-6, 1.03e-5], [-3.03e-10, 2.77e-10]
-# 224 min: [-0.0035, 0.0063], [-0.0030, 0.0033], [-1.74e-5, 1.53e-5], [-5.34e-10, 7.52e-10]
-# 225 min: [-0.0034, 0.0022], [-0.0023, 0.0020], [-1.45e-5, 1.38e-5], [-3.47e-10, 2.49e-10]
 
-tlims = [-0.004, 0.004]; tlevs = np.linspace(tlims[0], tlims[1], 21)
-slims = [-0.003, 0.003]; slevs = np.linspace(slims[0], slims[1], 21)
-blims = [-2e-5, 2e-5]; blevs = np.linspace(blims[0], blims[1], 21)
-flims = [-3e-10, 3e-10]; flevs = np.linspace(flims[0], flims[1], 21)
+
+tlims = [-0.002, 0.002]; tlevs = np.linspace(tlims[0], tlims[1], 21) # 0.0008
+slims = [-0.002, 0.002]; slevs = np.linspace(slims[0], slims[1], 21) # 0.0008
+blims = [-1e-3, 1e-3]; blevs = np.linspace(blims[0], blims[1], 21) # 2e-4
+flims = [-1e-9, 1e-9]; flevs = np.linspace(flims[0], flims[1], 21) # 2e-10
 
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
@@ -746,17 +1195,11 @@ ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 plt.suptitle(f"\u03B6 tendency - {t} min, {zh[iz]*1000:.0f} m")
 
 
-# 220 min: [-0.0023, 0.0037], [-0.0023, 0.0024], [-4.60e-4, 5.81e-4], [-4.92e-10, 2.29e-10]
-# 221 min: [-0.0019, 0.0030], [-0.0027, 0.0062], [-7.38e-4, 1.00e-3], [-1.04e-9, 4.89e-10]
-# 222 min: [-0.0040, 0.0039], [-0.0022, 0.0055], [-6.17e-4, 1.02e-3], [-1.44e-9, 8.17e-10]
-# 223 min: [-0.0029, 0.0035], [-0.0021, 0.0032], [-5.71e-4, 8.95e-4], [-7.56e-10, 4.57e-10]
-# 224 min: [-0.0039, 0.0041], [-0.0027, 0.0052], [-9.75e-4, 1.03e-3], [-2.83e-9, 2.03e-9]
-# 225 min: [-0.0030, 0.0034], [-0.0027, 0.0044], [-5.80e-4, 8.77e-4], [-7.13e-10, 3.98e-10]
 
-tlims = [-0.003, 0.003]; tlevs = np.linspace(tlims[0], tlims[1], 21)
-slims = [-0.006, 0.006]; slevs = np.linspace(slims[0], slims[1], 21)
-blims = [-10e-4, 10e-4]; blevs = np.linspace(blims[0], blims[1], 21)
-flims = [-10e-10, 10e-10]; flevs = np.linspace(flims[0], flims[1], 21)
+# tlims = [-0.001, 0.001]; tlevs = np.linspace(tlims[0], tlims[1], 21)
+# slims = [-0.001, 0.001]; slevs = np.linspace(slims[0], slims[1], 21)
+# blims = [-1e-3, 1e-3]; blevs = np.linspace(blims[0], blims[1], 21)
+# flims = [-2e-9, 2e-9]; flevs = np.linspace(flims[0], flims[1], 21)
 
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
