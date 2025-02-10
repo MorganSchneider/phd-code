@@ -56,7 +56,7 @@ def effective_layer(p, T, Td, h, height_layer=False):
     else:
         return pbot, ptop
 
-#%% Load data
+#%% Load obs data
 
 save_flag = False
 iop = 2
@@ -80,36 +80,35 @@ wnd = mc.wind_components(sndws*units('m/s'), sndwd*units.deg)
 sndsu = wnd[0].magnitude[:]
 sndsv = wnd[1].magnitude[:]
 
-#%%
+#%% load cm1 data
 
 #fp = f"/Users/morgan.schneider/Documents/cm1/PERiLS/IOP{iop}/{snd_time}/dry/"
 #ff = glob(fp+'cm1out_0000*.nc')
 #fn = ff[-1]
-fp = 'D:/cm1out/merger/merger2-500m/'
-fn = fp + 'cm1out_000001.nc'
+fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/'
+fn = fp+'cm1out_000001.nc'
 #ds = read_cm1out(fn,['z','th','qv','prs','u0','v0','th0','qv0','prs0'])
 
 ds = nc.Dataset(fn)
 
 z = ds.variables['z'][:].data # km
-u0 = ds.variables['u0'][:].data # m/s
-v0 = ds.variables['v0'][:].data # m/s
-th0 = ds.variables['th0'][:].data # K
-qv0 = ds.variables['qv0'][:].data # kg/kg
-prs0 = ds.variables['prs0'][:].data # Pa
+u0 = ds.variables['u0'][:].data[0,:,0,0] # m/s
+v0 = ds.variables['v0'][:].data[0,:,0,0] # m/s
+th0 = ds.variables['th0'][:].data[0,:,0,0] # K
+qv0 = ds.variables['qv0'][:].data[0,:,0,0] # kg/kg
+prs0 = ds.variables['prs0'][:].data[0,:,0,0] # Pa
 
 ds.close()
 
-#%%
 
-T0 = th0[0,:,0,0] * (prs0[0,:,0,0]/100000.)**0.286
-e0 = (qv0[0,:,0,0] * prs0[0,:,0,0]/100) / (0.622+qv0[0,:,0,0])
+
+T0 = th0 * (prs0/100000.)**0.286
+e0 = (qv0 * prs0/100) / (0.622+qv0)
 Td0 = 243.5 / ((17.67/(np.log(e0/6.112)))-1) + 273.15
 
-umove = 6
 
 
-#%%
+#%% obs sounding
 
 # 1 m/s = 1.944 kt
 
@@ -206,13 +205,13 @@ print(f"Significant tornado:  {STP_snd:.1f}")
 
 
 print(f"-----------------------------------")
+#%% cm1 stable sounding
 
-
-eff_cm1 = effective_layer(prs0[0,:,0,0]/100*units.hPa, T0*units.K, Td0*units.K, z*1000*units.m, height_layer=True)
+eff_cm1 = effective_layer(prs0/100*units.hPa, T0*units.K, Td0*units.K, z*1000*units.m, height_layer=True)
 ebot = eff_cm1[0].magnitude
 etop = eff_cm1[1].magnitude
 
-bwnd = mc.bunkers_storm_motion(prs0[0,:,0,0]/100*units.hPa, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), z*1000*units.m)
+bwnd = mc.bunkers_storm_motion(prs0/100*units.hPa, u0*units('m/s'), v0*units('m/s'), z*1000*units.m)
 uBR = bwnd[0].magnitude[0]
 vBR = bwnd[0].magnitude[1]
 uBL = bwnd[1].magnitude[0]
@@ -224,51 +223,51 @@ angBR = 180 + np.arctan2(vBR, uBR)*180/np.pi
 VH06 = np.sqrt(u06**2 + v06**2)
 ang06 = 180 + np.arctan2(v06, u06)*180/np.pi
 
-T_parcel = mc.parcel_profile(prs0[0,:,0,0]/100*units.hPa, T0[0]*units.K, Td0[0]*units.K)
-CC_cm1 = mc.cape_cin(prs0[0,:,0,0]/100*units.hPa, T0*units.K, Td0*units.K, T_parcel)
+T_parcel = mc.parcel_profile(prs0/100*units.hPa, T0[0]*units.K, Td0[0]*units.K)
+CC_cm1 = mc.cape_cin(prs0/100*units.hPa, T0*units.K, Td0*units.K, T_parcel)
 cape = CC_cm1[0].magnitude
 cin = CC_cm1[1].magnitude
-MU_cm1 = mc.most_unstable_cape_cin(prs0[0,:,0,0]/100*units.hPa, T0*units.K, Td0*units.K, height=z*1000*units.m)
+MU_cm1 = mc.most_unstable_cape_cin(prs0/100*units.hPa, T0*units.K, Td0*units.K, height=z*1000*units.m)
 mucape = MU_cm1[0].magnitude
 mucin = MU_cm1[1].magnitude
-SB_cm1 = mc.surface_based_cape_cin(prs0[0,:,0,0]/100*units.hPa, T0*units.K, Td0*units.K)
+SB_cm1 = mc.surface_based_cape_cin(prs0/100*units.hPa, T0*units.K, Td0*units.K)
 sbcape = SB_cm1[0].magnitude
 sbcin = SB_cm1[1].magnitude
-ML_cm1 = mc.mixed_layer_cape_cin(prs0[0,:,0,0]/100*units.hPa, T0*units.K, Td0*units.K, height=z*1000*units.m)
+ML_cm1 = mc.mixed_layer_cape_cin(prs0/100*units.hPa, T0*units.K, Td0*units.K, height=z*1000*units.m)
 mlcape = ML_cm1[0].magnitude
 mlcin = ML_cm1[1].magnitude
 
-lcl_cm1 = mc.lcl(prs0[0,0,0,0]/100*units.hPa, T0[0]*units.K, Td0[0]*units.K)
-Plcl = lcl_cm1[0].magnitude
-ilcl = np.where(prs0[0,:,0,0]/100 <= Plcl)[0][0]
+lcl_cm1 = mc.lcl(prs0/100*units.hPa, T0[0]*units.K, Td0[0]*units.K)
+Plcl = lcl_cm1[0].magnitude[0]
+ilcl = np.where(prs0/100 <= Plcl)[0][0]
 Zlcl = z[ilcl]*1000
 
-el_cm1 = mc.el(prs0[0,:,0,0]/100*units.hPa, T0*units.K, Td0*units.K)
+el_cm1 = mc.el(prs0/100*units.hPa, T0*units.K, Td0*units.K)
 Pel = el_cm1[0].magnitude
-iel = np.where(prs0[0,:,0,0]/100 <= Pel)[0][0]
+iel = np.where(prs0/100 <= Pel)[0][0]
 Zel = z[iel]*1000
 
-shr6km = mc.bulk_shear(prs0[0,:,0,0]/100*units.hPa, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), height=z*1000*units.m, bottom=15*units.m, depth=6000*units.m)
+shr6km = mc.bulk_shear(prs0/100*units.hPa, u0*units('m/s'), v0*units('m/s'), height=z*1000*units.m, bottom=10*units.m, depth=6000*units.m)
 ushr06 = shr6km[0].magnitude
 vshr06 = shr6km[1].magnitude
 shr06 = np.sqrt(ushr06**2 + vshr06**2)
 angSHR = 180 + np.arctan2(vshr06, ushr06)*180/np.pi
-shrE = mc.bulk_shear(prs0[0,:,0,0]/100*units.hPa, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), height=z*1000*units.m, bottom=ebot*units.m, depth=(Zel-ebot)*units.m)
+shrE = mc.bulk_shear(prs0/100*units.hPa, u0*units('m/s'), v0*units('m/s'), height=z*1000*units.m, bottom=ebot*units.m, depth=(Zel-ebot)*units.m)
 uEBS = shrE[0].magnitude
 vEBS = shrE[1].magnitude
 EBS = np.sqrt(uEBS**2 + vEBS**2)
 angEBS = 180 + np.arctan2(vEBS, uEBS)*180/np.pi
 
-srh500 = mc.storm_relative_helicity(z*1000*units.m, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), depth=500*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
+srh500 = mc.storm_relative_helicity(z*1000*units.m, u0*units('m/s'), v0*units('m/s'), depth=500*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
 SRH500 = srh500[2].magnitude
-srh1km = mc.storm_relative_helicity(z*1000*units.m, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), depth=1000*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
+srh1km = mc.storm_relative_helicity(z*1000*units.m, u0*units('m/s'), v0*units('m/s'), depth=1000*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
 SRH1km = srh1km[2].magnitude
-srh3km = mc.storm_relative_helicity(z*1000*units.m, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), depth=3000*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
+srh3km = mc.storm_relative_helicity(z*1000*units.m, u0*units('m/s'), v0*units('m/s'), depth=3000*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
 SRH3km = srh3km[2].magnitude
-esrh = mc.storm_relative_helicity(z*1000*units.m, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), depth=(etop-ebot)*units.m, bottom=ebot*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
+esrh = mc.storm_relative_helicity(z*1000*units.m, u0*units('m/s'), v0*units('m/s'), depth=(etop-ebot)*units.m, bottom=ebot*units.m, storm_u=uBR*units('m/s'), storm_v=vBR*units('m/s'))
 ESRH = esrh[2].magnitude
 
-crit_cm1 = mc.critical_angle(prs0[0,:,0,0]/100*units.hPa, (u0[0,:,0,0]+6)*units('m/s'), v0[0,:,0,0]*units('m/s'), z*1000*units.m, uBR*units('m/s'), vBR*units('m/s'))
+crit_cm1 = mc.critical_angle(prs0/100*units.hPa, u0*units('m/s'), v0*units('m/s'), z*1000*units.m, uBR*units('m/s'), vBR*units('m/s'))
 crit_angle = crit_cm1.magnitude
 scp_cm1 = mc.supercell_composite(mucape*units('J/kg'), ESRH*units('m^2/s^2'), EBS*units('m/s'))
 SCP = scp_cm1[0].magnitude
@@ -282,7 +281,7 @@ print(f"Sfc CAPE,CIN:         {cape:.0f} J/kg, {cin:.0f} J/kg")
 print(f"MUCAPE,MUCIN:         {mucape:.0f} J/kg, {mucin:.0f} J/kg")
 print(f"SBCAPE,SBCIN:         {sbcape:.0f} J/kg, {sbcin:.0f} J/kg")
 print(f"MLCAPE,MLCIN:         {mlcape:.0f} J/kg, {mlcin:.0f} J/kg")
-print(f"LCL height:           {Zlcl:.0f} m ({Plcl:.0f} hPa")
+print(f"LCL height:           {Zlcl:.0f} m ({Plcl:.0f} hPa)")
 print(f"Eff. inflow layer:    {ebot:.0f} m-{etop:.0f} m")
 print(f"Bunkers RM:           {smBR:.1f} m/s at {angBR:.0f} deg (Vector: {uBR:.1f} m/s, {vBR:.1f} m/s)")
 print(f"0-6 km mean wind:     {VH06:.1f} m/s at {ang06:.0f} deg (Vector: {u06:.1f} m/s, {v06:.1f} m/s)")
@@ -298,7 +297,7 @@ print(f"Supercell composite:  {SCP:.1f}")
 print(f"Significant tornado:  {STP:.1f}")
 
 #%%
-figsave = True
+figsave = False
 
 fig = plt.figure(figsize=(8,8))
 

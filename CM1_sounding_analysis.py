@@ -61,37 +61,21 @@ def effective_layer(p, T, Td, h, height_layer=False):
 
 #%% Load data
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/'
 fn = 'cm1out_000001.nc'
 
 ds = nc.Dataset(fp+fn)
-
 z = ds.variables['z'][:].data # km
-u1 = ds.variables['uinterp'][:].data # m/s
-v1 = ds.variables['vinterp'][:].data # m/s
-th1 = ds.variables['th'][:].data # K
-qv1 = ds.variables['qv'][:].data # kg/kg
-prs1 = ds.variables['prs'][:].data # Pa
-
+u = ds.variables['uinterp'][:].data[0,:,-1,-1] + 6 # m/s
+v = ds.variables['vinterp'][:].data[0,:,-1,-1] # m/s
+th = ds.variables['th'][:].data[0,:,-1,-1] # K
+qv = ds.variables['qv'][:].data[0,:,-1,-1] # kg/kg
+prs = ds.variables['prs'][:].data[0,:,-1,-1] # Pa
 ds.close()
 
-umove = 6 # domain translation
-vmove = 0
-
-# Pick a point
-iy = 0
-ix = 0
-
-u = u1[0,:,iy,ix] + umove
-v = v1[0,:,iy,ix] + vmove
-th = th1[0,:,iy,ix]
-qv = qv1[0,:,iy,ix]
-prs = prs1[0,:,iy,ix]
-
-
 # Calculate T, Td
-T = th[0,:,0,0] * (prs[0,:,0,0]/100000.)**0.286
-e = (qv[0,:,0,0] * prs[0,:,0,0]/100) / (0.622+qv[0,:,0,0])
+T = th * (prs/100000.)**0.286
+e = (qv * prs/100) / (0.622+qv)
 Td = 243.5 / ((17.67/(np.log(e/6.112)))-1) + 273.15
 
 
@@ -172,7 +156,7 @@ v_shr = shr[1].magnitude
 shr_06 = np.sqrt(u_shr**2 + v_shr**2)
 shr06_dir = 180 + np.arctan2(v_shr, u_shr)*180/np.pi
 # Effective layer bulk shear
-shr = mc.bulk_shear(prs*units.Pa, u*units('m/s'), v*units('m/s'), height=z*1000*units.m, bottom=ebot*units.m, depth=(Zel-ebot)*units.m)
+shr = mc.bulk_shear(prs*units.Pa, u*units('m/s'), v*units('m/s'), height=z*1000*units.m, bottom=ebot*units.m, depth=(z_el*1000-ebot)*units.m)
 u_shr = shr[0].magnitude
 v_shr = shr[1].magnitude
 EBS = np.sqrt(u_shr**2 + v_shr**2)
