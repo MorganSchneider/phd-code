@@ -27,6 +27,7 @@ import pickle
 import wrf
 from scipy.ndimage import gaussian_filter
 from os.path import exists
+from matplotlib.ticker import MultipleLocator
 
 #%%
 ######################
@@ -34,7 +35,7 @@ from os.path import exists
 ######################
 
 # Mimics the Matlab struct array
-# Literally just a dict that uses dot indexing instead of bracket indexing
+# Literally just a dict that uses dot indexing instead of brackets
 # so not actually useful but it took me far too long to discover dicts
 class struct():
     def __init__(self,**kwargs):
@@ -89,7 +90,7 @@ cmaps = {
 }
 
 
-# # Read CM1 output into struct object
+# # Read CM1 output into user-defined struct object
 # def read_cm1out(fname, dsvars=None):
 #     # fname : full path to data file
 #     # dsvars: list of the names of desired variables to load
@@ -110,7 +111,68 @@ cmaps = {
     
 #     return df
 
-# Calculate a moving-block average
+
+# Get vertical cross-sections of 3D fields along any diagonal line, plus a 1D vector for the diagonal horizontal coordinate
+def vert_cross_section(field, x, y, start=[0,0], end=[-1,-1], gety=False):
+    # start: xy coordinates of cross-section start point (array or tuple)
+    # end: xy coordinates of cross-section end point (array or tuple)
+    ix1 = np.where(x >= start[0])[0][0]
+    iy1 = np.where(y >= start[1])[0][0]
+    ix2 = np.where(x >= end[0])[0][0]
+    iy2 = np.where(y >= end[1])[0][0]
+    
+    xy = wrf.xy(field, start_point=(ix1,iy1), end_point=(ix2,iy2))
+    if gety:
+        x_cross = wrf.interp2dxy(np.moveaxis(np.tile(y, (field.shape[0],field.shape[2],1)), 2, 1), xy)
+    else:
+        x_cross = wrf.interp2dxy(np.tile(x, (field.shape[0],field.shape[1],1)), xy)
+    field_cross = wrf.interp2dxy(field, xy)
+    
+    return field_cross.data, x_cross[0].data
+    
+
+# Get magnitude of wind vectors projected onto an angle alpha (meant for getting horizontal winds along diagonal cross sections)
+def proj_winds(u, v, proj_angle):
+    if proj_angle > 2*np.pi:
+        proj_angle = proj_angle*np.pi/180 # convert to rads
+    
+    U_proj = u*np.sin(proj_angle) + v*np.cos(proj_angle)
+    V_proj = u*np.cos(proj_angle) - v*np.sin(proj_angle)
+    nu = U_proj * np.sin(proj_angle)
+    nv = U_proj * np.cos(proj_angle)
+    
+    return U_proj,nu,nv
+
+
+# Automate saving data to new or existing pickle file
+def save_to_pickle(data, pkl_fname, new_pkl=False):
+    # data: dict of variables to save
+    # pkl_fname: filename to save data to (includes path)
+    # new_pkl: True or False (if True, will overwrite any existing file)
+    if (not exists(pkl_fname)) | new_pkl:
+        dbfile = open(pkl_fname, 'wb')
+        pickle.dump(data, dbfile)
+        dbfile.close()
+    elif exists(pkl_fname):
+        dbfile = open(pkl_fname, 'rb')
+        save_data = pickle.load(dbfile)
+        dbfile.close()
+        
+        save_data.update(data)
+        dbfile = open(pkl_fname, 'wb')
+        pickle.dump(save_data, dbfile)
+        dbfile.close()
+
+
+# get index of value in a data array that's closest to a desired value
+def find_closest(data, val):
+    # data: array of data to search
+    # val: desired value
+    idx = np.abs(data - val).argmin()
+    return idx
+
+
+# Calculate an n-point moving block average
 def movmean(data, npts):
     # data: 1-D vector of data
     # npts: number of points to average
@@ -156,7 +218,7 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
     return c
 
 
-# Wrapper function for contourf?
+# Wrapper function for contourf
 def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None, ylims=None,
                   cmap=None, cbar=True, cbfs=None, **kwargs):
     if cmap is None:
@@ -198,58 +260,6 @@ def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None,
         ax.set_ylim(ylims[0], ylims[1])
     
     return c
-
-
-
-
-# Get vertical cross-sections of 3D fields along any diagonal line, plus a 1D vector for the diagonal horizontal coordinate
-def vert_cross_section(field, x, y, start=[0,0], end=[-1,-1], gety=False):
-    # start: xy coordinates of cross-section start point (array or tuple)
-    # end: xy coordinates of cross-section end point (array or tuple)
-    ix1 = np.where(x >= start[0])[0][0]
-    iy1 = np.where(y >= start[1])[0][0]
-    ix2 = np.where(x >= end[0])[0][0]
-    iy2 = np.where(y >= end[1])[0][0]
-    
-    xy = wrf.xy(field, start_point=(ix1,iy1), end_point=(ix2,iy2))
-    if gety:
-        x_cross = wrf.interp2dxy(np.moveaxis(np.tile(y, (field.shape[0],field.shape[2],1)), 2, 1), xy)
-    else:
-        x_cross = wrf.interp2dxy(np.tile(x, (field.shape[0],field.shape[1],1)), xy)
-    field_cross = wrf.interp2dxy(field, xy)
-    
-    return field_cross.data, x_cross[0].data
-    
-
-# Get magnitude of wind vectors projected onto an angle alpha (meant for getting horizontal winds along diagonal cross sections)
-def proj_winds(u, v, proj_angle):
-    if proj_angle > 2*np.pi:
-        proj_angle = proj_angle*np.pi/180 # convert to rads
-    
-    U_proj = u*np.sin(proj_angle) + v*np.cos(proj_angle)
-    V_proj = u*np.cos(proj_angle) - v*np.sin(proj_angle)
-    nu = U_proj * np.sin(proj_angle)
-    nv = U_proj * np.cos(proj_angle)
-    
-    return U_proj,nu,nv
-
-
-def save_to_pickle(data, pkl_fname, new_pkl=False):
-    if exists(pkl_fname) | (not new_pkl):
-        dbfile = open(pkl_fname, 'rb')
-        save_data = pickle.load(dbfile)
-        dbfile.close()
-        
-        save_data.update(data)
-        dbfile = open(pkl_fname, 'wb')
-        pickle.dump(save_data, dbfile)
-        dbfile.close()
-    elif (not exists(pkl_fname)) | new_pkl:
-        dbfile = open(pkl_fname, 'wb')
-        pickle.dump(data, dbfile)
-        dbfile.close()
-        
-    
 
 
 # Calculate individual CM1 reflectivity contributions (NSSL 2-moment microphysics only)

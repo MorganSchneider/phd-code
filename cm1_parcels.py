@@ -1077,11 +1077,19 @@ if False:
 #%% Make big multipanel figures for paper :c
 
 import matplotlib as mpl
-cm = mpl.colors.ListedColormap(['red', 'gold', 'deepskyblue', 'mediumblue'])
+cm = mpl.colors.ListedColormap(['gold', 'red', 'deepskyblue', 'mediumblue'])
 
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
 traj_mv1 = pickle.load(dbfile)
+dbfile.close()
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/boxes_s1.pkl", 'rb')
+box = pickle.load(dbfile)
+xb1 = box['x1_pp']
+xb2 = box['x2_pp']
+yb1 = box['y1_pp']
+yb2 = box['y2_pp']
 dbfile.close()
 
 
@@ -1178,19 +1186,53 @@ for i in range(3):
     
     # 3x3 panel trajectories colored by z, B, and source for merger
     if True:
-        p1 = axs[0,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=z_mv1/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3)
+        
+        x0 = x_mv1[:,(cc_mv1==0)]; y0 = y_mv1[:,(cc_mv1==0)]; z0 = z_mv1[:,(cc_mv1==0)]; b0 = b_mv1[:,(cc_mv1==0)]; c0 = cc_mv1[(cc_mv1==0)]
+        x1 = x_mv1[:,(cc_mv1==1)]; y1 = y_mv1[:,(cc_mv1==1)]; z1 = z_mv1[:,(cc_mv1==1)]; b1 = b_mv1[:,(cc_mv1==1)]; c1 = cc_mv1[(cc_mv1==1)]
+        x2 = x_mv1[:,(cc_mv1==2)]; y2 = y_mv1[:,(cc_mv1==2)]; z2 = z_mv1[:,(cc_mv1==2)]; b2 = b_mv1[:,(cc_mv1==2)]; c2 = cc_mv1[(cc_mv1==2)]
+        x3 = x_mv1[:,(cc_mv1==3)]; y3 = y_mv1[:,(cc_mv1==3)]; z3 = z_mv1[:,(cc_mv1==3)]; b3 = b_mv1[:,(cc_mv1==3)]; c3 = cc_mv1[(cc_mv1==3)]
+        if i == 0:
+            xp = np.append(x0[:,::50], x2[:,::8], axis=1)
+            yp = np.append(y0[:,::50], y2[:,::8], axis=1)
+            zp = np.append(z0[:,::50], z2[:,::8], axis=1)
+            bp = np.append(b0[:,::50], b2[:,::8], axis=1)
+            cc = np.append(c0[::50], c2[::8])
+        if i == 1:
+            xp = np.append(np.append(np.append(x0[:,::15], x1[:,::3], axis=1), x2[:,::4], axis=1), x3[:,:], axis=1)
+            yp = np.append(np.append(np.append(y0[:,::15], y1[:,::3], axis=1), y2[:,::4], axis=1), y3[:,:], axis=1)
+            zp = np.append(np.append(np.append(z0[:,::15], z1[:,::3], axis=1), z2[:,::4], axis=1), z3[:,:], axis=1)
+            bp = np.append(np.append(np.append(b0[:,::15], b1[:,::3], axis=1), b2[:,::4], axis=1), b3[:,:], axis=1)
+            cc = np.append(np.append(np.append(c0[::15], c1[::3]), c2[::4]), c3[:])
+        if i == 2:
+            xp = np.append(np.append(np.append(x0[:,::3], x1[:,:], axis=1), x2[:,:], axis=1), x3[:,::4], axis=1)
+            yp = np.append(np.append(np.append(y0[:,::3], y1[:,:], axis=1), y2[:,:], axis=1), y3[:,::4], axis=1)
+            zp = np.append(np.append(np.append(z0[:,::3], z1[:,:], axis=1), z2[:,:], axis=1), z3[:,::4], axis=1)
+            bp = np.append(np.append(np.append(b0[:,::3], b1[:,:], axis=1), b2[:,:], axis=1), b3[:,::4], axis=1)
+            cc = np.append(np.append(np.append(c0[::3], c1[:]), c2[:]), c3[::4])
+        
+        # p1 = axs[0,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=z_mv1/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3)
+        p1 = axs[0,i].scatter(xp/1000, yp/1000, s=0.5, c=zp/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3)
         axs[0,i].contour(xh[ix], yh[iy], dbz_m, levels=[30], colors='k', linewidths=1)
+        r1 = patches.Rectangle((xb1[15*i+14],yb1[15*i+14]), 10, 10, fc='none', ec='k', lw=2)
+        axs[0,i].add_patch(r1)
         axs[0,i].set_xlim(xl)
         axs[0,i].set_ylim(yl)
         axs[0,i].set_title(f"{t:.0f} min", fontsize=16)
         
-        p2 = axs[1,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=b_mv1, marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.3, vmax=0.1)
+        # p2 = axs[1,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=b_mv1, marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.3, vmax=0.1)
+        p2 = axs[1,i].scatter(xp/1000, yp/1000, s=0.5, c=bp, marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.3, vmax=0.1)
         axs[1,i].contour(xh[ix], yh[iy], dbz_m, levels=[30], colors='k', linewidths=1)
+        r2 = patches.Rectangle((xb1[15*i+14],yb1[15*i+14]), 10, 10, fc='none', ec='k', lw=2)
+        axs[1,i].add_patch(r2)
         axs[1,i].set_xlim(xl)
         axs[1,i].set_ylim(yl)
         
-        p3 = axs[2,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=np.tile(cc_mv1,(len(x_mv1[:,0]),1)), marker='.', cmap=cm, vmin=-0.5, vmax=3.5)
+        p3 = axs[2,i].scatter([0,0,0,0], [0,0,0,0], s=1, c=[0,1,2,3], marker='.', cmap=cm, vmin=-0.5, vmax=3.5)
+        # axs[2,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=np.tile(cc_mv1,(len(x_mv1[:,0]),1)), marker='.', cmap=cm, vmin=-0.5, vmax=3.5)
+        axs[2,i].scatter(xp/1000, yp/1000, s=0.5, c=np.tile(cc,(len(xp[:,0]),1)), marker='.', cmap=cm, vmin=-0.5, vmax=3.5)
         axs[2,i].contour(xh[ix], yh[iy], dbz_m, levels=[30], colors='k', linewidths=1)
+        r3 = patches.Rectangle((xb1[15*i+14],yb1[15*i+14]), 10, 10, fc='none', ec='k', lw=2)
+        axs[2,i].add_patch(r3)
         axs[2,i].set_xlim(xl)
         axs[2,i].set_ylim(yl)
         
@@ -1199,14 +1241,14 @@ for i in range(3):
             # axs[1,0].text(xl[1]-10, yl[1]-10, "B", fontsize=20, fontweight='bold')
             # axs[2,0].text(xl[1]-40, yl[1]-10, "Source", fontsize=19, fontweight='bold')
             axs[1,0].set_ylabel('y distance (km)', fontsize=14)
-            # if True:
-            #     l1, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='red')
-            #     l2, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='gold')
-            #     l3, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='deepskyblue')
-            #     l4, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='mediumblue')
-            # axs[2,0].legend(handles=[l1,l2,l3,l4],
-            #                 labels=['Low-level inflow', 'Mid-level inflow',
-            #                         'Supercell cold pool', 'QLCS cold pool'], loc=2, fontsize=10)
+            if True:
+                l1, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='gold')
+                l2, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='red')
+                l3, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='deepskyblue')
+                l4, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='mediumblue')
+            axs[2,0].legend(handles=[l1,l2,l3,l4],
+                            labels=['Low-level inflow', 'Mid-level inflow',
+                                    'Supercell outflow', 'QLCS outflow'], loc=2, fontsize=9)
         
         if i == 1:
             axs[2,1].set_xlabel('x distance (km)', fontsize=14)
@@ -1240,6 +1282,9 @@ if figsave:
 
 #%% One bigass time series plot of z/B/w/zvort for all MERGER sources
 
+from matplotlib.ticker import MultipleLocator
+
+
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
 traj_mv1 = pickle.load(dbfile)
 dbfile.close()
@@ -1258,6 +1303,10 @@ n = np.where(ptime == 225)[0][0]
 
 fig,axs1 = plt.subplots(4, 1, figsize=(15,11), sharex=True, layout='constrained')
 
+# for a in range(len(axs1)):
+#     axs1[a].axhline(0, color='darkgray', linestyle='-', linewidth=2)
+
+
 for i in range(3):
     t = times[i]
     it1 = np.where(ptime >= t-15)[0][0]
@@ -1267,7 +1316,6 @@ for i in range(3):
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{t:.0f}min_v2.pkl", 'rb')
     cc = pickle.load(dbfile)
     cc_mv1 = cc['mv1']
-    # cc_mv2 = cc['mv2']
     dbfile.close()
     
     
@@ -1281,56 +1329,27 @@ for i in range(3):
     b_mv1 = traj_mv1[f"{t:.0f}min"]['b']
     w_mv1 = traj_mv1[f"{t:.0f}min"]['w']
     zvort_mv1 = traj_mv1[f"{t:.0f}min"]['zvort']
-    vpg_mv1 = traj_mv1[f"{t:.0f}min"]['vpg']
     
     # colorblind-friendly colors
-    col1 = 'red'
-    col2 = 'gold'
+    col1 = 'gold'
+    col2 = 'red'
     col3 = 'deepskyblue'
     col4 = 'mediumblue'
     
-    # low-level environment
-    axs1[0].plot(ptime[it], np.median(z_mv1[it,c0_mv1],axis=1)/1000, col1, linewidth=2)
-    axs1[1].plot(ptime[it], np.median(b_mv1[it,c0_mv1],axis=1), col1, linewidth=2)
-    axs1[2].plot(ptime[it], np.median(w_mv1[it,c0_mv1],axis=1), col1, linewidth=2)
-    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c0_mv1],axis=1), col1, linewidth=2)
-    # mid-level environment
-    axs1[0].plot(ptime[it], np.median(z_mv1[it,c1_mv1],axis=1)/1000, col2, linewidth=2)
-    axs1[1].plot(ptime[it], np.median(b_mv1[it,c1_mv1],axis=1), col2, linewidth=2)
-    axs1[2].plot(ptime[it], np.median(w_mv1[it,c1_mv1],axis=1), col2, linewidth=2)
-    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c1_mv1],axis=1), col2, linewidth=2)
-    # supercell cold pool
-    axs1[0].plot(ptime[it], np.median(z_mv1[it,c2_mv1],axis=1)/1000, col3, linewidth=2)
-    axs1[1].plot(ptime[it], np.median(b_mv1[it,c2_mv1],axis=1), col3, linewidth=2)
-    axs1[2].plot(ptime[it], np.median(w_mv1[it,c2_mv1],axis=1), col3, linewidth=2)
-    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c2_mv1],axis=1), col3, linewidth=2)
+    
     # QLCS cold pool
-    axs1[0].plot(ptime[it], np.median(z_mv1[it,c3_mv1],axis=1)/1000, col4, linewidth=2)
-    axs1[1].plot(ptime[it], np.median(b_mv1[it,c3_mv1],axis=1), col4, linewidth=2)
-    axs1[2].plot(ptime[it], np.median(w_mv1[it,c3_mv1],axis=1), col4, linewidth=2)
-    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c3_mv1],axis=1), col4, linewidth=2)
-    
-    if np.any(cc_mv1 == 0):
-        c = c0_mv1
+    if np.any(cc_mv1 == 3):
+        c = c3_mv1
         axs1[0].fill_between(ptime[it], np.percentile(z_mv1[it,c], 25, axis=1)/1000,
-                             np.percentile(z_mv1[it,c], 75, axis=1)/1000, alpha=0.2, color=col1)
+                             np.percentile(z_mv1[it,c], 75, axis=1)/1000, alpha=0.25, color=col4)
         axs1[1].fill_between(ptime[it], np.percentile(b_mv1[it,c], 25, axis=1),
-                             np.percentile(b_mv1[it,c], 75, axis=1), alpha=0.2, color=col1)
+                             np.percentile(b_mv1[it,c], 75, axis=1), alpha=0.25, color=col4)
         axs1[2].fill_between(ptime[it], np.percentile(w_mv1[it,c], 25, axis=1),
-                             np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.2, color=col1)
+                             np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.25, color=col4)
         axs1[3].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
-                             np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.2, color=col1)
-    if np.any(cc_mv1 == 1):
-        c = c1_mv1
-        axs1[0].fill_between(ptime[it], np.percentile(z_mv1[it,c], 25, axis=1)/1000,
-                             np.percentile(z_mv1[it,c], 75, axis=1)/1000, alpha=0.3, color=col2)
-        axs1[1].fill_between(ptime[it], np.percentile(b_mv1[it,c], 25, axis=1),
-                             np.percentile(b_mv1[it,c], 75, axis=1), alpha=0.3, color=col2)
-        axs1[2].fill_between(ptime[it], np.percentile(w_mv1[it,c], 25, axis=1),
-                             np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.3, color=col2)
-        axs1[3].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
-                             np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.3, color=col2)
+                             np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.25, color=col4)
     
+    # supercell cold pool
     if np.any(cc_mv1 == 2):
         c = c2_mv1
         axs1[0].fill_between(ptime[it], np.percentile(z_mv1[it,c], 25, axis=1)/1000,
@@ -1342,29 +1361,58 @@ for i in range(3):
         axs1[3].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
                              np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.3, color=col3)
     
-    if np.any(cc_mv1 == 3):
-        c = c3_mv1
+    # low-level inflow
+    if np.any(cc_mv1 == 0):
+        c = c0_mv1
         axs1[0].fill_between(ptime[it], np.percentile(z_mv1[it,c], 25, axis=1)/1000,
-                             np.percentile(z_mv1[it,c], 75, axis=1)/1000, alpha=0.2, color=col4)
+                             np.percentile(z_mv1[it,c], 75, axis=1)/1000, alpha=0.3, color=col1)
         axs1[1].fill_between(ptime[it], np.percentile(b_mv1[it,c], 25, axis=1),
-                             np.percentile(b_mv1[it,c], 75, axis=1), alpha=0.2, color=col4)
+                             np.percentile(b_mv1[it,c], 75, axis=1), alpha=0.3, color=col1)
         axs1[2].fill_between(ptime[it], np.percentile(w_mv1[it,c], 25, axis=1),
-                             np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.2, color=col4)
+                             np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.3, color=col1)
         axs1[3].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
-                             np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.2, color=col4)
+                             np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.3, color=col1)
+    
+    # mid-level inflow
+    if np.any(cc_mv1 == 1):
+        c = c1_mv1
+        axs1[0].fill_between(ptime[it], np.percentile(z_mv1[it,c], 25, axis=1)/1000,
+                             np.percentile(z_mv1[it,c], 75, axis=1)/1000, alpha=0.2, color=col2)
+        axs1[1].fill_between(ptime[it], np.percentile(b_mv1[it,c], 25, axis=1),
+                             np.percentile(b_mv1[it,c], 75, axis=1), alpha=0.2, color=col2)
+        axs1[2].fill_between(ptime[it], np.percentile(w_mv1[it,c], 25, axis=1),
+                             np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.2, color=col2)
+        axs1[3].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
+                             np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.2, color=col2)
+    
+    # QLCS cold pool
+    s4, = axs1[0].plot(ptime[it], np.median(z_mv1[it,c3_mv1],axis=1)/1000, col4, linewidth=2)
+    axs1[1].plot(ptime[it], np.median(b_mv1[it,c3_mv1],axis=1), col4, linewidth=2)
+    axs1[2].plot(ptime[it], np.median(w_mv1[it,c3_mv1],axis=1), col4, linewidth=2)
+    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c3_mv1],axis=1), col4, linewidth=2)
+    # supercell cold pool
+    s3, = axs1[0].plot(ptime[it], np.median(z_mv1[it,c2_mv1],axis=1)/1000, col3, linewidth=2)
+    col3 = 'dodgerblue'
+    axs1[0].plot(ptime[it], np.median(z_mv1[it,c2_mv1],axis=1)/1000, col3, linewidth=2)
+    axs1[1].plot(ptime[it], np.median(b_mv1[it,c2_mv1],axis=1), col3, linewidth=2)
+    axs1[2].plot(ptime[it], np.median(w_mv1[it,c2_mv1],axis=1), col3, linewidth=2)
+    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c2_mv1],axis=1), col3, linewidth=2)
+    # low-level environment
+    s1, = axs1[0].plot(ptime[it], np.median(z_mv1[it,c0_mv1],axis=1)/1000, col1, linewidth=2)
+    axs1[1].plot(ptime[it], np.median(b_mv1[it,c0_mv1],axis=1), col1, linewidth=2)
+    axs1[2].plot(ptime[it], np.median(w_mv1[it,c0_mv1],axis=1), col1, linewidth=2)
+    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c0_mv1],axis=1), col1, linewidth=2)
+    # mid-level environment
+    s2, = axs1[0].plot(ptime[it], np.median(z_mv1[it,c1_mv1],axis=1)/1000, col2, linewidth=2)
+    # col2 = 'maroon'
+    # axs1[0].plot(ptime[it], np.median(z_mv1[it,c1_mv1],axis=1)/1000, col2, linewidth=2)
+    axs1[1].plot(ptime[it], np.median(b_mv1[it,c1_mv1],axis=1), col2, linewidth=2)
+    axs1[2].plot(ptime[it], np.median(w_mv1[it,c1_mv1],axis=1), col2, linewidth=2)
+    axs1[3].plot(ptime[it], np.median(zvort_mv1[it,c1_mv1],axis=1), col2, linewidth=2)
     
 
-        
-
-axs1[0].axvline(195, color='k', linestyle='-', linewidth=1.5)
-axs1[1].axvline(195, color='k', linestyle='-', linewidth=1.5)
-axs1[2].axvline(195, color='k', linestyle='-', linewidth=1.5)
-axs1[3].axvline(195, color='k', linestyle='-', linewidth=1.5)
-axs1[0].axvline(210, color='k', linestyle='-', linewidth=1.5)
-axs1[1].axvline(210, color='k', linestyle='-', linewidth=1.5)
-axs1[2].axvline(210, color='k', linestyle='-', linewidth=1.5)
-axs1[3].axvline(210, color='k', linestyle='-', linewidth=1.5)
-axs1[0].legend(labels=['Low-level inflow', 'Mid-level inflow', 'Supercell cold pool', 'QLCS cold pool'],
+axs1[0].legend(handles=[s1, s2, s3, s4],
+               labels=['Low-level inflow', 'Mid-level inflow', 'Supercell outflow', 'QLCS outflow'],
                loc='upper left', bbox_to_anchor=(0.13,0.99), fontsize=14)
 
 axs1[3].set_xlabel('Time (min)', fontsize=24)
@@ -1373,28 +1421,36 @@ axs1[3].set_xlim([180,225])
 axs1[0].set_ylim([0,3])
 axs1[1].set_ylim([-0.4,0.1])
 axs1[2].set_ylim([-15,15])
-axs1[3].set_ylim([-0.04,0.04])
-axs1[2].set_yticks([-15,-10,-5,0,5,10,15])
-axs1[3].set_yticks([-0.04,-0.02,0,0.02,0.04])
+axs1[3].set_ylim([-0.05,0.05])
+# axs1[2].set_yticks([-15,-10,-5,0,5,10,15])
+# axs1[3].set_yticks([-0.04,-0.02,0,0.02,0.04])
 axs1[0].set_ylabel('Height AGL', fontsize=20)
 axs1[1].set_ylabel("Buoyancy", fontsize=20)
 axs1[2].set_ylabel("Vertical velocity", fontsize=20)
 axs1[3].set_ylabel("Vertical vorticity", fontsize=20)
-axs1[0].tick_params(axis='y', which='major', labelsize=15)
-axs1[1].tick_params(axis='y', which='major', labelsize=15)
-axs1[2].tick_params(axis='y', which='major', labelsize=15)
-axs1[3].tick_params(axis='y', which='major', labelsize=15)
+
+for i in range(len(axs1)):
+    axs1[i].axvline(195, color='k', linestyle='--', linewidth=3)
+    axs1[i].axvline(210, color='k', linestyle='--', linewidth=3)
+    axs1[i].axhline(0, color='k', linestyle='--', linewidth=1.5)
+    axs1[i].tick_params(axis='y', which='major', labelsize=15)
+    axs1[i].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    axs1[i].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+
+axs1[0].yaxis.set_major_locator(MultipleLocator(1))
+axs1[0].yaxis.set_minor_locator(MultipleLocator(0.5))
+axs1[1].yaxis.set_major_locator(MultipleLocator(0.1))
+axs1[2].yaxis.set_major_locator(MultipleLocator(5))
+axs1[3].yaxis.set_major_locator(MultipleLocator(0.02))
+axs1[3].yaxis.set_minor_locator(MultipleLocator(0.01))
+axs1[3].xaxis.set_major_locator(MultipleLocator(5))
+axs1[3].xaxis.set_minor_locator(MultipleLocator(1))
 
 axs1[0].text(185, 3.2, '195 min', fontsize=24)
 axs1[0].text(200, 3.2, '210 min', fontsize=24)
 axs1[0].text(215, 3.2, '225 min', fontsize=24)
 
-
 fig.align_ylabels(axs1[:])
-axs1[0].grid(visible=True)
-axs1[1].grid(visible=True)
-axs1[2].grid(visible=True)
-axs1[3].grid(visible=True)
 
 # plt.show()
 
@@ -1407,9 +1463,7 @@ if figsave:
 
 
 
-# zoomed-in time series of w and zeta for mid-level
-
-from matplotlib.ticker import MultipleLocator
+#%% zoomed-in time series of w and zeta for mid-level
 
 ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
 ptime = ds.variables['time'][:].data/60
@@ -1779,7 +1833,7 @@ if figsave:
 
 
 
-#%% Interpolate pgf and vorticity to mid-level parcels
+#%% Calculate storm motion and save to pickle
 
 from CM1utils import *
 from scipy.interpolate import RegularGridInterpolator
@@ -1820,7 +1874,8 @@ if 'u_storm' not in locals():
             else:
                 y1_m[i+1] = (y1_m[i+2] + y1_m[i]) / 2
     
-    u_s = np.zeros(shape=(61,), dtype=float); v_s = np.zeros(shape=(61,), dtype=float)
+    u_s = np.zeros(shape=(61,), dtype=float)
+    v_s = np.zeros(shape=(61,), dtype=float)
     u_s[1:] = np.gradient(x1_m, np.linspace(10860, 14400, 60))
     v_s[1:] = np.gradient(y1_m, np.linspace(10860, 14400, 60))
     
@@ -1840,17 +1895,22 @@ if 'u_storm' not in locals():
 
 
 if False:
-    f = open('/Users/morgan.schneider/Documents/cm1_pp_v1.1/scripts/storm_motion.input', 'w')
-    f.close()
-    f = open('/Users/morgan.schneider/Documents/cm1_pp_v1.1/scripts/storm_motion.input', 'a')
-    for i in range(len(u_storm)):
-        f.write(f"{u_storm[i]:.3f}\t{v_storm[i]:.3f}\n")
-    f.close()
+    data = {'u_storm':u_storm, 'v_storm':v_storm}
+    save_to_pickle(data, ip+'storm_motion.pkl')
+    
+    # f = open('/Users/morgan.schneider/Documents/cm1_pp_v1.1/scripts/storm_motion.input', 'w')
+    # f.close()
+    # f = open('/Users/morgan.schneider/Documents/cm1_pp_v1.1/scripts/storm_motion.input', 'a')
+    # for i in range(len(u_storm)):
+    #     f.write(f"{u_storm[i]:.3f}\t{v_storm[i]:.3f}\n")
+    # f.close()
 
 
 
 
-#%%
+#%% Interpolate pgf and vorticity to mid-level parcels
+
+mvtime = 225
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime}min_v2.pkl", 'rb')
 cc = pickle.load(dbfile)
@@ -1863,14 +1923,13 @@ pids_ml = traj_mv1[f"{mvtime}min"]['pids'][(cc_mv1 == 1)]
 x_ml = traj_mv1[f"{mvtime}min"]['x'][:,(cc_mv1 == 1)]/1000
 y_ml = traj_mv1[f"{mvtime}min"]['y'][:,(cc_mv1 == 1)]/1000
 z_ml = traj_mv1[f"{mvtime}min"]['z'][:,(cc_mv1 == 1)]/1000
+u_ml = traj_mv1[f"{mvtime}min"]['u'][:,(cc_mv1 == 1)]
+v_ml = traj_mv1[f"{mvtime}min"]['v'][:,(cc_mv1 == 1)]
 zvort_ml = traj_mv1[f"{mvtime}min"]['zvort'][:,(cc_mv1 == 1)]
 dbfile.close()
 
 ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
 ptime = ds.variables['time'][:].data
-pid = ds.variables['xh'][:].data
-u_ml = ds.variables['u'][:].data[[np.nonzero(pid == pids_ml[i])[0][0] for i in range(len(pids_ml))]]
-v_ml = ds.variables['v'][:].data[[np.nonzero(pid == pids_ml[i])[0][0] for i in range(len(pids_ml))]]
 ds.close()
 
 x_median = np.median(x_ml, axis=1)
@@ -1889,6 +1948,12 @@ ix = slice(ix1,ix2+1)
 iy = slice(iy1,iy2+1)
 xx,yy = np.meshgrid(xh[ix], yh[iy], indexing='xy')
 
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+sm = pickle.load(dbfile)
+u_storm = sm['u_storm']
+v_storm = sm['v_storm']
+dbfile.close()
 
 
 # Interpolate model grid x/y/h/3d vorticity to trajectories
@@ -2044,51 +2109,30 @@ if True:
         
         ds = nc.Dataset(fp+f"cm1out_{k:06d}.nc")
         stime = ds.variables['time'][:].data[0]
-        # u = ds.variables['uinterp'][:].data[0,0:iz,:,:]
-        # v = ds.variables['vinterp'][:].data[0,0:iz,:,:]
         xvort = ds.variables['xvort'][:].data[0,0:iz,:,:]
         yvort = ds.variables['yvort'][:].data[0,0:iz,:,:]
-        # hvort = np.sqrt(xvort**2 + yvort**2)
         ds.close()
         
-        # u_sr = u - u_storm[k-13]
-        # v_sr = v - v_storm[k-13]
-        # del u,v
-        # usr_interp = RegularGridInterpolator((zh[0:iz], yh, xh), u_sr)
-        # vsr_interp = RegularGridInterpolator((zh[0:iz], yh, xh), v_sr)
         
         u_sr = u_ml - u_storm[k-13]
         v_sr = v_ml - v_storm[k-13]
         
         xvort_interp = RegularGridInterpolator((zh[0:iz], yh, xh), xvort)
         yvort_interp = RegularGridInterpolator((zh[0:iz], yh, xh), yvort)
-        # hvort_interp = RegularGridInterpolator((zh[0:iz], yh, xh), hvort)
-        del u_sr,v_sr,xvort,yvort
+        del xvort,yvort
         
         it = np.where(ptime == stime)[0][0]
         
         for p in range(len(pids_ml)):
-            # usr_ml = usr_interp((z_ml[it,p], y_ml[it,p], x_ml[it,p]))
-            # vsr_ml = vsr_interp((z_ml[it,p], y_ml[it,p], x_ml[it,p]))
             usr_ml = u_sr[it,p]
             vsr_ml = v_sr[it,p]
             xvort_ml = xvort_interp((z_ml[it,p], y_ml[it,p], x_ml[it,p]))
             yvort_ml = yvort_interp((z_ml[it,p], y_ml[it,p], x_ml[it,p]))
-            # hvort_ml = hvort_interp((z_ml[it,p], y_ml[it,p], x_ml[it,p]))
             vort_sw_ml[k-13,p] = (usr_ml*xvort_ml + vsr_ml*yvort_ml) / np.sqrt(usr_ml**2 + vsr_ml**2)
             vort_cw_ml[k-13,p] = (vsr_ml*xvort_ml - usr_ml*yvort_ml) / np.sqrt(usr_ml**2 + vsr_ml**2)
             
-        # usr_med = usr_interp((z_median[it], y_median[it], x_median[it]))
-        # vsr_med = vsr_interp((z_median[it], y_median[it], x_median[it]))
-        # usr_med = np.median(u_sr[it,:], axis=1)
-        # vsr_med = np.median(v_sr[it,:], axis=1)
-        # xvort_med = xvort_interp((z_median[it], y_median[it], x_median[it]))
-        # yvort_med = yvort_interp((z_median[it], y_median[it], x_median[it]))
-        # hvort_med = hvort_interp((z_median[it], y_median[it], x_median[it]))
-        # vort_sw_median[k-13] = (usr_med * xvort_med + vsr_med * yvort_med) / np.sqrt(usr_med**2 + vsr_med**2)
-        # vort_cw_median[k-13] = np.sqrt(hvort_med**2 - vort_sw_median[k-13]**2)
-        vort_sw_median[k-13] = np.median(vort_sw_ml[k-13,:], axis=1)
-        vort_cw_median[k-13] = np.median(vort_cw_ml[k-13,:], axis=1)
+        vort_sw_median[k-13] = np.median(vort_sw_ml[k-13,:])
+        vort_cw_median[k-13] = np.median(vort_cw_ml[k-13,:])
         stimes[k-13] = stime/60
     
     ptimes = ptime[0:it+1]/60
@@ -2100,10 +2144,10 @@ if True:
     
     pp,tp = np.meshgrid(pids_ml, ptimes, indexing='xy')
     
-    vort_sw_ml2 = vort_sw_ml_interp((tp, pp))
-    vort_cw_ml2 = vort_cw_ml_interp((tp, pp))
-    vort_sw_median2 = vort_sw_median_interp((ptimes,))
-    vort_cw_median2 = vort_cw_median_interp((ptimes,))
+    vort_sw_ml = vort_sw_ml_interp((tp, pp))
+    vort_cw_ml = vort_cw_ml_interp((tp, pp))
+    vort_sw_median = vort_sw_median_interp((ptimes,))
+    vort_cw_median = vort_cw_median_interp((ptimes,))
 
 
 
@@ -2287,6 +2331,7 @@ if False:
     
 #%% Save interpolations to pickle
 
+
 if False:
     # dbfile = open(ip+'hppga_traj_210min.pkl', 'wb')
     # save_vars = {'xpgf_ml':xpgf_ml, 'ypgf_ml':ypgf_ml, 'hpgf_ml':hpgf_ml, 'pgf_ml':pgf_ml,
@@ -2295,7 +2340,7 @@ if False:
     # pickle.dump(save_vars, dbfile)
     # dbfile.close()
     
-    dbfile = open(ip+f"hvort_traj_{mvtime}min.pkl", 'wb')
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mvtime}min.pkl", 'wb')
     save_vars = {'xvort_ml':xvort_ml, 'yvort_ml':yvort_ml,
                  'hvort_ml':hvort_ml, 'vort_ml':vort_ml,
                  'xvort_median':xvort_median, 'yvort_median':yvort_median,
@@ -2316,19 +2361,22 @@ if True:
     # pickle.dump(tmp, dbfile)
     # dbfile.close()
     
-    dbfile = open(ip+f"hvort_traj_{mvtime}min.pkl", 'rb')
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mvtime}min.pkl", 'rb')
     tmp = pickle.load(dbfile)
     dbfile.close()
     
-    save_vars = {'vort_cw_ml_signed':vort_cw_ml, 'vort_cw_median_signed':vort_cw_median}
+    save_vars = {'vort_sw_ml':vort_sw_ml, 'vort_sw_median':vort_sw_median,
+                 'vort_cw_ml_signed':vort_cw_ml, 'vort_cw_median_signed':vort_cw_median}
     tmp.update(save_vars)
-    dbfile = open(ip+f"hvort_traj_{mvtime}min.pkl", 'wb')
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mvtime}min.pkl", 'wb')
     pickle.dump(tmp, dbfile)
     dbfile.close()
     
     
 
 #%% Plot interpolated vorticity time series for mid-level parcels
+
+from matplotlib.ticker import MultipleLocator
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
 traj_mv1 = pickle.load(dbfile)
@@ -2347,9 +2395,9 @@ fig,axs = plt.subplots(4, 1, figsize=(9,8), sharex=True, layout='constrained')
 h = []
 l = []
 
+for a in range(len(axs)):
+    axs[a].axhline(0, color='darkgray', linestyle='-', linewidth=2.25)
 
-SR_flag = True
-plot_all = True
 
 for i in range(len(times)):
     t = times[i]
@@ -2362,20 +2410,13 @@ for i in range(len(times)):
     cc_mv1 = cc['mv1']
     dbfile.close()
     
-    ### MV1 ###
-    c0_mv1 = (cc_mv1 == 0)
-    c1_mv1 = (cc_mv1 == 1)
-    c2_mv1 = (cc_mv1 == 2)
-    c3_mv1 = (cc_mv1 == 3)
-    
-    
-    w_mv1 = traj_mv1[f"{t:.0f}min"]['w']
-    zvort_mv1 = traj_mv1[f"{t:.0f}min"]['zvort']
+    w_ml = traj_mv1[f"{t:.0f}min"]['w'][:,(cc_mv1 == 1)]
+    zvort_ml = traj_mv1[f"{t:.0f}min"]['zvort'][:,(cc_mv1 == 1)]
     
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{t:.0f}min.pkl", 'rb')
     vort_traj = pickle.load(dbfile)
-    hvort_mv1 = vort_traj['hvort_ml']
-    vort_mv1 = vort_traj['vort_ml']
+    hvort_ml = vort_traj['hvort_ml']
+    vort_ml = vort_traj['vort_ml']
     vort_sw = vort_traj['vort_sw_ml']
     vort_cw = vort_traj['vort_cw_ml_signed']
     dbfile.close()
@@ -2384,144 +2425,78 @@ for i in range(len(times)):
     
     # colorblind-friendly colors
     # col = ['red', 'gold', 'deepskyblue', 'mediumblue']
-    col = ['mediumblue', 'deepskyblue', 'gold', 'red']
+    col = ['black', 'midnightblue', 'mediumblue', 'red', 'purple', 'deepskyblue']
+    al = [0.2, 0.2, 0.3, 0.3, 0.3, 0.3]
     
     
-    if plot_all:
-        al = 0.2
-        axs[0].fill_between(ptime[it], np.percentile(w_mv1[it,c1_mv1], 25, axis=1),
-                              np.percentile(w_mv1[it,c1_mv1], 75, axis=1), alpha=al, color=col[0])
-        axs[1].fill_between(ptime[it], np.percentile(hvort_mv1[it,:], 25, axis=1),
-                              np.percentile(hvort_mv1[it,:], 75, axis=1), alpha=al, color=col[0])
-        axs[1].fill_between(ptime[it], np.percentile(zvort_mv1[it,c1_mv1], 25, axis=1),
-                              np.percentile(zvort_mv1[it,c1_mv1], 75, axis=1), alpha=0.3, color=col[1])
-        axs[2].fill_between(ptime[it], np.percentile(vort_mv1[it,:], 25, axis=1),
-                              np.percentile(vort_mv1[it,:], 75, axis=1), alpha=al, color=col[0])
-        axs[3].fill_between(ptime[it], np.percentile(vort_sw[it,:], 25, axis=1),
-                              np.percentile(vort_sw[it,:], 75, axis=1), alpha=al, color=col[0])
-        axs[3].fill_between(ptime[it], np.percentile(vort_cw[it,:], 25, axis=1),
-                              np.percentile(vort_cw[it,:], 75, axis=1), alpha=0.3, color=col[1])
-        
-        s1, = axs[0].plot(ptime[it], np.median(w_mv1[it,c1_mv1], axis=1), col[0], linewidth=2)
-        s2, = axs[1].plot(ptime[it], np.median(hvort_mv1[it,:], axis=1), col[0], linewidth=2)
-        s3, = axs[1].plot(ptime[it], np.median(zvort_mv1[it,c1_mv1], axis=1), col[1], linewidth=2)
-        s4, = axs[2].plot(ptime[it], np.median(vort_mv1[it,:], axis=1), col[0], linewidth=2)
-        s5, = axs[3].plot(ptime[it], np.median(vort_sw[it,:], axis=1), col[0], linewidth=2)
-        s6, = axs[3].plot(ptime[it], np.median(vort_cw[it,:], axis=1), col[1], linewidth=2)
-        
-        
-    else:
-        if SR_flag:
-            l1 = zvort_mv1[it,c1_mv1]
-            l2 = hvort_mv1[it,:]
-            l3 = vort_sw[it,:]
-            l4 = vort_cw[it,:]
-        else:
-            l1 = w_mv1[it,c1_mv1]
-            l2 = hvort_mv1[it,:]
-            l3 = zvort_mv1[it,c1_mv1]
-            l4 = vort_mv1[it,:]
-        
-        
-        # mid-level environment
-        s, = axs[0].plot(ptime[it], np.median(l1, axis=1), col[i], linewidth=2)
-        axs[1].plot(ptime[it], np.median(l2, axis=1), col[i], linewidth=2)
-        axs[2].plot(ptime[it], np.median(l3, axis=1), col[i], linewidth=2)
-        axs[3].plot(ptime[it], np.median(l4, axis=1), col[i], linewidth=2)
-        
-        axs[0].fill_between(ptime[it], np.percentile(l1, 25, axis=1),
-                              np.percentile(l1, 75, axis=1), alpha=0.2, color=col[i])
-        axs[1].fill_between(ptime[it], np.percentile(l2, 25, axis=1),
-                              np.percentile(l2, 75, axis=1), alpha=0.2, color=col[i])
-        axs[2].fill_between(ptime[it], np.percentile(l3, 25, axis=1),
-                              np.percentile(l3, 75, axis=1), alpha=0.2, color=col[i])
-        axs[3].fill_between(ptime[it], np.percentile(l4, 25, axis=1),
-                              np.percentile(l4, 75, axis=1), alpha=0.2, color=col[i])
-        
-        # axs[3].plot([t-15,t], [0.06+i/100, 0.06+i/100], col[i], linestyle='-', linewidth=1.5)
-        axs[0].axvline(t, color=col[i], linestyle='--', linewidth=1.5)
-        axs[1].axvline(t, color=col[i], linestyle='--', linewidth=1.5)
-        axs[2].axvline(t, color=col[i], linestyle='--', linewidth=1.5)
-        axs[3].axvline(t, color=col[i], linestyle='--', linewidth=1.5)
-        
-        h.append(s)
-        l.append(f"{t} min")
+    axs[0].fill_between(ptime[it], np.percentile(w_ml[it,:], 25, axis=1),
+                        np.percentile(w_ml[it,:], 75, axis=1), alpha=al[0], color=col[0])
     
+    axs[1].fill_between(ptime[it], np.percentile(vort_ml[it,:], 25, axis=1),
+                        np.percentile(vort_ml[it,:], 75, axis=1), alpha=al[1], color=col[1])
     
-axs[0].axvline(210, color='k', linestyle='--', linewidth=1.5)
-axs[1].axvline(210, color='k', linestyle='--', linewidth=1.5)
-axs[2].axvline(210, color='k', linestyle='--', linewidth=1.5)
-axs[3].axvline(210, color='k', linestyle='--', linewidth=1.5)
-
-# axs[0].axhline(0, color='gray', linestyle='--', linewidth=1)
-# axs[1].axhline(0, color='gray', linestyle='--', linewidth=1)
-# axs[2].axhline(0, color='gray', linestyle='--', linewidth=1)
-# axs[3].axhline(0, color='gray', linestyle='--', linewidth=1)
-axs[0].grid(visible=True)
-axs[1].grid(visible=True)
-axs[2].grid(visible=True)
-axs[3].grid(visible=True)
+    axs[2].fill_between(ptime[it], np.percentile(hvort_ml[it,:], 25, axis=1),
+                        np.percentile(hvort_ml[it,:], 75, axis=1), alpha=al[2], color=col[2])
+    
+    axs[2].fill_between(ptime[it], np.percentile(zvort_ml[it,:], 25, axis=1),
+                        np.percentile(zvort_ml[it,:], 75, axis=1), alpha=al[3], color=col[3])
+    
+    axs[3].fill_between(ptime[it], np.percentile(vort_sw[it,:], 25, axis=1),
+                        np.percentile(vort_sw[it,:], 75, axis=1), alpha=al[4], color=col[4])
+    
+    axs[3].fill_between(ptime[it], np.percentile(vort_cw[it,:], 25, axis=1),
+                        np.percentile(vort_cw[it,:], 75, axis=1), alpha=al[5], color=col[5])
+        
+    s1, = axs[0].plot(ptime[it], np.median(w_ml[it,:], axis=1), col[0], linewidth=2)
+    s2, = axs[1].plot(ptime[it], np.median(vort_ml[it,:], axis=1), col[1], linewidth=2)
+    s3, = axs[2].plot(ptime[it], np.median(hvort_ml[it,:], axis=1), col[2], linewidth=2)
+    s4, = axs[2].plot(ptime[it], np.median(zvort_ml[it,:], axis=1), col[3], linewidth=2)
+    s5, = axs[3].plot(ptime[it], np.median(vort_sw[it,:], axis=1), col[4], linewidth=2)
+    s6, = axs[3].plot(ptime[it], np.median(vort_cw[it,:], axis=1), col[5], linewidth=2)
+    
 
 axs[3].set_xlabel('Time (min)', fontsize=16)
 axs[3].tick_params(axis='x', which='major', labelsize=14)
 axs[3].set_xlim([195,225])
 
-if plot_all:
-    axs[0].legend(handles=[s1], labels=["w"], loc=3, fontsize=11)
-    axs[1].legend(handles=[s2,s3], labels=["|\u03c9$_H$|", "\u03B6"], loc=3, fontsize=11)
-    axs[2].legend(handles=[s4], labels=["Total |\u03c9|"], loc=3, fontsize=11)
-    axs[3].legend(handles=[s5,s6], labels=["Streamwise \u03c9", "Crosswise \u03c9"], loc=3, fontsize=11)
-    # axs[0].legend(handles=[s1], labels=["w"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
-    # axs[1].legend(handles=[s2,s3], labels=["|\u03c9$_H$|", "\u03B6"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
-    # axs[2].legend(handles=[s4], labels=["Total |\u03c9|"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
-    # axs[3].legend(handles=[s5,s6], labels=["Streamwise \u03c9", "Crosswise \u03c9"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
-    axs[0].set_ylim([-15, 15]) # w
-    axs[1].set_ylim([-0.06, 0.09]) # horiz and vert
-    axs[2].set_ylim([-0.01, 0.1]) # total
-    axs[3].set_ylim([-0.06, 0.065]) # streamwise and crosswise
-    axs[0].set_yticks([-15, -10, -5, 0, 5, 10, 15])
-    # axs[1].set_yticks([-0.04, -0.02, 0, 0.02, 0.04, 0.06, 0.08])
-    # axs[1].set_yticks([-0.05, -0.025, 0, 0.025, 0.05, 0.075, 0.1])
-    axs[1].set_yticks([-0.06, -0.03, 0, 0.03, 0.06, 0.09])
-    axs[2].set_yticks([0, 0.025, 0.05, 0.075, 0.1])
-    axs[3].set_yticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06])
-    figname = 'vort-all'
-else:
-    axs[0].legend(handles=h, labels=l, loc=2, fontsize=12)
-    if SR_flag:
-        axs[0].set_ylabel("\u03B6", fontsize=14)
-        axs[1].set_ylabel("\u03c9$_H$ magnitude", fontsize=14)
-        axs[2].set_ylabel("\u03c9$_{SW}$", fontsize=14)
-        axs[3].set_ylabel("\u03c9$_{CW}$", fontsize=14)
-        axs[0].set_ylim([-0.04, 0.04]) # vert vort
-        axs[1].set_ylim([0, 0.1]) # horiz vort
-        axs[2].set_ylim([-0.02, 0.06]) # streamwise vort
-        # axs[3].set_ylim([0, 0.08]) # crosswise vort magnitude
-        axs[3].set_ylim([-0.06, 0.06]) # crosswise vort
-        axs[0].set_yticks([-0.04, -0.02, 0, 0.02, 0.04]) # vert vort ticks
-        axs[3].set_yticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06])
-        figname = 'vort-SR'
-    else:
-        axs[0].set_ylabel("w", fontsize=14)
-        axs[1].set_ylabel("\u03c9$_H$ magnitude", fontsize=14)
-        axs[2].set_ylabel("\u03B6", fontsize=14)
-        axs[3].set_ylabel("Total \u03c9 magnitude", fontsize=14)
-        axs[0].set_ylim([-15, 15]) # w
-        axs[1].set_ylim([0, 0.1]) # horiz vort
-        axs[2].set_ylim([-0.04, 0.04]) # vert vort
-        axs[3].set_ylim([0, 0.1]) # 3d vort
-        axs[0].set_yticks([-15, -10, -5, 0, 5, 10, 15]) # w ticks
-        axs[2].set_yticks([-0.04, -0.02, 0, 0.02, 0.04]) # vert vort ticks
-        figname = 'vort'
+axs[0].legend(handles=[s1], labels=["w"], loc=3, fontsize=12)
+axs[1].legend(handles=[s2], labels=["Total |\u03c9|"], loc=3, fontsize=12)
+axs[2].legend(handles=[s3,s4], labels=["|\u03c9$_H$|", "\u03B6"], loc=3, fontsize=12, ncol=2)
+axs[3].legend(handles=[s5,s6], labels=["Streamwise", "Crosswise"], loc=3, fontsize=12, ncol=2)
+# axs[0].legend(handles=[s1], labels=["w"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
+# axs[1].legend(handles=[s2,s3], labels=["|\u03c9$_H$|", "\u03B6"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
+# axs[2].legend(handles=[s4], labels=["Total |\u03c9|"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
+# axs[3].legend(handles=[s5,s6], labels=["Streamwise \u03c9", "Crosswise \u03c9"], loc='upper left', bbox_to_anchor=(0.15,1), fontsize=11)
+axs[0].set_ylim([-15, 15]) # w
+axs[1].set_ylim([-0.02, 0.1]) # total
+axs[2].set_ylim([-0.05, 0.09]) # horiz and vert
+axs[3].set_ylim([-0.07, 0.07]) # streamwise and crosswise
+# axs[0].set_yticks([-15, -10, -5, 0, 5, 10, 15])
+# # axs[1].set_yticks([-0.04, -0.02, 0, 0.02, 0.04, 0.06, 0.08])
+# # axs[1].set_yticks([-0.05, -0.025, 0, 0.025, 0.05, 0.075, 0.1])
+# axs[1].set_yticks([-0.06, -0.03, 0, 0.03, 0.06, 0.09])
+# axs[2].set_yticks([0, 0.025, 0.05, 0.075, 0.1])
+# axs[3].set_yticks([-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06])
+figname = 'vort-all'
     
 
 # axs[0].set_title("Mid-level parcel vorticity for merger MV at 210/225 min", fontsize=14)
 axs[0].text(200.5, 16, '210 min', fontsize=18)
 axs[0].text(215.5, 16, '225 min', fontsize=18)
-axs[0].tick_params(axis='y', which='major', labelsize=12)
-axs[1].tick_params(axis='y', which='major', labelsize=12)
-axs[2].tick_params(axis='y', which='major', labelsize=12)
-axs[3].tick_params(axis='y', which='major', labelsize=12)
+
+for i in range(len(axs)):
+    axs[i].axvline(210, color='k', linestyle='--', linewidth=2)
+    axs[i].tick_params(axis='y', which='major', labelsize=12)
+    axs[i].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    axs[i].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+
+axs[0].yaxis.set_major_locator(MultipleLocator(5))
+axs[1].yaxis.set_major_locator(MultipleLocator(0.02))
+axs[2].yaxis.set_major_locator(MultipleLocator(0.02))
+axs[3].yaxis.set_major_locator(MultipleLocator(0.02))
+# axs[3].yaxis.set_minor_locator(MultipleLocator(0.01))
+axs[3].xaxis.set_major_locator(MultipleLocator(5))
+axs[3].xaxis.set_minor_locator(MultipleLocator(1))
 
 # plt.show()
 

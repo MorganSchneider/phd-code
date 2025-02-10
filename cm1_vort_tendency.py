@@ -12,10 +12,9 @@ Created on Mon Jan  6 15:24:56 2025
 
 from CM1utils import *
 from scipy.interpolate import RegularGridInterpolator
-from os.path import exists
 import metpy.calc as mc
 
-#%% Tendency along trajectories
+#%% Calculate tendency along trajectories
 
 ds = nc.Dataset("/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/cm1out_000001.nc")
 xh = ds.variables['xh'][:].data
@@ -48,53 +47,21 @@ ds.close()
 
 # Calculate storm motion for streamwise/crosswise vorticity
 if 'u_storm' not in locals():
-    dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/boxes_s1.pkl', 'rb') # interchange with boxes_q
-    box = pickle.load(dbfile)
-    x1_m = 1000 * np.array(box['x1_pp'])
-    y1_m = 1000 * np.array(box['y1_pp'])
+    dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+    sm = pickle.load(dbfile)
+    u_storm = sm['u_storm']
+    v_storm = sm['v_storm']
     dbfile.close()
-    
-    for i in range(len(x1_m)-1):
-        if x1_m[i+1] == x1_m[i]:
-            if (i != 0):
-                x1_m[i] = (x1_m[i+1] + x1_m[i-1]) / 2
-            else:
-                x1_m[i+1] = (x1_m[i+2] + x1_m[i]) / 2
-        
-        if y1_m[i+1] == y1_m[i]:
-            if (i != 0):
-                y1_m[i] = (y1_m[i+1] + y1_m[i-1]) / 2
-            else:
-                y1_m[i+1] = (y1_m[i+2] + y1_m[i]) / 2
-    
-    u_s = np.zeros(shape=(61,), dtype=float); v_s = np.zeros(shape=(61,), dtype=float)
-    u_s[1:] = np.gradient(x1_m, np.linspace(10860, 14400, 60))
-    v_s[1:] = np.gradient(y1_m, np.linspace(10860, 14400, 60))
-    
-    if u_s[1] == u_s[2]:
-        u_s[0] = u_s[1]
-    else:
-        u_s[0] = u_s[1] - np.diff(u_s)[1]
-    
-    if v_s[1] == v_s[2]:
-        v_s[0] = v_s[1]
-    else:
-        v_s[0] = v_s[1] - np.diff(v_s)[1]
-    
-    u_storm = u_s;  v_storm = v_s
-    u_storm[1:-1] = movmean(u_s,3)[1:-1]
-    v_storm[1:-1] = movmean(v_s,3)[1:-1]
 
 
-times = [225]
+times = [210,225]
 # n = np.where(ptime/60 == 225)[0][0]
-fnums = [58]
+fnums = [43,58]
 
 calc_stretching = False
 calc_tilting = False
 calc_baroclinic = False
 calc_friction = False
-
 
 for i in range(len(times)):
     t = times[i]
@@ -121,6 +88,8 @@ for i in range(len(times)):
     xvort_ml = vort_traj['xvort_ml']
     yvort_ml = vort_traj['yvort_ml']
     hvort_ml = vort_traj['hvort_ml']
+    svort_ml = vort_traj['vort_sw_ml']
+    cvort_ml = vort_traj['vort_cw_ml_signed']
     dbfile.close()
     
     # stimes = np.zeros(shape=(16,), dtype=float)
@@ -333,9 +302,7 @@ for i in range(len(times)):
 #end for i in range(len(times))
 
 
-#%% Parcel vorticity tendency time series
-
-from matplotlib.ticker import MultipleLocator
+#%% Time series - single time, panels z/h/sw/cw, all terms
 
 mvtime = 225
 # times = np.arange(195,226)
@@ -346,15 +313,68 @@ vten = pickle.load(dbfile)
 dbfile.close()
 
 
-tilt_z = vten['tilt_z']; stretch_z = vten['stretch_z']; bcl_z = vten['bcl_z']; fric_z = vten['fric_z']
-tilt_h = vten['tilt_h']; stretch_h = vten['stretch_h']; bcl_h = vten['bcl_h']; fric_h = vten['fric_h']
-tilt_sw = vten['tilt_sw']; stretch_sw = vten['stretch_sw']; bcl_sw = vten['bcl_sw']; fric_sw = vten['fric_sw']
-tilt_cw = vten['tilt_cw']; stretch_cw = vten['stretch_cw']; bcl_cw = vten['bcl_cw']; fric_cw = vten['fric_cw']
+tilt_z = vten['tilt_z']; stretch_z = vten['stretch_z']; bcl_z = vten['bcl_z']; fric_z = vten['fric_z']; total_z = vten['total_z']
+tilt_h = vten['tilt_h']; stretch_h = vten['stretch_h']; bcl_h = vten['bcl_h']; fric_h = vten['fric_h']; total_h = vten['total_h']
+tilt_sw = vten['tilt_sw']; stretch_sw = vten['stretch_sw']; bcl_sw = vten['bcl_sw']; fric_sw = vten['fric_sw']; total_sw = vten['total_sw']
+tilt_cw = vten['tilt_cw']; stretch_cw = vten['stretch_cw']; bcl_cw = vten['bcl_cw']; fric_cw = vten['fric_cw']; total_cw = vten['total_cw']
+
+if False:
+    tp = t
+    fric_z = total_z - tilt_z - stretch_z - bcl_z
+    fric_h = total_h - tilt_h - stretch_h - bcl_h
+    fric_sw = total_sw - tilt_sw - stretch_sw - bcl_sw
+    fric_cw = total_cw - tilt_cw - stretch_cw - bcl_cw
+
+
+if True:
+    ds = nc.Dataset("/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc")
+    ptime = ds.variables['time'][:].data
+    ds.close()
+    
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime:.0f}min_v2.pkl", 'rb')
+    cc = pickle.load(dbfile)
+    cc_mv1 = cc['mv1']
+    dbfile.close()
+    
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
+    traj = pickle.load(dbfile)
+    dbfile.close()
+    pids_ml = traj[f"{mvtime}min"]['pids'][(cc_mv1 == 1)]
+    zvort_ml = traj[f"{mvtime}min"]['zvort'][:,(cc_mv1 == 1)]
+    
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mvtime:.0f}min.pkl", 'rb')
+    vort_traj = pickle.load(dbfile)
+    xvort_ml = vort_traj['xvort_ml']
+    yvort_ml = vort_traj['yvort_ml']
+    hvort_ml = vort_traj['hvort_ml']
+    svort_ml = vort_traj['vort_sw_ml']
+    cvort_ml = vort_traj['vort_cw_ml_signed']
+    dbfile.close()
+    
+    it1 = np.where(ptime/60 == mvtime-15)[0][0]
+    it2 = np.where(ptime/60 == mvtime)[0][0]+1
+    tp = ptime[it1:it2]/60
+    
+    total_z = np.gradient(zvort_ml[it1:it2,:], ptime[it1:it2], axis=0)
+    total_h = np.gradient(hvort_ml[it1:it2,:], ptime[it1:it2], axis=0)
+    total_sw = np.gradient(svort_ml[it1:it2,:], ptime[it1:it2], axis=0)
+    total_cw = np.gradient(cvort_ml[it1:it2,:], ptime[it1:it2], axis=0)
+    
+    
+    fric_z = total_z[::4,:] - tilt_z - stretch_z - bcl_z
+    fric_h = total_h[::4,:] - tilt_h - stretch_h - bcl_h
+    fric_sw = total_sw[::4,:] - tilt_sw - stretch_sw - bcl_sw
+    fric_cw = total_cw[::4,:] - tilt_cw - stretch_cw - bcl_cw
+    
+    tp = t
+    total_z = total_z[::4,:]
+    total_h = total_h[::4,:]
+    total_sw = total_sw[::4,:]
+    total_cw = total_cw[::4,:]
 
 
 
-
-fig,ax = plt.subplots(4, 1, figsize=(8,10), sharex=True, layout='constrained')
+fig,ax = plt.subplots(4, 1, figsize=(8,11), sharex=True, layout='constrained')
 
 ax[0].axhline(0, color='gray', linewidth=1, linestyle='--')
 # ax.fill_between(t, np.percentile(svort_term, 25, axis=1),
@@ -362,50 +382,58 @@ ax[0].axhline(0, color='gray', linewidth=1, linestyle='--')
 s1, = ax[0].plot(t, np.median(tilt_z, axis=1), 'mediumblue', linewidth=2)
 s2, = ax[0].plot(t, np.median(stretch_z, axis=1), 'deepskyblue', linewidth=2)
 s3, = ax[0].plot(t, np.median(bcl_z, axis=1), 'red', linewidth=2)
-s4, = ax[0].plot(t, np.median(fric_z, axis=1), 'gold', linewidth=2)
+s4, = ax[0].plot(t, np.median(fric_z, axis=1), 'goldenrod', linewidth=2)
+s5, = ax[0].plot(tp, np.median(total_z, axis=1), 'k', linewidth=2)
 ax[0].set_title("Parcel \u03B6 tendency")
 # ax[0].set_ylim([-0.0001, 0.0003])
-ax[0].set_ylim([-0.0004, 0.0004])
-ax[0].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
-ax[0].grid(visible=True, which='major', linestyle='-')
-ax[0].grid(visible=True, which='minor', linestyle='--')
+ax[0].set_ylim([-0.0008, 0.0008])
+ax[0].yaxis.set_major_locator(MultipleLocator(0.0002))
+ax[0].legend(handles=[s1,s2,s3,s4,s5], labels=['Tilting','Stretching','Baroclinic','Friction','Total'], loc=2, ncol=2)
+ax[0].grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax[0].grid(visible=True, which='minor', color='lightgray', linestyle='--')
 
 ax[1].axhline(0, color='gray', linewidth=1, linestyle='--')
 ax[1].plot(t, np.median(tilt_h, axis=1), 'mediumblue', linewidth=2)
 ax[1].plot(t, np.median(stretch_h, axis=1), 'deepskyblue', linewidth=2)
 ax[1].plot(t, np.median(bcl_h, axis=1), 'red', linewidth=2)
-ax[1].plot(t, np.median(fric_h, axis=1), 'gold', linewidth=2)
+ax[1].plot(t, np.median(fric_h, axis=1), 'goldenrod', linewidth=2)
+ax[1].plot(tp, np.median(total_h, axis=1), 'k', linewidth=2)
 ax[1].set_title("Parcel \u03c9$_H$ tendency")
 # ax[1].set_ylim([-0.0002, 0.0002])
-ax[1].set_ylim([-0.0004, 0.0008])
-ax[1].grid(visible=True, which='major', linestyle='-')
-ax[1].grid(visible=True, which='minor', linestyle='--')
+ax[1].set_ylim([-0.0008, 0.0008])
+ax[1].yaxis.set_major_locator(MultipleLocator(0.0002))
+ax[1].grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax[1].grid(visible=True, which='minor', color='lightgray', linestyle='--')
 
 ax[2].axhline(0, color='gray', linewidth=1, linestyle='--')
 ax[2].plot(t, np.median(tilt_sw, axis=1), 'mediumblue', linewidth=2)
 ax[2].plot(t, np.median(stretch_sw, axis=1), 'deepskyblue', linewidth=2)
 ax[2].plot(t, np.median(bcl_sw, axis=1), 'red', linewidth=2)
-ax[2].plot(t, np.median(fric_sw, axis=1), 'gold', linewidth=2)
+ax[2].plot(t, np.median(fric_sw, axis=1), 'goldenrod', linewidth=2)
+ax[2].plot(tp, np.median(total_sw, axis=1), 'k', linewidth=2)
 ax[2].set_title("Parcel \u03c9$_{SW}$ tendency")
 # ax[2].set_ylim([-0.0004, 0.0003])
-ax[2].set_ylim([-0.0008, 0.0006])
-ax[2].grid(visible=True, which='major', linestyle='-')
-ax[2].grid(visible=True, which='minor', linestyle='--')
+ax[2].set_ylim([-0.0008, 0.0008])
+ax[2].yaxis.set_major_locator(MultipleLocator(0.0002))
+ax[2].grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax[2].grid(visible=True, which='minor', color='lightgray', linestyle='--')
 
 ax[3].axhline(0, color='gray', linewidth=1, linestyle='--')
 ax[3].plot(t, np.median(tilt_cw, axis=1), 'mediumblue', linewidth=2)
 ax[3].plot(t, np.median(stretch_cw, axis=1), 'deepskyblue', linewidth=2)
 ax[3].plot(t, np.median(bcl_cw, axis=1), 'red', linewidth=2)
-ax[3].plot(t, np.median(fric_cw, axis=1), 'gold', linewidth=2)
+ax[3].plot(t, np.median(fric_cw, axis=1), 'goldenrod', linewidth=2)
+ax[3].plot(tp, np.median(total_cw, axis=1), 'k', linewidth=2)
 ax[3].set_title("Parcel \u03c9$_{CW}$ tendency")
 ax[3].set_xlabel('Time (min)', fontsize=12)
 ax[3].set_xlim([t[0], t[-1]])
 # ax[3].set_ylim([-0.0002, 0.0002])
-ax[3].set_ylim([-0.0006, 0.0003])
+ax[3].set_ylim([-0.0008, 0.0008])
 ax[3].xaxis.set_major_locator(MultipleLocator(5))
 ax[3].xaxis.set_minor_locator(MultipleLocator(1))
-ax[3].grid(visible=True, which='major', linestyle='-')
-ax[3].grid(visible=True, which='minor', linestyle='--')
+ax[3].yaxis.set_major_locator(MultipleLocator(0.0002))
+ax[3].grid(visible=True, which='major', color='darkgray', linestyle='-')
+ax[3].grid(visible=True, which='minor', color='lightgray', linestyle='--')
 
 plt.suptitle(f"Parcel vorticity tendency at {mvtime} min", fontsize=12)
 
@@ -437,9 +465,7 @@ plt.show()
 
 
 
-#%%
-
-from matplotlib.ticker import MultipleLocator
+#%% Time series - both times, panels z/h/sw/cw, all terms
 
 t = np.linspace(195, 225, 31)
 
@@ -484,41 +510,114 @@ dbfile.close()
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
 traj = pickle.load(dbfile)
 dbfile.close()
-zvort1 = np.median(traj[f"210min"]['zvort'][it1:it2+1,(cc1 == 1)], axis=1)
-zvort2 = np.median(traj[f"225min"]['zvort'][it2:it3+1,(cc2 == 1)], axis=1)
+zvort1 = traj[f"210min"]['zvort'][it1:it2+1,(cc1 == 1)]
+zvort2 = traj[f"225min"]['zvort'][it2:it3+1,(cc2 == 1)]
 # load 210 min parcel horizontal vorticity
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_210min.pkl", 'rb')
 vort_traj = pickle.load(dbfile)
-hvort1 = np.median(vort_traj['hvort_ml'][it1:it2+1,:], axis=1)
-svort1 = np.median(vort_traj['vort_sw_ml'][it1:it2+1,:], axis=1)
-cvort1 = np.median(vort_traj['vort_cw_ml_signed'][it1:it2+1,:], axis=1)
+hvort1 = vort_traj['hvort_ml'][it1:it2+1,:]
+svort1 = vort_traj['vort_sw_ml'][it1:it2+1,:]
+cvort1 = vort_traj['vort_cw_ml_signed'][it1:it2+1,:]
 dbfile.close()
 # load 225 min parcel horizontal vorticity
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_225min.pkl", 'rb')
 vort_traj = pickle.load(dbfile)
-hvort2 = np.median(vort_traj['hvort_ml'][it2:it3+1,:], axis=1)
-svort2 = np.median(vort_traj['vort_sw_ml'][it2:it3+1,:], axis=1)
-cvort2 = np.median(vort_traj['vort_cw_ml_signed'][it2:it3+1,:], axis=1)
+hvort2 = vort_traj['hvort_ml'][it2:it3+1,:]
+svort2 = vort_traj['vort_sw_ml'][it2:it3+1,:]
+cvort2 = vort_traj['vort_cw_ml_signed'][it2:it3+1,:]
 dbfile.close()
 
 
+if True:
+    tsb_z1 = tilt_z1 + stretch_z1 + bcl_z1 + fric_z1
+    tsb_h1 = tilt_h1 + stretch_h1 + bcl_h1 + fric_h1
+    tsb_sw1 = tilt_sw1 + stretch_sw1 + bcl_sw1 + fric_sw1
+    tsb_cw1 = tilt_cw1 + stretch_cw1 + bcl_cw1 + fric_cw1
+    tsb_z2 = tilt_z2 + stretch_z2 + bcl_z2 + fric_z2
+    tsb_h2 = tilt_h2 + stretch_h2 + bcl_h2 + fric_h2
+    tsb_sw2 = tilt_sw2 + stretch_sw2 + bcl_sw2 + fric_sw2
+    tsb_cw2 = tilt_cw2 + stretch_cw2 + bcl_cw2 + fric_cw2
+
+if False:
+    # it1 = np.where(ptime/60 == 195)[0][0]
+    # it2 = np.where(ptime/60 == 210)[0][0]
+    # it3 = np.where(ptime/60 == 225)[0][0]
+    
+    total_z1 = np.gradient(zvort1, ptime[it1:it2+1], axis=0)
+    total_h1 = np.gradient(hvort1, ptime[it1:it2+1], axis=0)
+    total_sw1 = np.gradient(svort1, ptime[it1:it2+1], axis=0)
+    total_cw1 = np.gradient(cvort1, ptime[it1:it2+1], axis=0)
+    fric_z1 = total_z1[::4,:] - tilt_z1 - stretch_z1 - bcl_z1
+    fric_h1 = total_h1[::4,:] - tilt_h1 - stretch_h1 - bcl_h1
+    fric_sw1 = total_sw1[::4,:] - tilt_sw1 - stretch_sw1 - bcl_sw1
+    fric_cw1 = total_cw1[::4,:] - tilt_cw1 - stretch_cw1 - bcl_cw1
+    
+    total_z2 = np.gradient(zvort2, ptime[it2:it3+1], axis=0)
+    total_h2 = np.gradient(hvort2, ptime[it2:it3+1], axis=0)
+    total_sw2 = np.gradient(svort2, ptime[it2:it3+1], axis=0)
+    total_cw2 = np.gradient(cvort2, ptime[it2:it3+1], axis=0)
+    fric_z2 = total_z2[::4,:] - tilt_z2 - stretch_z2 - bcl_z2
+    fric_h2 = total_h2[::4,:] - tilt_h2 - stretch_h2 - bcl_h2
+    fric_sw2 = total_sw2[::4,:] - tilt_sw2 - stretch_sw2 - bcl_sw2
+    fric_cw2 = total_cw2[::4,:] - tilt_cw2 - stretch_cw2 - bcl_cw2
+    
+    total_z1 = total_z1[::4,:]
+    total_h1 = total_h1[::4,:]
+    total_sw1 = total_sw1[::4,:]
+    total_cw1 = total_cw1[::4,:]
+    total_z2 = total_z2[::4,:]
+    total_h2 = total_h2[::4,:]
+    total_sw2 = total_sw2[::4,:]
+    total_cw2 = total_cw2[::4,:]
+    
+if True:
+    # it1 = np.where(ptime/60 == 195)[0][0]
+    # it2 = np.where(ptime/60 == 210)[0][0]
+    # it3 = np.where(ptime/60 == 225)[0][0]
+    tp = ptime[it1:it3+1]/60
+    
+    total_z1 = np.gradient(zvort1[::4,:], ptime[it1:it2+1][::4], axis=0)
+    total_h1 = np.gradient(hvort1[::4,:], ptime[it1:it2+1][::4], axis=0)
+    total_sw1 = np.gradient(svort1[::4,:], ptime[it1:it2+1][::4], axis=0)
+    total_cw1 = np.gradient(cvort1[::4,:], ptime[it1:it2+1][::4], axis=0)
+    fric_z1 = total_z1 - tilt_z1 - stretch_z1 - bcl_z1
+    fric_h1 = total_h1 - tilt_h1 - stretch_h1 - bcl_h1
+    fric_sw1 = total_sw1 - tilt_sw1 - stretch_sw1 - bcl_sw1
+    fric_cw1 = total_cw1 - tilt_cw1 - stretch_cw1 - bcl_cw1
+    
+    total_z2 = np.gradient(zvort2[::4,:], ptime[it2:it3+1][::4], axis=0)
+    total_h2 = np.gradient(hvort2[::4,:], ptime[it2:it3+1][::4], axis=0)
+    total_sw2 = np.gradient(svort2[::4,:], ptime[it2:it3+1][::4], axis=0)
+    total_cw2 = np.gradient(cvort2[::4,:], ptime[it2:it3+1][::4], axis=0)
+    
+    fric_z2 = total_z2 - tilt_z2 - stretch_z2 - bcl_z2
+    fric_h2 = total_h2 - tilt_h2 - stretch_h2 - bcl_h2
+    fric_sw2 = total_sw2 - tilt_sw2 - stretch_sw2 - bcl_sw2
+    fric_cw2 = total_cw2 - tilt_cw2 - stretch_cw2 - bcl_cw2
+
+
+figsave = False
 
 if True:
-    fig,ax = plt.subplots(4, 1, figsize=(9,10), sharex=True, layout='constrained')
+    fig,ax = plt.subplots(4, 1, figsize=(9,11), sharex=True, layout='constrained')
     
     ax[0].axhline(0, color='gray', linewidth=1.5, linestyle='--')
     s1, = ax[0].plot(t[:16], np.median(tilt_z1, axis=1), 'mediumblue', linewidth=2)
     s2, = ax[0].plot(t[:16], np.median(stretch_z1, axis=1), 'deepskyblue', linewidth=2)
     s3, = ax[0].plot(t[:16], np.median(bcl_z1, axis=1), 'red', linewidth=2)
     s4, = ax[0].plot(t[:16], np.median(fric_z1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[0].plot(t[:16], np.median(total_z1, axis=1), 'k', linewidth=3)
+    s6, = ax[0].plot(t[:16], np.median(tsb_z1, axis=1), 'gray', linewidth=2)
     ax[0].plot(t[15:], np.median(tilt_z2, axis=1), 'mediumblue', linewidth=2)
     ax[0].plot(t[15:], np.median(stretch_z2, axis=1), 'deepskyblue', linewidth=2)
     ax[0].plot(t[15:], np.median(bcl_z2, axis=1), 'red', linewidth=2)
     ax[0].plot(t[15:], np.median(fric_z2, axis=1), 'goldenrod', linewidth=2)
+    ax[0].plot(t[15:], np.median(total_z2, axis=1), 'k', linewidth=3)
+    ax[0].plot(t[15:], np.median(tsb_z2, axis=1), 'gray', linewidth=2)
     ax[0].axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax[0].set_title("Parcel \u03B6 tendency")
     ax[0].set_ylim([-0.0004, 0.0004])
-    ax[0].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[0].legend(handles=[s1,s2,s3,s4,s5,s6], labels=['Tilting','Stretching','Baroclinic','Residual','Total','T+S+B'], loc=2, ncol=2)
     ax[0].grid(visible=True, which='major', color='darkgray', linestyle='-')
     ax[0].grid(visible=True, which='minor', color='lightgray', linestyle='--')
     ax[0].yaxis.set_minor_locator(MultipleLocator(0.0001))
@@ -528,14 +627,18 @@ if True:
     s2, = ax[1].plot(t[:16], np.median(stretch_h1, axis=1), 'deepskyblue', linewidth=2)
     s3, = ax[1].plot(t[:16], np.median(bcl_h1, axis=1), 'red', linewidth=2)
     s4, = ax[1].plot(t[:16], np.median(fric_h1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[1].plot(t[:16], np.median(total_h1, axis=1), 'k', linewidth=3)
+    s6, = ax[1].plot(t[:16], np.median(tsb_h1, axis=1), 'gray', linewidth=2)
     ax[1].plot(t[15:], np.median(tilt_h2, axis=1), 'mediumblue', linewidth=2)
     ax[1].plot(t[15:], np.median(stretch_h2, axis=1), 'deepskyblue', linewidth=2)
     ax[1].plot(t[15:], np.median(bcl_h2, axis=1), 'red', linewidth=2)
     ax[1].plot(t[15:], np.median(fric_h2, axis=1), 'goldenrod', linewidth=2)
+    ax[1].plot(t[15:], np.median(total_h2, axis=1), 'k', linewidth=3)
+    ax[1].plot(t[15:], np.median(tsb_h2, axis=1), 'gray', linewidth=2)
     ax[1].axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax[1].set_title("Parcel \u03c9$_H$ tendency")
     ax[1].set_ylim([-0.0004, 0.0008])
-    ax[1].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[1].legend(handles=[s1,s2,s3,s4,s5,s6], labels=['Tilting','Stretching','Baroclinic','Residual','Total','T+S+B'], loc=2, ncol=2)
     ax[1].grid(visible=True, which='major', color='darkgray', linestyle='-')
     ax[1].grid(visible=True, which='minor', color='lightgray', linestyle='--')
     ax[1].yaxis.set_minor_locator(MultipleLocator(0.0001))
@@ -545,14 +648,18 @@ if True:
     s2, = ax[2].plot(t[:16], np.median(stretch_sw1, axis=1), 'deepskyblue', linewidth=2)
     s3, = ax[2].plot(t[:16], np.median(bcl_sw1, axis=1), 'red', linewidth=2)
     s4, = ax[2].plot(t[:16], np.median(fric_sw1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[2].plot(t[:16], np.median(total_sw1, axis=1), 'k', linewidth=3)
+    s6, = ax[2].plot(t[:16], np.median(tsb_sw1, axis=1), 'gray', linewidth=2)
     ax[2].plot(t[15:], np.median(tilt_sw2, axis=1), 'mediumblue', linewidth=2)
     ax[2].plot(t[15:], np.median(stretch_sw2, axis=1), 'deepskyblue', linewidth=2)
     ax[2].plot(t[15:], np.median(bcl_sw2, axis=1), 'red', linewidth=2)
     ax[2].plot(t[15:], np.median(fric_sw2, axis=1), 'goldenrod', linewidth=2)
+    ax[2].plot(t[15:], np.median(total_sw2, axis=1), 'k', linewidth=3)
+    ax[2].plot(t[15:], np.median(tsb_sw2, axis=1), 'gray', linewidth=2)
     ax[2].axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax[2].set_title("Parcel \u03c9$_{SW}$ tendency")
     ax[2].set_ylim([-0.0008, 0.0006])
-    ax[2].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[2].legend(handles=[s1,s2,s3,s4,s5,s6], labels=['Tilting','Stretching','Baroclinic','Residual','Total','T+S+B'], loc=2, ncol=2)
     ax[2].grid(visible=True, which='major', color='darkgray', linestyle='-')
     ax[2].grid(visible=True, which='minor', color='lightgray', linestyle='--')
     ax[2].yaxis.set_minor_locator(MultipleLocator(0.0001))
@@ -562,29 +669,144 @@ if True:
     s2, = ax[3].plot(t[:16], np.median(stretch_cw1, axis=1), 'deepskyblue', linewidth=2)
     s3, = ax[3].plot(t[:16], np.median(bcl_cw1, axis=1), 'red', linewidth=2)
     s4, = ax[3].plot(t[:16], np.median(fric_cw1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[3].plot(t[:16], np.median(total_cw1, axis=1), 'k', linewidth=3)
+    s6, = ax[3].plot(t[:16], np.median(tsb_cw1, axis=1), 'gray', linewidth=2)
     ax[3].plot(t[15:], np.median(tilt_cw2, axis=1), 'mediumblue', linewidth=2)
     ax[3].plot(t[15:], np.median(stretch_cw2, axis=1), 'deepskyblue', linewidth=2)
     ax[3].plot(t[15:], np.median(bcl_cw2, axis=1), 'red', linewidth=2)
     ax[3].plot(t[15:], np.median(fric_cw2, axis=1), 'goldenrod', linewidth=2)
+    ax[3].plot(t[15:], np.median(total_cw2, axis=1), 'k', linewidth=3)
+    ax[3].plot(t[15:], np.median(tsb_cw2, axis=1), 'gray', linewidth=2)
     ax[3].axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax[3].set_title("Parcel \u03c9$_{CW}$ tendency")
     ax[3].set_xlabel('Time (min)', fontsize=12)
     ax[3].set_xlim([195, 225])
     ax[3].set_ylim([-0.0006, 0.0004])
-    ax[3].legend(handles=[s1,s2,s3,s4], labels=['Tilting','Stretching','Baroclinic','Friction'], loc=2)
+    ax[3].legend(handles=[s1,s2,s3,s4,s5,s6], labels=['Tilting','Stretching','Baroclinic','Residual','Total','T+S+B'], loc='lower left', ncol=2)
     ax[3].grid(visible=True, which='major', color='darkgray', linestyle='-')
     ax[3].grid(visible=True, which='minor', color='lightgray', linestyle='--')
     ax[3].xaxis.set_major_locator(MultipleLocator(5))
     ax[3].xaxis.set_minor_locator(MultipleLocator(1))
     ax[3].yaxis.set_minor_locator(MultipleLocator(0.0001))
     
-    plt.show()
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/traj_vten_timeseries1.png", dpi=300)
 
 
 
-#%%
 
-from matplotlib.ticker import MultipleLocator
+if True:
+    fig,ax = plt.subplots(4, 1, figsize=(9,11), sharex=True, layout='constrained')
+    
+    ax[0].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    ax[0].fill_between(t[:16], np.percentile(total_z1, 25, axis=1),
+                    np.percentile(total_z1, 75, axis=1), color='k', alpha=0.2)
+    ax[0].fill_between(t[15:], np.percentile(total_z2, 25, axis=1),
+                    np.percentile(total_z2, 75, axis=1), color='k', alpha=0.2)
+    s1, = ax[0].plot(t[:16], np.median(tilt_z1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[0].plot(t[:16], np.median(stretch_z1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[0].plot(t[:16], np.median(bcl_z1, axis=1), 'red', linewidth=2)
+    s4, = ax[0].plot(t[:16], np.median(fric_z1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[0].plot(t[:16], np.median(total_z1, axis=1), 'k', linewidth=3)
+    # s6, = ax[0].plot(t[:16], np.median(tsb_z1, axis=1), 'dimgray', linewidth=2)
+    ax[0].plot(t[15:], np.median(tilt_z2, axis=1), 'mediumblue', linewidth=2)
+    ax[0].plot(t[15:], np.median(stretch_z2, axis=1), 'deepskyblue', linewidth=2)
+    ax[0].plot(t[15:], np.median(bcl_z2, axis=1), 'red', linewidth=2)
+    ax[0].plot(t[15:], np.median(fric_z2, axis=1), 'goldenrod', linewidth=2)
+    ax[0].plot(t[15:], np.median(total_z2, axis=1), 'k', linewidth=3)
+    # ax[0].plot(t[15:], np.median(tsb_z2, axis=1), 'dimgray', linewidth=2)
+    ax[0].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[0].set_title("Parcel \u03B6 tendency")
+    ax[0].set_ylim([-0.0004, 0.0004])
+    ax[0].legend(handles=[s1,s2,s3,s4,s5], labels=['Tilting','Stretching','Baroclinic','Residual','Total'], loc=2, ncol=2)
+    ax[0].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[0].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[0].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    ax[1].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    ax[1].fill_between(t[:16], np.percentile(total_h1, 25, axis=1),
+                    np.percentile(total_h1, 75, axis=1), color='k', alpha=0.2)
+    ax[1].fill_between(t[15:], np.percentile(total_h2, 25, axis=1),
+                    np.percentile(total_h2, 75, axis=1), color='k', alpha=0.2)
+    s1, = ax[1].plot(t[:16], np.median(tilt_h1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[1].plot(t[:16], np.median(stretch_h1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[1].plot(t[:16], np.median(bcl_h1, axis=1), 'red', linewidth=2)
+    s4, = ax[1].plot(t[:16], np.median(fric_h1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[1].plot(t[:16], np.median(total_h1, axis=1), 'k', linewidth=3)
+    # s6, = ax[1].plot(t[:16], np.median(tsb_h1, axis=1), 'dimgray', linewidth=2)
+    ax[1].plot(t[15:], np.median(tilt_h2, axis=1), 'mediumblue', linewidth=2)
+    ax[1].plot(t[15:], np.median(stretch_h2, axis=1), 'deepskyblue', linewidth=2)
+    ax[1].plot(t[15:], np.median(bcl_h2, axis=1), 'red', linewidth=2)
+    ax[1].plot(t[15:], np.median(fric_h2, axis=1), 'goldenrod', linewidth=2)
+    ax[1].plot(t[15:], np.median(total_h2, axis=1), 'k', linewidth=3)
+    # ax[1].plot(t[15:], np.median(tsb_h2, axis=1), 'dimgray', linewidth=2)
+    ax[1].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[1].set_title("Parcel \u03c9$_H$ tendency")
+    ax[1].set_ylim([-0.0004, 0.0008])
+    ax[1].legend(handles=[s1,s2,s3,s4,s5], labels=['Tilting','Stretching','Baroclinic','Residual','Total'], loc=2, ncol=2)
+    ax[1].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[1].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[1].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    ax[2].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    ax[2].fill_between(t[:16], np.percentile(total_sw1, 25, axis=1),
+                    np.percentile(total_sw1, 75, axis=1), color='k', alpha=0.2)
+    ax[2].fill_between(t[15:], np.percentile(total_sw2, 25, axis=1),
+                    np.percentile(total_sw2, 75, axis=1), color='k', alpha=0.2)
+    s1, = ax[2].plot(t[:16], np.median(tilt_sw1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[2].plot(t[:16], np.median(stretch_sw1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[2].plot(t[:16], np.median(bcl_sw1, axis=1), 'red', linewidth=2)
+    s4, = ax[2].plot(t[:16], np.median(fric_sw1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[2].plot(t[:16], np.median(total_sw1, axis=1), 'k', linewidth=3)
+    # s6, = ax[2].plot(t[:16], np.median(tsb_sw1, axis=1), 'dimgray', linewidth=2)
+    ax[2].plot(t[15:], np.median(tilt_sw2, axis=1), 'mediumblue', linewidth=2)
+    ax[2].plot(t[15:], np.median(stretch_sw2, axis=1), 'deepskyblue', linewidth=2)
+    ax[2].plot(t[15:], np.median(bcl_sw2, axis=1), 'red', linewidth=2)
+    ax[2].plot(t[15:], np.median(fric_sw2, axis=1), 'goldenrod', linewidth=2)
+    ax[2].plot(t[15:], np.median(total_sw2, axis=1), 'k', linewidth=3)
+    # ax[2].plot(t[15:], np.median(tsb_sw2, axis=1), 'dimgray', linewidth=2)
+    ax[2].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[2].set_title("Parcel \u03c9$_{SW}$ tendency")
+    ax[2].set_ylim([-0.0008, 0.0006])
+    ax[2].legend(handles=[s1,s2,s3,s4,s5], labels=['Tilting','Stretching','Baroclinic','Residual','Total'], loc=2, ncol=2)
+    ax[2].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[2].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[2].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    ax[3].axhline(0, color='gray', linewidth=1.5, linestyle='--')
+    ax[3].fill_between(t[:16], np.percentile(total_cw1, 25, axis=1),
+                    np.percentile(total_cw1, 75, axis=1), color='k', alpha=0.2)
+    ax[3].fill_between(t[15:], np.percentile(total_cw2, 25, axis=1),
+                    np.percentile(total_cw2, 75, axis=1), color='k', alpha=0.2)
+    s1, = ax[3].plot(t[:16], np.median(tilt_cw1, axis=1), 'mediumblue', linewidth=2)
+    s2, = ax[3].plot(t[:16], np.median(stretch_cw1, axis=1), 'deepskyblue', linewidth=2)
+    s3, = ax[3].plot(t[:16], np.median(bcl_cw1, axis=1), 'red', linewidth=2)
+    s4, = ax[3].plot(t[:16], np.median(fric_cw1, axis=1), 'goldenrod', linewidth=2)
+    s5, = ax[3].plot(t[:16], np.median(total_cw1, axis=1), 'k', linewidth=3)
+    # s6, = ax[3].plot(t[:16], np.median(tsb_cw1, axis=1), 'dimgray', linewidth=2)
+    ax[3].plot(t[15:], np.median(tilt_cw2, axis=1), 'mediumblue', linewidth=2)
+    ax[3].plot(t[15:], np.median(stretch_cw2, axis=1), 'deepskyblue', linewidth=2)
+    ax[3].plot(t[15:], np.median(bcl_cw2, axis=1), 'red', linewidth=2)
+    ax[3].plot(t[15:], np.median(fric_cw2, axis=1), 'goldenrod', linewidth=2)
+    ax[3].plot(t[15:], np.median(total_cw2, axis=1), 'k', linewidth=3)
+    # ax[3].plot(t[15:], np.median(tsb_cw2, axis=1), 'dimgray', linewidth=2)
+    ax[3].axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax[3].set_title("Parcel \u03c9$_{CW}$ tendency")
+    ax[3].set_xlabel('Time (min)', fontsize=12)
+    ax[3].set_xlim([195, 225])
+    ax[3].set_ylim([-0.0006, 0.0004])
+    ax[3].legend(handles=[s1,s2,s3,s4,s5], labels=['Tilting','Stretching','Baroclinic','Residual','Total'], loc='lower left', ncol=2)
+    ax[3].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[3].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax[3].xaxis.set_major_locator(MultipleLocator(5))
+    ax[3].xaxis.set_minor_locator(MultipleLocator(1))
+    ax[3].yaxis.set_minor_locator(MultipleLocator(0.0001))
+    
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/traj_vten_timeseries2.png", dpi=300)
+
+
+#%% Time series - both times, individual plots per vorticity component
 
 # actual vorticity
 fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
@@ -720,9 +942,7 @@ ax.xaxis.set_minor_locator(MultipleLocator(1))
 
 plt.show()
 
-#%%
-
-from matplotlib.ticker import MultipleLocator
+#%% Time series - both times, individual plots per term for all components
 
 # actual vorticity
 fig,ax = plt.subplots(1, 1, figsize=(8,4), layout='constrained')
@@ -1049,53 +1269,68 @@ for fn in np.arange(28,59):
     del u,v,w,xvort,yvort,zvort,u_sr,v_sr,ws_sr,hvort
 
 
-#%% Plot plan views of tendency
+#%% Load data for plan views of tendency
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
-t = 223
-mvtime = 225
+t = 203
+mvtime = 210
+
+fnum = t - 180 + 13
 
 dbfile = open(ip+f"plan{t}_tilt.pkl", 'rb')
 tmp = pickle.load(dbfile)
 xh = tmp['x']
 yh = tmp['y']
 zh = tmp['z']
-tilt_h = tmp['tilt_h']
+tilt_x = tmp['tilt_x']
+tilt_y = tmp['tilt_y']
 tilt_z = tmp['tilt_z']
+tilt_h = tmp['tilt_h']
+tilt_sw = tmp['tilt_sw']
+tilt_cw = tmp['tilt_cw']
 dbfile.close()
 
 dbfile = open(ip+f"plan{t}_stretch.pkl", 'rb')
 tmp = pickle.load(dbfile)
-stretch_h = tmp['stretch_h']
+stretch_x = tmp['stretch_x']
+stretch_y = tmp['stretch_y']
 stretch_z = tmp['stretch_z']
+stretch_h = tmp['stretch_h']
+stretch_sw = tmp['stretch_sw']
+stretch_cw = tmp['stretch_cw']
 dbfile.close()
 
 dbfile = open(ip+f"plan{t}_baroclinic.pkl", 'rb')
 tmp = pickle.load(dbfile)
-bcl_h = tmp['bcl_h']
+bcl_x = tmp['bcl_x']
+bcl_y = tmp['bcl_y']
 bcl_z = tmp['bcl_z']
+bcl_h = tmp['bcl_h']
 bcl_sw = tmp['bcl_sw']
 bcl_cw = tmp['bcl_cw']
 dbfile.close()
 
 dbfile = open(ip+f"plan{t}_friction.pkl", 'rb')
 tmp = pickle.load(dbfile)
-fric_h = tmp['fric_h']
+fric_x = tmp['fric_x']
+fric_y = tmp['fric_y']
 fric_z = tmp['fric_z']
+fric_h = tmp['fric_h']
 fric_sw = tmp['fric_sw']
 fric_cw = tmp['fric_cw']
 dbfile.close()
 
 
-# Read parcel data
-ds = nc.Dataset(fp+'cm1out_pdata.nc')
+# Read parcel time
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
 ptime = ds.variables['time'][:].data
 # xp = ds.variables['x'][:].data
 # yp = ds.variables['y'][:].data
 # zp = ds.variables['z'][:].data
 ds.close()
 
+# Load filtered parcel data
 dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
 traj = pickle.load(dbfile)
 x_mv = traj[f"{mvtime}min"]['x']/1000
@@ -1105,6 +1340,7 @@ z_mv = traj[f"{mvtime}min"]['z']/1000
 # zvort_mv = traj[f"{mvtime}min"]['zvort']
 dbfile.close()
 
+# Load source regions
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime}min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
@@ -1115,85 +1351,125 @@ x_ml = x_mv[:,(cc==1)]
 y_ml = y_mv[:,(cc==1)]
 z_ml = z_mv[:,(cc==1)]
 
+# match model time and height to parcel time and median height
 it = np.where(ptime/60 == t)[0][0]
-iz = np.where(zh >= np.median(z_ml[it,:]))[0][0]
-iz1 = np.where(zh >= 1)[0][0]
-
-ix = np.where(xh >= np.median(x_ml[it,:]))[0][0]
-iy = np.where(yh >= np.median(y_ml[it,:]))[0][0]
+iz = np.abs(zh - np.median(z_ml[it,:])).argmin()
 
 
-### zvort lims (208 min)
-# tilting max/min: 0.0023, -0.0024
-# stretching max/min: 0.0026, -0.0031
-# baroclinic max/min: 0.00001, -0.00002
-# friction max/min: tiny, tiny
-
-### hvort lims (223 min)
-# tilting max/min: 0.0035, -0.0029
-# stretching max/min: 0.0032, -0.0021
-# baroclinic max/min: 0.00089, -0.00057
-# friction max/min: tiny, tiny
-
-print(f"...zvort limits, {t} min, {zh[iz]*1000:.0f} m...")
-print(f"Tilting: {np.min(tilt_z[iz,:,:]):.6f}, {np.max(tilt_z[iz,:,:]):.6f}")
-print(f"Stretching: {np.min(stretch_z[iz,:,:]):.6f}, {np.max(stretch_z[iz,:,:]):.6f}")
-print(f"Baroclinic: {np.min(bcl_z[iz,:,:])}, {np.max(bcl_z[iz,:,:])}")
-print(f"Friction: {np.min(fric_z[iz,:,:])}, {np.max(fric_z[iz,:,:])}\n")
-
-print(f"...hvort limits, {t} min, {zh[iz]*1000:.0f} m...")
-print(f"Tilting: {np.min(tilt_h[iz,:,:]):.6f}, {np.max(tilt_h[iz,:,:]):.6f}")
-print(f"Stretching: {np.min(stretch_h[iz,:,:]):.6f}, {np.max(stretch_h[iz,:,:]):.6f}")
-print(f"Baroclinic: {np.min(bcl_h[iz,:,:])}, {np.max(bcl_h[iz,:,:])}")
-print(f"Friction: {np.min(fric_h[iz,:,:])}, {np.max(fric_h[iz,:,:])}")
-
-
-#%%
-
-# def find_power(x):
-#     if x < 0:
-#         logx = np.log10(np.abs(x))
-#     else:
-#         logx = np.log10(x)
-#     ex = np.floor(logx)
-#     c = x / 10**ex
+# if np.abs(zh[iz] - np.median(z_ml[it,:])) > 0.05:
+#     from scipy.interpolate import interp1d
     
-#     return c,ex
+#     tz_interp = interp1d(zh, tilt_z, kind='cubic', axis=0)
+#     sz_interp = interp1d(zh, stretch_z, kind='cubic', axis=0)
+#     bz_interp = interp1d(zh, bcl_z, kind='cubic', axis=0)
+#     fz_interp = interp1d(zh, fric_z, kind='cubic', axis=0)
+    
+#     tilt_z_new = tz_interp(np.median(z_ml[it,:]))
+#     stretch_z_new = sz_interp(np.median(z_ml[it,:]))
+#     bcl_z_new = bz_interp(np.median(z_ml[it,:]))
+#     fric_z_new = fz_interp(np.median(z_ml[it,:]))
+    
+#     th_interp = interp1d(zh, tilt_h, kind='cubic', axis=0)
+#     sh_interp = interp1d(zh, stretch_h, kind='cubic', axis=0)
+#     bh_interp = interp1d(zh, bcl_h, kind='cubic', axis=0)
+#     fh_interp = interp1d(zh, fric_h, kind='cubic', axis=0)
+    
+#     tilt_h_new = th_interp(np.median(z_ml[it,:]))
+#     stretch_h_new = sh_interp(np.median(z_ml[it,:]))
+#     bcl_h_new = bh_interp(np.median(z_ml[it,:]))
+#     fric_h_new = fh_interp(np.median(z_ml[it,:]))
+    
+
+ixp = np.abs(xh - np.median(x_ml[it,:])).argmin()
+iyp = np.abs(yh - np.median(y_ml[it,:])).argmin()
 
 
-xlims = [-11,-6] # [-19,-14] for 210 min
-ylims = [-51,-46] # [-70,-65] for 210 min
 
-sz = 100
+# print(f"...zvort limits, {t} min, {zh[iz]*1000:.0f} m...")
+# print(f"Tilting: {np.min(tilt_z[iz,:,:]):.6f}, {np.max(tilt_z[iz,:,:]):.6f}")
+# print(f"Stretching: {np.min(stretch_z[iz,:,:]):.6f}, {np.max(stretch_z[iz,:,:]):.6f}")
+# print(f"Baroclinic: {np.min(bcl_z[iz,:,:])}, {np.max(bcl_z[iz,:,:])}")
+# print(f"Friction: {np.min(fric_z[iz,:,:])}, {np.max(fric_z[iz,:,:])}\n")
+
+# print(f"...hvort limits, {t} min, {zh[iz]*1000:.0f} m...")
+# print(f"Tilting: {np.min(tilt_h[iz,:,:]):.6f}, {np.max(tilt_h[iz,:,:]):.6f}")
+# print(f"Stretching: {np.min(stretch_h[iz,:,:]):.6f}, {np.max(stretch_h[iz,:,:]):.6f}")
+# print(f"Baroclinic: {np.min(bcl_h[iz,:,:])}, {np.max(bcl_h[iz,:,:])}")
+# print(f"Friction: {np.min(fric_h[iz,:,:])}, {np.max(fric_h[iz,:,:])}")
+
+
+# # Load model data from parcel time in a 5 km box roughly around median parcel location
+# ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_{fnum:06d}.nc")
+# ix1 = np.abs(ds.variables['xh'][:].data - xh[0]).argmin()
+# ix2 = np.abs(ds.variables['xh'][:].data - xh[-1]).argmin() + 1
+# iy1 = np.abs(ds.variables['yh'][:].data - yh[0]).argmin()
+# iy2 = np.abs(ds.variables['yh'][:].data - yh[-1]).argmin() + 1
+# dbz = ds.variables['dbz'][:].data[0,0,slice(iy1,iy2),slice(ix1,ix2)]
+# w = np.max(ds.variables['winterp'][:].data[0,slice(0,iz+1),slice(iy1,iy2),slice(ix1,ix2)], axis=0)
+# zvort = ds.variables['zvort'][:].data[0,iz,slice(iy1,iy2),slice(ix1,ix2)]
+# hvort = np.sqrt(ds.variables['xvort'][:].data[0,iz,slice(iy1,iy2),slice(ix1,ix2)]**2 + 
+#                 ds.variables['yvort'][:].data[0,iz,slice(iy1,iy2),slice(ix1,ix2)]**2)
+# ds.close()
 
 
 
-tlims = [-0.002, 0.002]; tlevs = np.linspace(tlims[0], tlims[1], 21) # 0.0008
-slims = [-0.002, 0.002]; slevs = np.linspace(slims[0], slims[1], 21) # 0.0008
-blims = [-1e-3, 1e-3]; blevs = np.linspace(blims[0], blims[1], 21) # 2e-4
-flims = [-1e-9, 1e-9]; flevs = np.linspace(flims[0], flims[1], 21) # 2e-10
+
+
+#%% Plot plan views of tendency terms
+
+figsave = False
+
+
+xlims = [-19, -14] # [-19,-14] at 205-210 / [-11,-5] at 220-225
+ylims = [-73.5, -68.5] # [-72,-67]+0.75 at 205-210 / ?[-55,-49]+1 at 220-225
+
+sz = 30
+
+m = 4
+
+tlims = [-0.002, 0.002]; tlims = [m*-1e-4, m*1e-4]; tlevs = np.linspace(tlims[0], tlims[1], 41) # 0.0008
+slims = [-0.002, 0.002]; slims = [m*-1e-4, m*1e-4]; slevs = np.linspace(slims[0], slims[1], 41) # 0.0008
+blims = [-1e-3, 1e-3]; blims = [m*-1e-4, m*1e-4]; blevs = np.linspace(blims[0], blims[1], 41) # 2e-4
+flims = [-1e-9, 1e-9]; flims = [m*-1e-4, m*1e-4]; flevs = np.linspace(flims[0], flims[1], 41) # 2e-10
+
+zvort_levs = [-0.04, -0.02, 0.02, 0.04]
+
+tlevs = np.append(np.append([-0.01], tlevs), [0.01])
+slevs = np.append(np.append([-0.01], slevs), [0.01])
+blevs = np.append(np.append([-0.01], blevs), [0.01])
 
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
 plot_contourf(xh, yh, tilt_z[iz,:,:], 'zvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims)
-ax[0,0].set_title(f"Tilting")
+# ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# c = ax[0,0].contour(xh, yh, zvort, levels=zvort_levs, colors='k', linewidths=1)
+# ax[0,0].clabel(c, fontsize=8, inline=True)
 ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,0].set_title(f"Tilting")
 
 plot_contourf(xh, yh, stretch_z[iz,:,:], 'zvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims)
-ax[0,1].set_title(f"Stretching")
+# ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[0,1].contour(xh, yh, zvort, levels=zvort_levs, colors='k', linewidths=1)
 ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,1].set_title(f"Stretching")
 
 plot_contourf(xh, yh, bcl_z[iz,:,:], 'zvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims)
-ax[1,0].set_title(f"Baroclinic")
+# ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,0].contour(xh, yh, zvort, levels=zvort_levs, colors='k', linewidths=1)
 ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,0].set_title(f"Baroclinic")
 
 plot_contourf(xh, yh, fric_z[iz,:,:], 'zvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims)
-ax[1,1].set_title(f"Friction")
+# ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,1].contour(xh, yh, zvort, levels=zvort_levs, colors='k', linewidths=1)
 ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,1].set_title(f"Friction")
 
 plt.suptitle(f"\u03B6 tendency - {t} min, {zh[iz]*1000:.0f} m")
 
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/zvort_{t}min.png", dpi=300)
 
 
 # tlims = [-0.001, 0.001]; tlevs = np.linspace(tlims[0], tlims[1], 21)
@@ -1204,25 +1480,103 @@ plt.suptitle(f"\u03B6 tendency - {t} min, {zh[iz]*1000:.0f} m")
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh, yh, tilt_h[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
-ax[0,0].set_title(f"Tilting")
+cf = plot_contourf(xh, yh, tilt_x[iz,:,:], 'xvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,0].set_title(f"Tilting")
+
+plot_contourf(xh, yh, stretch_x[iz,:,:], 'xvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,1].set_title(f"Stretching")
+
+plot_contourf(xh, yh, bcl_x[iz,:,:], 'xvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,0].set_title(f"Baroclinic")
+
+plot_contourf(xh, yh, fric_x[iz,:,:], 'xvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,1].set_title(f"Friction")
+
+plt.suptitle(f"\u03c9$_x$ tendency - {t} min, {zh[iz]*1000:.0f} m")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/xvort_{t}min.png", dpi=300)
+
+
+fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+cf = plot_contourf(xh, yh, tilt_y[iz,:,:], 'yvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,0].set_title(f"Tilting")
+
+plot_contourf(xh, yh, stretch_y[iz,:,:], 'yvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,1].set_title(f"Stretching")
+
+plot_contourf(xh, yh, bcl_y[iz,:,:], 'yvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,0].set_title(f"Baroclinic")
+
+plot_contourf(xh, yh, fric_y[iz,:,:], 'yvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,1].set_title(f"Friction")
+
+plt.suptitle(f"\u03c9$_y$ tendency - {t} min, {zh[iz]*1000:.0f} m")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/yvort_{t}min.png", dpi=300)
+
+
+
+
+
+hvort_levs = [0.05, 0.1]
+
+fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+cf = plot_contourf(xh, yh, tilt_h[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,0].set_title(f"Tilting")
 
 plot_contourf(xh, yh, stretch_h[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
-ax[0,1].set_title(f"Stretching")
+# ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,1].set_title(f"Stretching")
 
 plot_contourf(xh, yh, bcl_h[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
-ax[1,0].set_title(f"Baroclinic")
+# ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,0].set_title(f"Baroclinic")
 
 plot_contourf(xh, yh, fric_h[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
-ax[1,1].set_title(f"Friction")
+# ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,1].set_title(f"Friction")
 
 plt.suptitle(f"\u03c9$_H$ tendency - {t} min, {zh[iz]*1000:.0f} m")
 
-plt.show()
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/hvort_{t}min.png", dpi=300)
 
 
 
@@ -1230,26 +1584,1199 @@ plt.show()
 
 
 
+fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh, yh, tilt_sw[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+# ax[0,0].clabel(c, fontsize=8, inline=True)
+ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,0].set_title(f"Tilting")
+
+plot_contourf(xh, yh, stretch_sw[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,1].set_title(f"Stretching")
+
+plot_contourf(xh, yh, bcl_sw[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,0].set_title(f"Baroclinic")
+
+plot_contourf(xh, yh, fric_sw[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,1].set_title(f"Friction")
+
+plt.suptitle(f"Streamwise \u03c9$_H$ tendency - {t} min, {zh[iz]*1000:.0f} m")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/swvort_{t}min.png", dpi=300)
+
+
+
+
+fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh, yh, tilt_cw[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+# ax[0,0].clabel(c, fontsize=8, inline=True)
+ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,0].set_title(f"Tilting")
+
+plot_contourf(xh, yh, stretch_cw[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[0,1].set_title(f"Stretching")
+
+plot_contourf(xh, yh, bcl_cw[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,0].set_title(f"Baroclinic")
+
+plot_contourf(xh, yh, fric_cw[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+# ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
+# ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
+ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
+ax[1,1].set_title(f"Friction")
+
+plt.suptitle(f"Crosswise \u03c9$_H$ tendency - {t} min, {zh[iz]*1000:.0f} m")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/cwvort_{t}min.png", dpi=300)
+
+
+
+
+#%% Load data for time composites of tendencies
+
+
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
+
+times = np.arange(217, 222) # 203-208, 217-223/220-225
+mvtime = 225
+
+# Read parcel time
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+# Load filtered parcel data
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+x_mv = traj[f"{mvtime}min"]['x']/1000
+y_mv = traj[f"{mvtime}min"]['y']/1000
+z_mv = traj[f"{mvtime}min"]['z']/1000
+dbfile.close()
+
+# Load source regions
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime}min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+# Mid-level source
+x_ml = x_mv[:,(cc==1)]
+y_ml = y_mv[:,(cc==1)]
+z_ml = z_mv[:,(cc==1)]
+
+x_median = np.median(x_ml, axis=1); x_max = np.max(x_ml, axis=1); x_min = np.min(x_ml, axis=1)
+y_median = np.median(y_ml, axis=1); y_max = np.max(y_ml, axis=1); y_min = np.min(y_ml, axis=1)
+z_median = np.median(z_ml, axis=1); z_max = np.max(z_ml, axis=1); z_min = np.min(z_ml, axis=1)
+
+
+dbfile = open(ip+f"plan{mvtime}_tilt.pkl", 'rb')
+tmp = pickle.load(dbfile)
+xh = tmp['x']
+yh = tmp['y']
+zh = tmp['z']
+dbfile.close()
+
+
+
+tilt_x = np.zeros(shape=(len(times),17,17), dtype=float)
+tilt_y = np.zeros(shape=(len(times),17,17), dtype=float)
+tilt_z = np.zeros(shape=(len(times),17,17), dtype=float)
+tilt_h = np.zeros(shape=(len(times),17,17), dtype=float)
+tilt_sw = np.zeros(shape=(len(times),17,17), dtype=float)
+tilt_cw = np.zeros(shape=(len(times),17,17), dtype=float)
+
+stretch_x = np.zeros(shape=(len(times),17,17), dtype=float)
+stretch_y = np.zeros(shape=(len(times),17,17), dtype=float)
+stretch_z = np.zeros(shape=(len(times),17,17), dtype=float)
+stretch_h = np.zeros(shape=(len(times),17,17), dtype=float)
+stretch_sw = np.zeros(shape=(len(times),17,17), dtype=float)
+stretch_cw = np.zeros(shape=(len(times),17,17), dtype=float)
+
+bcl_x = np.zeros(shape=(len(times),17,17), dtype=float)
+bcl_y = np.zeros(shape=(len(times),17,17), dtype=float)
+bcl_h = np.zeros(shape=(len(times),17,17), dtype=float)
+bcl_sw = np.zeros(shape=(len(times),17,17), dtype=float)
+bcl_cw = np.zeros(shape=(len(times),17,17), dtype=float)
+
+
+for i in range(len(times)):
+    t = times[i]
+    it = np.where(ptime/60 == t)[0][0]
+    iz = np.abs(zh - z_median[it]).argmin()
+    i1 = np.abs(xh - x_median[it]).argmin()
+    i2 = np.abs(yh - y_median[it]).argmin()
+    ix = slice(i1-8,i1+9)
+    iy = slice(i2-8,i2+9)
+    
+    
+    dbfile = open(ip+f"plan{t}_tilt.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    tilt_x[i,:,:] = tmp['tilt_x'][iz,iy,ix]
+    tilt_y[i,:,:] = tmp['tilt_y'][iz,iy,ix]
+    tilt_z[i,:,:] = tmp['tilt_z'][iz,iy,ix]
+    tilt_h[i,:,:] = tmp['tilt_h'][iz,iy,ix]
+    tilt_sw[i,:,:] = tmp['tilt_sw'][iz,iy,ix]
+    tilt_cw[i,:,:] = tmp['tilt_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_stretch.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    stretch_x[i,:,:] = tmp['stretch_x'][iz,iy,ix]
+    stretch_y[i,:,:] = tmp['stretch_y'][iz,iy,ix]
+    stretch_z[i,:,:] = tmp['stretch_z'][iz,iy,ix]
+    stretch_h[i,:,:] = tmp['stretch_h'][iz,iy,ix]
+    stretch_sw[i,:,:] = tmp['stretch_sw'][iz,iy,ix]
+    stretch_cw[i,:,:] = tmp['stretch_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_baroclinic.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    bcl_x[i,:,:] = tmp['bcl_x'][iz,iy,ix]
+    bcl_y[i,:,:] = tmp['bcl_y'][iz,iy,ix]
+    bcl_h[i,:,:] = tmp['bcl_h'][iz,iy,ix]
+    bcl_sw[i,:,:] = tmp['bcl_sw'][iz,iy,ix]
+    bcl_cw[i,:,:] = tmp['bcl_cw'][iz,iy,ix]
+    dbfile.close()
+    
+
+
+tilt_x_comp = np.mean(tilt_x, axis=0)
+tilt_y_comp = np.mean(tilt_y, axis=0)
+tilt_z_comp = np.mean(tilt_z, axis=0)
+tilt_h_comp = np.mean(tilt_h, axis=0)
+tilt_sw_comp = np.mean(tilt_sw, axis=0)
+tilt_cw_comp = np.mean(tilt_cw, axis=0)
+
+stretch_x_comp = np.mean(stretch_x, axis=0)
+stretch_y_comp = np.mean(stretch_y, axis=0)
+stretch_z_comp = np.mean(stretch_z, axis=0)
+stretch_h_comp = np.mean(stretch_h, axis=0)
+stretch_sw_comp = np.mean(stretch_sw, axis=0)
+stretch_cw_comp = np.mean(stretch_cw, axis=0)
+
+bcl_x_comp = np.mean(bcl_x, axis=0)
+bcl_y_comp = np.mean(bcl_y, axis=0)
+bcl_h_comp = np.mean(bcl_h, axis=0)
+bcl_sw_comp = np.mean(bcl_sw, axis=0)
+bcl_cw_comp = np.mean(bcl_cw, axis=0)
+
+
+itp = np.where(ptime/60 == times[-1])[0][0]
+
+xp = x_ml[itp,:]
+yp = y_ml[itp,:]
+zp = z_ml[itp,:]
+xmp = x_median[itp]
+ymp = y_median[itp]
+zmp = z_median[itp]
+
+iz = np.abs(zh - zmp).argmin()
+i1 = np.abs(xh - xmp).argmin()
+i2 = np.abs(yh - ymp).argmin()
+ix = slice(i1-8,i1+9)
+iy = slice(i2-8,i2+9)
+
+
+
+#%% Make plots, single time
+
+figsave = False
+
+
+xlims = [xh[ix][0], xh[ix][-1]] # [-19,-14] at 205-210 / [-11,-5] at 220-225
+ylims = [yh[iy][0], yh[iy][-1]] # [-72,-67]+0.75 at 205-210 / ?[-55,-49]+1 at 220-225
+
+sz = 200
+
+m = 6
+
+tlims = [-0.002, 0.002]; tlims = [m*-1e-4, m*1e-4]; tlevs = np.linspace(tlims[0], tlims[1], 41) # 0.0008
+slims = [-0.002, 0.002]; slims = [m*-1e-4, m*1e-4]; slevs = np.linspace(slims[0], slims[1], 41) # 0.0008
+blims = [-1e-3, 1e-3]; blims = [m*-1e-4, m*1e-4]; blevs = np.linspace(blims[0], blims[1], 41) # 2e-4
+flims = [-1e-9, 1e-9]; flims = [m*-1e-4, m*1e-4]; flevs = np.linspace(flims[0], flims[1], 41) # 2e-10
+
+zvort_levs = [-0.04, -0.02, 0.02, 0.04]
+
+tlevs = np.append(np.append([-0.01], tlevs), [0.01])
+slevs = np.append(np.append([-0.01], slevs), [0.01])
+blevs = np.append(np.append([-0.01], blevs), [0.01])
+
+
+
+
+fig,ax = plt.subplots(1,2, figsize=(8.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+c = plot_contourf(xh[ix], yh[iy], tilt_z_comp, 'zvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[0], extend='both')
+# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[0].set_title(f"Tilting")
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], stretch_z_comp, 'zvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+cb = plt.colorbar(c, ax=ax[1], extend='both')
+cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[1].set_title(f"Stretching")
+ax[1].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite \u03B6 tendency ({times[0]}-{times[-1]} min)")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/zvort_comp_{mvtime}min.png", dpi=300)
+
+
+
+
+fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+c = plot_contourf(xh[ix], yh[iy], tilt_x_comp, 'xvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[0], extend='both')
+# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[0].set_title(f"Tilting")
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], stretch_x_comp, 'xvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[1], extend='both')
+# cb.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[1].set_title(f"Stretching")
+ax[1].set_xlabel('x (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], bcl_x_comp, 'xvort', ax[2], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=12)
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[2].set_title(f"Baroclinic")
+ax[2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite \u03BE tendency ({times[0]}-{times[-1]} min)")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/xvort_comp_{mvtime}min.png", dpi=300)
+
+
+
+
+fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+c = plot_contourf(xh[ix], yh[iy], tilt_y_comp, 'yvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[0], extend='both')
+# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[0].set_title(f"Tilting")
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], stretch_y_comp, 'yvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[1], extend='both')
+# cb.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[1].set_title(f"Stretching")
+ax[1].set_xlabel('x (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], bcl_y_comp, 'yvort', ax[2], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=12)
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[2].set_title(f"Baroclinic")
+ax[2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite \u03B7 tendency ({times[0]}-{times[-1]} min)")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/yvort_comp_{mvtime}min.png", dpi=300)
+
+
+
+
+fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+c = plot_contourf(xh[ix], yh[iy], tilt_h_comp, 'zvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[0], extend='both')
+# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[0].set_title(f"Tilting")
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], stretch_h_comp, 'zvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[1], extend='both')
+# cb.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[1].set_title(f"Stretching")
+ax[1].set_xlabel('x (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], bcl_h_comp, 'zvort', ax[2], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=12)
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[2].set_title(f"Baroclinic")
+ax[2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite |\u03c9$_H$| tendency ({times[0]}-{times[-1]} min)")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/hvort_comp_{mvtime}min.png", dpi=300)
+
+
+
+
+fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+c = plot_contourf(xh[ix], yh[iy], tilt_sw_comp, 'xvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[0], extend='both')
+# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[0].set_title(f"Tilting")
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], stretch_sw_comp, 'xvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[1], extend='both')
+# cb.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[1].set_title(f"Stretching")
+ax[1].set_xlabel('x (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], bcl_sw_comp, 'xvort', ax[2], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=12)
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[2].set_title(f"Baroclinic")
+ax[2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite streamwise \u03c9 tendency ({times[0]}-{times[-1]} min)")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/swvort_comp_{mvtime}min.png", dpi=300)
+
+
+
+
+fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+c = plot_contourf(xh[ix], yh[iy], tilt_cw_comp, 'yvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[0], extend='both')
+# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[0].set_title(f"Tilting")
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], stretch_cw_comp, 'yvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[1], extend='both')
+# cb.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[1].set_title(f"Stretching")
+ax[1].set_xlabel('x (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], bcl_cw_comp, 'yvort', ax[2], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=12)
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(xp, yp, s=sz, color='k', marker='.')
+ax[2].set_title(f"Baroclinic")
+ax[2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite crosswise \u03c9 tendency ({times[0]}-{times[-1]} min)")
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/cwvort_comp_{mvtime}min.png", dpi=300)
+
+
+#%% Load data for composite vorticity tendency plots, all times
+
+
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
+
+times = np.arange(217, 222) # 203-208, 217-222/220-225
+mvtime = 225
+
+# Read parcel time
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+# Load filtered parcel data
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+x1_mv = traj[f"210min"]['x']/1000
+y1_mv = traj[f"210min"]['y']/1000
+z1_mv = traj[f"210min"]['z']/1000
+x2_mv = traj[f"225min"]['x']/1000
+y2_mv = traj[f"225min"]['y']/1000
+z2_mv = traj[f"225min"]['z']/1000
+dbfile.close()
+
+# Load source regions and pull mid-level source
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_210min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+x1_ml = x1_mv[:,(cc==1)]
+y1_ml = y1_mv[:,(cc==1)]
+z1_ml = z1_mv[:,(cc==1)]
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_225min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+x2_ml = x2_mv[:,(cc==1)]
+y2_ml = y2_mv[:,(cc==1)]
+z2_ml = z2_mv[:,(cc==1)]
+
+
+x1_median = np.median(x1_ml, axis=1); x1_max = np.max(x1_ml, axis=1); x1_min = np.min(x1_ml, axis=1)
+y1_median = np.median(y1_ml, axis=1); y1_max = np.max(y1_ml, axis=1); y1_min = np.min(y1_ml, axis=1)
+z1_median = np.median(z1_ml, axis=1); z1_max = np.max(z1_ml, axis=1); z1_min = np.min(z1_ml, axis=1)
+x2_median = np.median(x2_ml, axis=1); x2_max = np.max(x2_ml, axis=1); x2_min = np.min(x2_ml, axis=1)
+y2_median = np.median(y2_ml, axis=1); y2_max = np.max(y2_ml, axis=1); y2_min = np.min(y2_ml, axis=1)
+z2_median = np.median(z2_ml, axis=1); z2_max = np.max(z2_ml, axis=1); z2_min = np.min(z2_ml, axis=1)
+
+
+dbfile = open(ip+f"plan210_tilt.pkl", 'rb')
+tmp = pickle.load(dbfile)
+xh1 = tmp['x']
+yh1 = tmp['y']
+zh1 = tmp['z']
+dbfile.close()
+
+dbfile = open(ip+f"plan225_tilt.pkl", 'rb')
+tmp = pickle.load(dbfile)
+xh2 = tmp['x']
+yh2 = tmp['y']
+zh2 = tmp['z']
+dbfile.close()
+
+
+
+
+### Time 1 ###
+times1 = np.arange(203, 208) # 210 min, downdraft
+tilt_x = np.zeros(shape=(len(times1),17,17), dtype=float)
+tilt_y = np.zeros(shape=(len(times1),17,17), dtype=float)
+tilt_z = np.zeros(shape=(len(times1),17,17), dtype=float)
+tilt_h = np.zeros(shape=(len(times1),17,17), dtype=float)
+tilt_sw = np.zeros(shape=(len(times1),17,17), dtype=float)
+tilt_cw = np.zeros(shape=(len(times1),17,17), dtype=float)
+stretch_x = np.zeros(shape=(len(times1),17,17), dtype=float)
+stretch_y = np.zeros(shape=(len(times1),17,17), dtype=float)
+stretch_z = np.zeros(shape=(len(times1),17,17), dtype=float)
+stretch_h = np.zeros(shape=(len(times1),17,17), dtype=float)
+stretch_sw = np.zeros(shape=(len(times1),17,17), dtype=float)
+stretch_cw = np.zeros(shape=(len(times1),17,17), dtype=float)
+bcl_x = np.zeros(shape=(len(times1),17,17), dtype=float)
+bcl_y = np.zeros(shape=(len(times1),17,17), dtype=float)
+bcl_h = np.zeros(shape=(len(times1),17,17), dtype=float)
+bcl_sw = np.zeros(shape=(len(times1),17,17), dtype=float)
+bcl_cw = np.zeros(shape=(len(times1),17,17), dtype=float)
+
+for i in range(len(times1)):
+    t = times1[i]
+    it = np.where(ptime/60 == t)[0][0]
+    iz = np.abs(zh1 - z1_median[it]).argmin()
+    i1 = np.abs(xh1 - x1_median[it]).argmin()
+    i2 = np.abs(yh1 - y1_median[it]).argmin()
+    ix = slice(i1-8,i1+9)
+    iy = slice(i2-8,i2+9)
+    
+    dbfile = open(ip+f"plan{t}_tilt.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    tilt_x[i,:,:] = tmp['tilt_x'][iz,iy,ix]
+    tilt_y[i,:,:] = tmp['tilt_y'][iz,iy,ix]
+    tilt_z[i,:,:] = tmp['tilt_z'][iz,iy,ix]
+    tilt_h[i,:,:] = tmp['tilt_h'][iz,iy,ix]
+    tilt_sw[i,:,:] = tmp['tilt_sw'][iz,iy,ix]
+    tilt_cw[i,:,:] = tmp['tilt_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_stretch.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    stretch_x[i,:,:] = tmp['stretch_x'][iz,iy,ix]
+    stretch_y[i,:,:] = tmp['stretch_y'][iz,iy,ix]
+    stretch_z[i,:,:] = tmp['stretch_z'][iz,iy,ix]
+    stretch_h[i,:,:] = tmp['stretch_h'][iz,iy,ix]
+    stretch_sw[i,:,:] = tmp['stretch_sw'][iz,iy,ix]
+    stretch_cw[i,:,:] = tmp['stretch_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_baroclinic.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    bcl_x[i,:,:] = tmp['bcl_x'][iz,iy,ix]
+    bcl_y[i,:,:] = tmp['bcl_y'][iz,iy,ix]
+    bcl_h[i,:,:] = tmp['bcl_h'][iz,iy,ix]
+    bcl_sw[i,:,:] = tmp['bcl_sw'][iz,iy,ix]
+    bcl_cw[i,:,:] = tmp['bcl_cw'][iz,iy,ix]
+    dbfile.close()
+
+tilt_x1 = np.mean(tilt_x, axis=0)
+tilt_y1 = np.mean(tilt_y, axis=0)
+tilt_z1 = np.mean(tilt_z, axis=0)
+tilt_h1 = np.mean(tilt_h, axis=0)
+tilt_sw1 = np.mean(tilt_sw, axis=0)
+tilt_cw1 = np.mean(tilt_cw, axis=0)
+stretch_x1 = np.mean(stretch_x, axis=0)
+stretch_y1 = np.mean(stretch_y, axis=0)
+stretch_z1 = np.mean(stretch_z, axis=0)
+stretch_h1 = np.mean(stretch_h, axis=0)
+stretch_sw1 = np.mean(stretch_sw, axis=0)
+stretch_cw1 = np.mean(stretch_cw, axis=0)
+bcl_x1 = np.mean(bcl_x, axis=0)
+bcl_y1 = np.mean(bcl_y, axis=0)
+bcl_h1 = np.mean(bcl_h, axis=0)
+bcl_sw1 = np.mean(bcl_sw, axis=0)
+bcl_cw1 = np.mean(bcl_cw, axis=0)
+del tilt_x,tilt_y,tilt_z,tilt_h,tilt_sw,tilt_cw
+del stretch_x,stretch_y,stretch_z,stretch_h,stretch_sw,stretch_cw
+del bcl_x,bcl_y,bcl_h,bcl_sw,bcl_cw
+
+
+
+### Time 2 ###
+times2 = np.arange(217, 222) # 225 min, downdraft
+tilt_x = np.zeros(shape=(len(times2),17,17), dtype=float)
+tilt_y = np.zeros(shape=(len(times2),17,17), dtype=float)
+tilt_z = np.zeros(shape=(len(times2),17,17), dtype=float)
+tilt_h = np.zeros(shape=(len(times2),17,17), dtype=float)
+tilt_sw = np.zeros(shape=(len(times2),17,17), dtype=float)
+tilt_cw = np.zeros(shape=(len(times2),17,17), dtype=float)
+stretch_x = np.zeros(shape=(len(times2),17,17), dtype=float)
+stretch_y = np.zeros(shape=(len(times2),17,17), dtype=float)
+stretch_z = np.zeros(shape=(len(times2),17,17), dtype=float)
+stretch_h = np.zeros(shape=(len(times2),17,17), dtype=float)
+stretch_sw = np.zeros(shape=(len(times2),17,17), dtype=float)
+stretch_cw = np.zeros(shape=(len(times2),17,17), dtype=float)
+bcl_x = np.zeros(shape=(len(times2),17,17), dtype=float)
+bcl_y = np.zeros(shape=(len(times2),17,17), dtype=float)
+bcl_h = np.zeros(shape=(len(times2),17,17), dtype=float)
+bcl_sw = np.zeros(shape=(len(times2),17,17), dtype=float)
+bcl_cw = np.zeros(shape=(len(times2),17,17), dtype=float)
+
+for i in range(len(times2)):
+    t = times2[i]
+    it = np.where(ptime/60 == t)[0][0]
+    iz = np.abs(zh2 - z2_median[it]).argmin()
+    i1 = np.abs(xh2 - x2_median[it]).argmin()
+    i2 = np.abs(yh2 - y2_median[it]).argmin()
+    ix = slice(i1-8,i1+9)
+    iy = slice(i2-8,i2+9)
+    
+    dbfile = open(ip+f"plan{t}_tilt.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    tilt_x[i,:,:] = tmp['tilt_x'][iz,iy,ix]
+    tilt_y[i,:,:] = tmp['tilt_y'][iz,iy,ix]
+    tilt_z[i,:,:] = tmp['tilt_z'][iz,iy,ix]
+    tilt_h[i,:,:] = tmp['tilt_h'][iz,iy,ix]
+    tilt_sw[i,:,:] = tmp['tilt_sw'][iz,iy,ix]
+    tilt_cw[i,:,:] = tmp['tilt_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_stretch.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    stretch_x[i,:,:] = tmp['stretch_x'][iz,iy,ix]
+    stretch_y[i,:,:] = tmp['stretch_y'][iz,iy,ix]
+    stretch_z[i,:,:] = tmp['stretch_z'][iz,iy,ix]
+    stretch_h[i,:,:] = tmp['stretch_h'][iz,iy,ix]
+    stretch_sw[i,:,:] = tmp['stretch_sw'][iz,iy,ix]
+    stretch_cw[i,:,:] = tmp['stretch_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_baroclinic.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    bcl_x[i,:,:] = tmp['bcl_x'][iz,iy,ix]
+    bcl_y[i,:,:] = tmp['bcl_y'][iz,iy,ix]
+    bcl_h[i,:,:] = tmp['bcl_h'][iz,iy,ix]
+    bcl_sw[i,:,:] = tmp['bcl_sw'][iz,iy,ix]
+    bcl_cw[i,:,:] = tmp['bcl_cw'][iz,iy,ix]
+    dbfile.close()
+
+tilt_x2 = np.mean(tilt_x, axis=0)
+tilt_y2 = np.mean(tilt_y, axis=0)
+tilt_z2 = np.mean(tilt_z, axis=0)
+tilt_h2 = np.mean(tilt_h, axis=0)
+tilt_sw2 = np.mean(tilt_sw, axis=0)
+tilt_cw2 = np.mean(tilt_cw, axis=0)
+stretch_x2 = np.mean(stretch_x, axis=0)
+stretch_y2 = np.mean(stretch_y, axis=0)
+stretch_z2 = np.mean(stretch_z, axis=0)
+stretch_h2 = np.mean(stretch_h, axis=0)
+stretch_sw2 = np.mean(stretch_sw, axis=0)
+stretch_cw2 = np.mean(stretch_cw, axis=0)
+bcl_x2 = np.mean(bcl_x, axis=0)
+bcl_y2 = np.mean(bcl_y, axis=0)
+bcl_h2 = np.mean(bcl_h, axis=0)
+bcl_sw2 = np.mean(bcl_sw, axis=0)
+bcl_cw2 = np.mean(bcl_cw, axis=0)
+del tilt_x,tilt_y,tilt_z,tilt_h,tilt_sw,tilt_cw
+del stretch_x,stretch_y,stretch_z,stretch_h,stretch_sw,stretch_cw
+del bcl_x,bcl_y,bcl_h,bcl_sw,bcl_cw
+
+
+
+### Time 3 ###
+times3 = np.arange(220, 225) # 225 min, rotor
+tilt_x = np.zeros(shape=(len(times3),17,17), dtype=float)
+tilt_y = np.zeros(shape=(len(times3),17,17), dtype=float)
+tilt_z = np.zeros(shape=(len(times3),17,17), dtype=float)
+tilt_h = np.zeros(shape=(len(times3),17,17), dtype=float)
+tilt_sw = np.zeros(shape=(len(times3),17,17), dtype=float)
+tilt_cw = np.zeros(shape=(len(times3),17,17), dtype=float)
+stretch_x = np.zeros(shape=(len(times3),17,17), dtype=float)
+stretch_y = np.zeros(shape=(len(times3),17,17), dtype=float)
+stretch_z = np.zeros(shape=(len(times3),17,17), dtype=float)
+stretch_h = np.zeros(shape=(len(times3),17,17), dtype=float)
+stretch_sw = np.zeros(shape=(len(times3),17,17), dtype=float)
+stretch_cw = np.zeros(shape=(len(times3),17,17), dtype=float)
+bcl_x = np.zeros(shape=(len(times3),17,17), dtype=float)
+bcl_y = np.zeros(shape=(len(times3),17,17), dtype=float)
+bcl_h = np.zeros(shape=(len(times3),17,17), dtype=float)
+bcl_sw = np.zeros(shape=(len(times3),17,17), dtype=float)
+bcl_cw = np.zeros(shape=(len(times3),17,17), dtype=float)
+
+for i in range(len(times3)):
+    t = times3[i]
+    it = np.where(ptime/60 == t)[0][0]
+    iz = np.abs(zh2 - z2_median[it]).argmin()
+    i1 = np.abs(xh2 - x2_median[it]).argmin()
+    i2 = np.abs(yh2 - y2_median[it]).argmin()
+    ix = slice(i1-8,i1+9)
+    iy = slice(i2-8,i2+9)
+    
+    dbfile = open(ip+f"plan{t}_tilt.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    tilt_x[i,:,:] = tmp['tilt_x'][iz,iy,ix]
+    tilt_y[i,:,:] = tmp['tilt_y'][iz,iy,ix]
+    tilt_z[i,:,:] = tmp['tilt_z'][iz,iy,ix]
+    tilt_h[i,:,:] = tmp['tilt_h'][iz,iy,ix]
+    tilt_sw[i,:,:] = tmp['tilt_sw'][iz,iy,ix]
+    tilt_cw[i,:,:] = tmp['tilt_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_stretch.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    stretch_x[i,:,:] = tmp['stretch_x'][iz,iy,ix]
+    stretch_y[i,:,:] = tmp['stretch_y'][iz,iy,ix]
+    stretch_z[i,:,:] = tmp['stretch_z'][iz,iy,ix]
+    stretch_h[i,:,:] = tmp['stretch_h'][iz,iy,ix]
+    stretch_sw[i,:,:] = tmp['stretch_sw'][iz,iy,ix]
+    stretch_cw[i,:,:] = tmp['stretch_cw'][iz,iy,ix]
+    dbfile.close()
+    
+    dbfile = open(ip+f"plan{t}_baroclinic.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    bcl_x[i,:,:] = tmp['bcl_x'][iz,iy,ix]
+    bcl_y[i,:,:] = tmp['bcl_y'][iz,iy,ix]
+    bcl_h[i,:,:] = tmp['bcl_h'][iz,iy,ix]
+    bcl_sw[i,:,:] = tmp['bcl_sw'][iz,iy,ix]
+    bcl_cw[i,:,:] = tmp['bcl_cw'][iz,iy,ix]
+    dbfile.close()
+
+tilt_x3 = np.mean(tilt_x, axis=0)
+tilt_y3 = np.mean(tilt_y, axis=0)
+tilt_z3 = np.mean(tilt_z, axis=0)
+tilt_h3 = np.mean(tilt_h, axis=0)
+tilt_sw3 = np.mean(tilt_sw, axis=0)
+tilt_cw3 = np.mean(tilt_cw, axis=0)
+stretch_x3 = np.mean(stretch_x, axis=0)
+stretch_y3 = np.mean(stretch_y, axis=0)
+stretch_z3 = np.mean(stretch_z, axis=0)
+stretch_h3 = np.mean(stretch_h, axis=0)
+stretch_sw3 = np.mean(stretch_sw, axis=0)
+stretch_cw3 = np.mean(stretch_cw, axis=0)
+bcl_x3 = np.mean(bcl_x, axis=0)
+bcl_y3 = np.mean(bcl_y, axis=0)
+bcl_h3 = np.mean(bcl_h, axis=0)
+bcl_sw3 = np.mean(bcl_sw, axis=0)
+bcl_cw3 = np.mean(bcl_cw, axis=0)
+del tilt_x,tilt_y,tilt_z,tilt_h,tilt_sw,tilt_cw
+del stretch_x,stretch_y,stretch_z,stretch_h,stretch_sw,stretch_cw
+del bcl_x,bcl_y,bcl_h,bcl_sw,bcl_cw
+
+
+
+itp1 = np.where(ptime/60 == times1[-1])[0][0]
+itp2 = np.where(ptime/60 == times2[-1])[0][0]
+itp3 = np.where(ptime/60 == times3[-1])[0][0]
+
+xp1 = x1_ml[itp1,:]
+yp1 = y1_ml[itp1,:]
+zp1 = z1_ml[itp1,:]
+xmp1 = x1_median[itp1]
+ymp1 = y1_median[itp1]
+zmp1 = z1_median[itp1]
+
+xp2 = x2_ml[itp2,:]
+yp2 = y2_ml[itp2,:]
+zp2 = z2_ml[itp2,:]
+xmp2 = x2_median[itp2]
+ymp2 = y2_median[itp2]
+zmp2 = z2_median[itp2]
+
+xp3 = x2_ml[itp3,:]
+yp3 = y2_ml[itp3,:]
+zp3 = z2_ml[itp3,:]
+xmp3 = x2_median[itp3]
+ymp3 = y2_median[itp3]
+zmp3 = z2_median[itp3]
+
+iz1 = np.abs(zh1 - zmp1).argmin()
+i1 = np.abs(xh1 - xmp1).argmin()
+i2 = np.abs(yh1 - ymp1).argmin()
+ix1 = slice(i1-8,i1+9)
+iy1 = slice(i2-8,i2+9)
+
+iz2 = np.abs(zh2 - zmp2).argmin()
+i1 = np.abs(xh2 - xmp2).argmin()
+i2 = np.abs(yh2 - ymp2).argmin()
+ix2 = slice(i1-8,i1+9)
+iy2 = slice(i2-8,i2+9)
+
+iz3 = np.abs(zh2 - zmp3).argmin()
+i1 = np.abs(xh2 - xmp3).argmin()
+i2 = np.abs(yh2 - ymp3).argmin()
+ix3 = slice(i1-8,i1+9)
+iy3 = slice(i2-8,i2+9)
+
+
+
+#%% Make the plots
+
+figsave = False
+
+
+xl1 = [xh1[ix1][0], xh1[ix1][-1]] # [-19,-14] at 205-210 / [-11,-5] at 220-225
+yl1 = [yh1[iy1][0], yh1[iy1][-1]] # [-72,-67]+0.75 at 205-210 / ?[-55,-49]+1 at 220-225
+xl2 = [xh2[ix2][0], xh2[ix2][-1]]
+yl2 = [yh2[iy2][0], yh2[iy2][-1]]
+xl3 = [xh2[ix3][0], xh2[ix3][-1]]
+yl3 = [yh2[iy3][0], yh2[iy3][-1]]
+
+
+lims1 = [-2e-4, 2e-4]; levs1 = np.linspace(lims1[0], lims1[1], 41)
+lims2 = [-6e-4, 6e-4]; levs2 = np.linspace(lims2[0], lims2[1], 41)
+levs1 = np.append(np.append([-0.01], levs1), [0.01])
+levs2 = np.append(np.append([-0.01], levs2), [0.01])
+
+
+### Vertical ###
+fig,ax = plt.subplots(3,2, figsize=(7,8.5), layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh1[ix1], yh1[iy1], tilt_z1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,0].set_title(f"                                             {times1[0]}-{times1[-1]} min", fontsize=14)
+ax[0,0].set_ylabel('y (km)', fontsize=12)
+
+c1 = plot_contourf(xh1[ix1], yh1[iy1], stretch_z1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+cb1 = plt.colorbar(c1, ax=ax[0,1], extend='both')
+cb1.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+cb1.formatter.set_powerlimits((0,0))
+ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=12)
+
+plot_contourf(xh2[ix2], yh2[iy2], tilt_z2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
+ax[1,0].set_title(f"                                             {times2[0]}-{times2[-1]} min", fontsize=14)
+ax[1,0].set_ylabel('y (km)', fontsize=12)
+
+c2 = plot_contourf(xh2[ix2], yh2[iy2], stretch_z2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+cb2 = plt.colorbar(c2, ax=ax[1,1], extend='both')
+cb2.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+cb2.formatter.set_powerlimits((0,0))
+ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=12)
+
+plot_contourf(xh2[ix3], yh2[iy3], tilt_z3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
+ax[2,0].set_title(f"                                             {times3[0]}-{times3[-1]} min", fontsize=14)
+ax[2,0].set_xlabel('x (km)', fontsize=12)
+ax[2,0].set_ylabel('y (km)', fontsize=12)
+
+c3 = plot_contourf(xh2[ix3], yh2[iy3], stretch_z3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+cb3 = plt.colorbar(c3, ax=ax[2,1], extend='both')
+cb3.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+cb3.formatter.set_powerlimits((0,0))
+ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=12)
+ax[2,1].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite \u03B6 tendency", fontsize=14)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/zvort_composite.png", dpi=300)
+
+
+
+
+### Horizontal ###
+fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh1[ix1], yh1[iy1], tilt_h1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+ax[0,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh1[ix1], yh1[iy1], stretch_h1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
+
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_h1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
+cb1.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=10)
+cb1.formatter.set_powerlimits((0,0))
+ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+
+
+plot_contourf(xh2[ix2], yh2[iy2], tilt_h2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+ax[1,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix2], yh2[iy2], stretch_h2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
+
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_h2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
+cb2.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=10)
+cb2.formatter.set_powerlimits((0,0))
+ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+
+
+plot_contourf(xh2[ix3], yh2[iy3], tilt_h3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+ax[2,0].set_xlabel('x (km)', fontsize=12)
+ax[2,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix3], yh2[iy3], stretch_h3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
+ax[2,1].set_xlabel('x (km)', fontsize=12)
+
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_h3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
+cb3.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=10)
+cb3.formatter.set_powerlimits((0,0))
+ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+ax[2,2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite |\u03c9$_H$| tendency", fontsize=14)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/hvort_composite.png", dpi=300)
+
+
+
+
+### X vorticity ###
+fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh1[ix1], yh1[iy1], tilt_x1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+ax[0,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh1[ix1], yh1[iy1], stretch_x1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
+
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_x1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
+cb1.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=10)
+cb1.formatter.set_powerlimits((0,0))
+ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+
+
+plot_contourf(xh2[ix2], yh2[iy2], tilt_x2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+ax[1,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix2], yh2[iy2], stretch_x2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
+
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_x2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
+cb2.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=10)
+cb2.formatter.set_powerlimits((0,0))
+ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+
+
+plot_contourf(xh2[ix3], yh2[iy3], tilt_x3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+ax[2,0].set_xlabel('x (km)', fontsize=12)
+ax[2,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix3], yh2[iy3], stretch_x3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
+ax[2,1].set_xlabel('x (km)', fontsize=12)
+
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_x3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
+cb3.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=10)
+cb3.formatter.set_powerlimits((0,0))
+ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+ax[2,2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite \u03BE tendency", fontsize=14)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/xvort_composite.png", dpi=300)
+
+
+
+
+### Y vorticity ###
+fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh1[ix1], yh1[iy1], tilt_y1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+ax[0,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh1[ix1], yh1[iy1], stretch_y1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
+
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_y1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
+cb1.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+cb1.formatter.set_powerlimits((0,0))
+ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+
+
+plot_contourf(xh2[ix2], yh2[iy2], tilt_y2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+ax[1,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix2], yh2[iy2], stretch_y2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
+
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_y2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
+cb2.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+cb2.formatter.set_powerlimits((0,0))
+ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+
+
+plot_contourf(xh2[ix3], yh2[iy3], tilt_y3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+ax[2,0].set_xlabel('x (km)', fontsize=12)
+ax[2,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix3], yh2[iy3], stretch_y3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
+ax[2,1].set_xlabel('x (km)', fontsize=12)
+
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_y3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
+cb3.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+cb3.formatter.set_powerlimits((0,0))
+ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+ax[2,2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite \u03B7 tendency", fontsize=14)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/yvort_composite.png", dpi=300)
 
 
 
 
 
+### Streamwise ###
+fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh1[ix1], yh1[iy1], tilt_sw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+ax[0,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh1[ix1], yh1[iy1], stretch_sw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
+
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_sw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
+cb1.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=10)
+cb1.formatter.set_powerlimits((0,0))
+ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+
+
+plot_contourf(xh2[ix2], yh2[iy2], tilt_sw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+ax[1,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix2], yh2[iy2], stretch_sw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
+
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_sw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
+cb2.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=10)
+cb2.formatter.set_powerlimits((0,0))
+ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+
+
+plot_contourf(xh2[ix3], yh2[iy3], tilt_sw3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+ax[2,0].set_xlabel('x (km)', fontsize=12)
+ax[2,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix3], yh2[iy3], stretch_sw3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
+ax[2,1].set_xlabel('x (km)', fontsize=12)
+
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_sw3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
+cb3.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=10)
+cb3.formatter.set_powerlimits((0,0))
+ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+ax[2,2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite streamwise \u03c9 tendency", fontsize=14)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/swvort_composite.png", dpi=300)
 
 
 
 
+### Crosswise ###
+fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xh1[ix1], yh1[iy1], tilt_cw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+# ax[0,0].set_title(f"{times1[0]}-{times1[-1]} min")
+ax[0,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh1[ix1], yh1[iy1], stretch_cw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,1].set_title(f"Stretching ({times1[0]}-{times1[-1]} min)")
+ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
+
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_cw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
+cb1.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=10)
+cb1.formatter.set_powerlimits((0,0))
+ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+# ax[0,2].set_title(f"{times1[0]}-{times1[-1]} min")
 
 
+plot_contourf(xh2[ix2], yh2[iy2], tilt_cw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+# ax[1,0].set_title(f"{times2[0]}-{times2[-1]} min")
+ax[1,0].set_ylabel('y (km)', fontsize=12)
+
+plot_contourf(xh2[ix2], yh2[iy2], stretch_cw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,1].set_title(f"Stretching ({times2[0]}-{times2[-1]} min)")
+ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
+
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_cw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
+cb2.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=10)
+cb2.formatter.set_powerlimits((0,0))
+ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
+# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+# ax[1,2].set_title(f"{times2[0]}-{times2[-1]} min")
 
 
+plot_contourf(xh2[ix3], yh2[iy3], tilt_cw3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+# ax[2,0].set_title(f"{times3[0]}-{times3[-1]} min")
+ax[2,0].set_xlabel('x (km)', fontsize=12)
+ax[2,0].set_ylabel('y (km)', fontsize=12)
 
+plot_contourf(xh2[ix3], yh2[iy3], stretch_cw3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,1].set_title(f"Stretching ({times3[0]}-{times3[-1]} min)")
+ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
+ax[2,1].set_xlabel('x (km)', fontsize=12)
 
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_cw3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
+cb3.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=10)
+cb3.formatter.set_powerlimits((0,0))
+ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
+# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+# ax[2,2].set_title(f"{times3[0]}-{times3[-1]} min")
+ax[2,2].set_xlabel('x (km)', fontsize=12)
 
+plt.suptitle(f"Composite crosswise \u03c9 tendency", fontsize=14)
 
-
-
-
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/cwvort_composite.png", dpi=300)
 
 
 
