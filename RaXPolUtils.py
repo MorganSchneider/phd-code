@@ -32,8 +32,10 @@ warnings.filterwarnings('ignore', category=UserWarning)
 ### Define colormaps ###
 ########################
 
+# nwsdmap = LinearSegmentedColormap.from_list('nwsdmap',
+#         np.vstack((plt.cm.gray(np.linspace(0,1,12)), pyart.graph.cm.RefDiff(np.linspace(0,1,12)))))
 nwsdmap = LinearSegmentedColormap.from_list('nwsdmap',
-        np.vstack((plt.cm.gray(np.linspace(0,1,12)), pyart.graph.cm.RefDiff(np.linspace(0,1,12)))))
+        np.vstack((plt.cm.gray(np.linspace(0,1,12)), pyart.graph.cm_colorblind.HomeyerRainbow(np.linspace(0,1,12)))))
 
 # Define colormaps for plotting radar variables
 cmaps = {
@@ -45,7 +47,8 @@ cmaps = {
     'temp': {'cm': 'pyart_HomeyerRainbow', 'label': "$T$ (C)"},
     'dewpt': {'cm': cmocean.cm.algae, 'label': "$T_D$ (C)"},
     'theta': {'cm': 'pyart_HomeyerRainbow', 'label': "\u03B8 (K)"},
-    'vort': {'cm': 'pyart_ChaseSpectral', 'label': "Pseudovorticity (s$^{-1}$)"}
+    'vort': {'cm': 'pyart_ChaseSpectral', 'label': "Pseudovorticity (s$^{-1}$)"},
+    'div': {'cm': 'pyart_balance', 'label': "Pseudodivergence (s$^{-1}$)"}
 }
 
 #%%
@@ -255,7 +258,48 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
     return c
 
 
-
+# Wrapper function for contourf
+def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None, ylims=None,
+                  cmap=None, cbar=True, cbfs=None, **kwargs):
+    if cmap is None:
+        cm, cb_label = cmaps[field]['cm'], cmaps[field]['label']
+    else:
+        cm, cb_label = cmap, cmaps[field]['label']
+    
+    if levels is None:
+        levs = None
+    else:
+        levs = levels
+    
+    if datalims is None:
+        datamin = None
+        datamax = None
+    else:
+        datamin = datalims[0]
+        datamax = datalims[1]
+    
+    c = ax.contourf(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    # ax.contour(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    # ax.contourf(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    # ax.contourf(x, y, data, levels=levs, vmin=datamin, vmax=datamax, cmap=cm, antialiased=True, **kwargs)
+    c.set_edgecolor('face')
+    
+    if cbar:
+        cb = plt.colorbar(c, ax=ax, extend='both')
+        cb.set_label(cb_label)
+        if np.max(np.abs(datalims)) < 0.1:
+            cb.formatter.set_powerlimits((0,0))
+        if cbfs is None:
+            cb.set_label(cb_label)
+        else:
+            cb.set_label(cb_label, fontsize=cbfs)
+    
+    if xlims is not None:
+        ax.set_xlim(xlims[0], xlims[1])
+    if ylims is not None:
+        ax.set_ylim(ylims[0], ylims[1])
+    
+    return c
 
 
 

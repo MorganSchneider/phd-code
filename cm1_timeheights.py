@@ -415,10 +415,6 @@ if False:
 #%% Multi panel timeheight figures
 
 
-figsave = False
-ztop = 4
-
-
 ### SUPERCELL 1 ###
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/timeheight_s1.pkl", 'rb')
@@ -477,6 +473,8 @@ pp_min_mq = tmp['pp_min']
 vppga_1km_max_mq = tmp['vppga_1km_max']
 dbfile.close()
 
+ztop = 4
+
 # cm = cmocean.tools.lighten(plt.get_cmap('Blues_r'), 0.8)
 # cm = cmocean.tools.lighten(pyart.graph.cm_colorblind.HomeyerRainbow_r, 0.6)
 # cm = 'pyart_Bu10_r'
@@ -486,11 +484,12 @@ cm = 'Blues_r'
 # cm = 'pyart_LangRainbow12_r'
 # cm = 'pyart_HomeyerRainbow_r'
 
+
 figsave = False
 
 
 # OW timeheights with w contoured
-if True:
+if False:
     fig,((ax1),(ax2),(ax3)) = plt.subplots(3, 1, figsize=(8,7), sharex=True, sharey=True, layout='constrained')
     
     # c = plot_cfill(times, zz, OW_min_m, 'OW', ax1, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
@@ -608,7 +607,7 @@ if False:
 
 
 # w timeheights with OW contoured
-if True:
+if False:
     fig,((ax1),(ax2),(ax3)) = plt.subplots(3, 1, figsize=(8,7), sharex=True, sharey=True, layout='constrained')
     
     # c = plot_cfill(times, zz, w_max_m, 'w', ax1, datalims=[0,20], cmap='Reds', cbar=False, xlims=[180,240], ylims=[0,ztop])
@@ -644,8 +643,8 @@ if True:
 
 
 # Complete UH 0-2 and 2-5 km time series
-if False:
-    fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,6), sharex=True, layout='constrained')
+if True:
+    fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
     
     ax1.plot(times, uh02_max_q, 'k', linewidth=1.5)
     ax1.plot(times, uh02_max_m, 'r', linewidth=1.5)
@@ -655,7 +654,7 @@ if False:
     ax1.set_xlim([180,240])
     ax1.set_ylim([0,2000])
     # ax1.set_title(f"Maximum 0-2 km updraft helicity")
-    ax1.legend(['QLCSONLY', 'MERGER', 'SUPERCELL'], loc='upper right')
+    # ax1.legend(['QLCSONLY', 'MERGER', 'SUPERCELL'], loc='upper right')
     
     ax2.plot(times, uh25_max_q, 'k', linewidth=1.5)
     ax2.plot(times, uh25_max_m, 'r', linewidth=1.5)
@@ -666,66 +665,65 @@ if False:
     ax2.set_ylim([0,2000])
     # ax2.set_title(f"Maximum 2-5 km updraft helicity")
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_s1_UH.png", dpi=300)
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH.png", dpi=300)
 
 
 # UH 0-2 and 2-5 time series split by supercell and qlcs
-ti = np.where(times == 210)[0][0]
-
-
-fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
-
-ax1.plot(times[ti:], uh25_max_q[ti:], 'k', linewidth=2)
-ax1.plot(times, uh25_max_s, 'dodgerblue', linewidth=2)
-ax1.plot(times, uh25_max_m, 'r', linewidth=2)
-ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
-# ax1.set_xlabel('Time (min)')
-ax1.set_xlim([180,240])
-ax1.set_ylim([0,2000])
-ax1.set_title(f"Maximum 2-5 km updraft helicity (supercell)")
-ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-
-ax2.plot(times, uh25_max_q, 'k', linewidth=2)
-ax2.plot(times[ti:], uh25_max_s[ti:], 'dodgerblue', linewidth=2)
-ax2.plot(times, np.append(uh25_max_mq[0:ti], uh25_max_m[ti:]), 'r', linewidth=2)
-ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
-ax2.set_xlabel('Time (min)')
-ax2.set_xlim([180,240])
-ax2.set_ylim([0,2000])
-ax2.set_title(f"Maximum 2-5 km updraft helicity (qlcs)")
-ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH25.png", dpi=300)
-    
-
-fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
-
-ax1.plot(times[ti:], uh02_max_q[ti:], 'k', linewidth=2)
-ax1.plot(times, uh02_max_s, 'dodgerblue', linewidth=2)
-ax1.plot(times, uh02_max_m, 'r', linewidth=2)
-ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
-# ax1.set_xlabel('Time (min)')
-ax1.set_xlim([180,240])
-ax1.set_ylim([0,2000])
-ax1.set_title(f"Maximum 0-2 km updraft helicity (supercell)")
-ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-
-ax2.plot(times, uh02_max_q, 'k', linewidth=2)
-ax2.plot(times[ti:], uh02_max_s[ti:], 'dodgerblue', linewidth=2)
-ax2.plot(times, np.append(uh02_max_mq[0:ti], uh02_max_m[ti:]), 'r', linewidth=2)
-ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
-ax2.set_xlabel('Time (min)')
-ax2.set_xlim([180,240])
-ax2.set_ylim([0,2000])
-ax2.set_title(f"Maximum 0-2 km updraft helicity (qlcs)")
-ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
-if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH02.png", dpi=300)
-
-
-
 if False:
-    # UH 0-1 and 1-3 time series split by supercell and qlcs
+    ti = np.where(times == 210)[0][0]
+    
+    fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
+    
+    ax1.plot(times[ti:], uh25_max_q[ti:], 'k', linewidth=2)
+    ax1.plot(times, uh25_max_s, 'dodgerblue', linewidth=2)
+    ax1.plot(times, uh25_max_m, 'r', linewidth=2)
+    ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    # ax1.set_xlabel('Time (min)')
+    ax1.set_xlim([180,240])
+    ax1.set_ylim([0,2000])
+    ax1.set_title(f"Maximum 2-5 km updraft helicity (supercell)")
+    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    
+    ax2.plot(times, uh25_max_q, 'k', linewidth=2)
+    ax2.plot(times[ti:], uh25_max_s[ti:], 'dodgerblue', linewidth=2)
+    ax2.plot(times, np.append(uh25_max_mq[0:ti], uh25_max_m[ti:]), 'r', linewidth=2)
+    ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax2.set_xlabel('Time (min)')
+    ax2.set_xlim([180,240])
+    ax2.set_ylim([0,2000])
+    ax2.set_title(f"Maximum 2-5 km updraft helicity (qlcs)")
+    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH25.png", dpi=300)
+        
+    
+    fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
+    
+    ax1.plot(times[ti:], uh02_max_q[ti:], 'k', linewidth=2)
+    ax1.plot(times, uh02_max_s, 'dodgerblue', linewidth=2)
+    ax1.plot(times, uh02_max_m, 'r', linewidth=2)
+    ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    # ax1.set_xlabel('Time (min)')
+    ax1.set_xlim([180,240])
+    ax1.set_ylim([0,2000])
+    ax1.set_title(f"Maximum 0-2 km updraft helicity (supercell)")
+    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    
+    ax2.plot(times, uh02_max_q, 'k', linewidth=2)
+    ax2.plot(times[ti:], uh02_max_s[ti:], 'dodgerblue', linewidth=2)
+    ax2.plot(times, np.append(uh02_max_mq[0:ti], uh02_max_m[ti:]), 'r', linewidth=2)
+    ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
+    ax2.set_xlabel('Time (min)')
+    ax2.set_xlim([180,240])
+    ax2.set_ylim([0,2000])
+    ax2.set_title(f"Maximum 0-2 km updraft helicity (qlcs)")
+    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH02.png", dpi=300)
+
+
+# UH 0-1 and 1-3 time series split by supercell and qlcs
+if False:
     fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
     
     ax1.plot(times[ti:], uh13_max_q[ti:], 'k', linewidth=2)

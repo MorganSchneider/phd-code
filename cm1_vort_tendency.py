@@ -4,6 +4,13 @@
 Created on Mon Jan  6 15:24:56 2025
 
 @author: morgan.schneider
+
+- PAPER FIGURES -
+composite_zvort (hvort, xvort, yvort, swvort, cwvort)
+
+- Other figures -
+Tendency plan views at single times
+Parcel time series of tendency terms
 """
 
 ####################
@@ -20,19 +27,19 @@ ds = nc.Dataset("/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/cm1out_00
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
-iz = np.where(zh >= 4)[0][1]
+iz = np.where(zh >= 4.1)[0][1]
 ds.close()
 
-xlims = [-25,5]
-ylims = [-90,-40]
-zlims = [0,4]
+xlims = [-35,5]
+ylims = [-135,-45]
+zlims = [0,4.1]
 
 ix1 = np.where(xh >= xlims[0])[0][0]
-ix2 = np.where(xh >= xlims[1])[0][0]
+ix2 = np.where(xh >= xlims[1])[0][1]
 iy1 = np.where(yh >= ylims[0])[0][0]
-iy2 = np.where(yh >= ylims[1])[0][0]
-ix = slice(ix1,ix2+1)
-iy = slice(iy1,iy2+1)
+iy2 = np.where(yh >= ylims[1])[0][1]
+ix = slice(ix1,ix2)
+iy = slice(iy1,iy2)
 # xx,yy = np.meshgrid(xh[ix], yh[iy], indexing='xy')
 
 
@@ -44,21 +51,18 @@ ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.n
 ptime = ds.variables['time'][:].data
 ds.close()
 
-
-# Calculate storm motion for streamwise/crosswise vorticity
-if 'u_storm' not in locals():
-    dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
-    sm = pickle.load(dbfile)
-    u_storm = sm['u_storm']
-    v_storm = sm['v_storm']
-    dbfile.close()
+dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+sm = pickle.load(dbfile)
+u_storm = sm['u_storm']
+v_storm = sm['v_storm']
+dbfile.close()
 
 
-times = [210,225]
+times = [220]
 # n = np.where(ptime/60 == 225)[0][0]
-fnums = [43,58]
+fnums = [53]
 
-calc_stretching = False
+calc_stretching = True
 calc_tilting = False
 calc_baroclinic = False
 calc_friction = False
@@ -69,19 +73,19 @@ for i in range(len(times)):
     # it2 = np.where(ptime/60 > t)[0][0]
     # its = slice(it1,it2)
     
-    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{t:.0f}min_v2.pkl", 'rb')
-    cc = pickle.load(dbfile)
-    cc_mv1 = cc['mv1']
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{t:.0f}min_v2.pkl", 'rb')
+    tmp = pickle.load(dbfile)
+    cc = tmp['mv1']
     dbfile.close()
     
-    pids_ml = traj[f"{t}min"]['pids'][(cc_mv1 == 1)]
-    x_ml = traj[f"{t}min"]['x'][:,(cc_mv1 == 1)]/1000
-    y_ml = traj[f"{t}min"]['y'][:,(cc_mv1 == 1)]/1000
-    z_ml = traj[f"{t}min"]['z'][:,(cc_mv1 == 1)]/1000
-    u_ml = traj[f"{t}min"]['u'][:,(cc_mv1 == 1)]
-    v_ml = traj[f"{t}min"]['v'][:,(cc_mv1 == 1)]
-    w_ml = traj[f"{t}min"]['w'][:,(cc_mv1 == 1)]
-    zvort_ml = traj[f"{t}min"]['zvort'][:,(cc_mv1 == 1)]
+    pids_ml = traj[f"{t}min"]['pids'][(cc == 1)]
+    x_ml = traj[f"{t}min"]['x'][:,(cc == 1)]/1000
+    y_ml = traj[f"{t}min"]['y'][:,(cc == 1)]/1000
+    z_ml = traj[f"{t}min"]['z'][:,(cc == 1)]/1000
+    u_ml = traj[f"{t}min"]['u'][:,(cc == 1)]
+    v_ml = traj[f"{t}min"]['v'][:,(cc == 1)]
+    w_ml = traj[f"{t}min"]['w'][:,(cc == 1)]
+    zvort_ml = traj[f"{t}min"]['zvort'][:,(cc == 1)]
     
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{t:.0f}min.pkl", 'rb')
     vort_traj = pickle.load(dbfile)
@@ -112,10 +116,13 @@ for i in range(len(times)):
             fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
         #end if k == 13
         
-        us = u_ml - u_storm[k-13]
-        vs = v_ml - v_storm[k-13]
-        us_norm = us / np.sqrt(us**2 + vs**2)
-        vs_norm = vs / np.sqrt(us**2 + vs**2)
+        u_sr = u_ml - u_storm[k-13]
+        v_sr = v_ml - v_storm[k-13]
+        ws_sr = np.sqrt(u_sr**2 + v_sr**2)
+        
+        dudt = np.gradient(u_sr, ptime, axis=0)
+        dvdt = np.gradient(v_sr, ptime, axis=0)
+        dwsdt = 1/ws_sr * (u_sr * dudt + v_sr * dvdt)
         
         if calc_stretching | calc_tilting:
             ds = nc.Dataset(fp+f"cm1out_{k:06d}.nc")
@@ -148,8 +155,13 @@ for i in range(len(times)):
                     yvort_term[m,p] = yvort_ml[it,p] * dvdy_ml
                     zvort_term[m,p] = zvort_ml[it,p] * dwdz_ml
                     hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
-                    svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
-                    cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                    
+                    svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
+                                                        + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
+                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
+                    cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
+                                                        + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
+                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
                     
                     del dudx_ml,dvdy_ml,dwdz_ml
                 #end for p in range(len(pids_ml))
@@ -189,8 +201,12 @@ for i in range(len(times)):
                     zvort_term[m,p] = xvort_ml[it,p] * dwdx_ml + yvort_ml[it,p] * dwdy_ml
                     
                     hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
-                    svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
-                    cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                    svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
+                                                        + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
+                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
+                    cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
+                                                        + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
+                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
                     
                     del dudy_ml,dudz_ml,dvdx_ml,dvdz_ml,dwdx_ml,dwdy_ml
                 #end for p in range(len(pids_ml))
@@ -236,8 +252,12 @@ for i in range(len(times)):
                 yvort_term[m,p] = 1/(1.1**2) * (drdz_ml * dpdx_ml - drdx_ml * dpdz_ml)
                 zvort_term[m,p] = 1/(1.1**2) * (drdx_ml * dpdy_ml - drdy_ml * dpdx_ml)
                 hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
-                svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
-                cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
+                                                    + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
+                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
+                cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
+                                                    + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
+                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
                 
                 del drdx_ml,drdy_ml,drdz_ml,dpdx_ml,dpdy_ml,dpdz_ml
             #end for p in range(len(pids_ml))
@@ -276,8 +296,12 @@ for i in range(len(times)):
                 yvort_term[m,p] = nu * del2yvort_ml
                 zvort_term[m,p] = nu * del2zvort_ml
                 hvort_term[m,p] = (xvort_ml[it,p] / hvort_ml[it,p]) * xvort_term[m,p] + (yvort_ml[it,p] / hvort_ml[it,p]) * yvort_term[m,p]
-                svort_term[m,p] = us_norm[it,p] * xvort_term[m,p] + vs_norm[it,p] * yvort_term[m,p]
-                cvort_term[m,p] = vs_norm[it,p] * xvort_term[m,p] - us_norm[it,p] * yvort_term[m,p]
+                svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
+                                                    + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
+                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
+                cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
+                                                    + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
+                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
                 
                 del del2xvort_ml,del2yvort_ml,del2zvort_ml
             #end for p in range(len(pids_ml))
@@ -331,7 +355,7 @@ if True:
     ptime = ds.variables['time'][:].data
     ds.close()
     
-    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime:.0f}min_v2.pkl", 'rb')
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime:.0f}min_v2.pkl", 'rb')
     cc = pickle.load(dbfile)
     cc_mv1 = cc['mv1']
     dbfile.close()
@@ -496,12 +520,12 @@ tilt_sw2 = vten2['tilt_sw']; stretch_sw2 = vten2['stretch_sw']; bcl_sw2 = vten2[
 tilt_cw2 = vten2['tilt_cw']; stretch_cw2 = vten2['stretch_cw']; bcl_cw2 = vten2['bcl_cw']; fric_cw2 = vten2['fric_cw']
 
 # load 210 min source regions
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_210min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_210min_v2.pkl", 'rb')
 cc = pickle.load(dbfile)
 cc1 = cc['mv1']
 dbfile.close()
 # load 225 min source regions
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_225min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_225min_v2.pkl", 'rb')
 cc = pickle.load(dbfile)
 cc2 = cc['mv1']
 dbfile.close()
@@ -1076,47 +1100,13 @@ plt.show()
 
 
 
-#%% Calculate tendency plan views
+#%% Calculate tendency plan views - median parcel, single time
 
-# Calculate storm motion for streamwise/crosswise vorticity
-if 'u_storm' not in locals():
-    dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/boxes_s1.pkl', 'rb') # interchange with boxes_q
-    box = pickle.load(dbfile)
-    x1_m = 1000 * np.array(box['x1_pp'])
-    y1_m = 1000 * np.array(box['y1_pp'])
-    dbfile.close()
-    
-    for i in range(len(x1_m)-1):
-        if x1_m[i+1] == x1_m[i]:
-            if (i != 0):
-                x1_m[i] = (x1_m[i+1] + x1_m[i-1]) / 2
-            else:
-                x1_m[i+1] = (x1_m[i+2] + x1_m[i]) / 2
-        
-        if y1_m[i+1] == y1_m[i]:
-            if (i != 0):
-                y1_m[i] = (y1_m[i+1] + y1_m[i-1]) / 2
-            else:
-                y1_m[i+1] = (y1_m[i+2] + y1_m[i]) / 2
-    
-    u_s = np.zeros(shape=(61,), dtype=float); v_s = np.zeros(shape=(61,), dtype=float)
-    u_s[1:] = np.gradient(x1_m, np.linspace(10860, 14400, 60))
-    v_s[1:] = np.gradient(y1_m, np.linspace(10860, 14400, 60))
-    
-    if u_s[1] == u_s[2]:
-        u_s[0] = u_s[1]
-    else:
-        u_s[0] = u_s[1] - np.diff(u_s)[1]
-    
-    if v_s[1] == v_s[2]:
-        v_s[0] = v_s[1]
-    else:
-        v_s[0] = v_s[1] - np.diff(v_s)[1]
-    
-    u_storm = u_s;  v_storm = v_s
-    u_storm[1:-1] = movmean(u_s,3)[1:-1]
-    v_storm[1:-1] = movmean(v_s,3)[1:-1]
-
+dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+sm = pickle.load(dbfile)
+u_storm = sm['u_storm']
+v_storm = sm['v_storm']
+dbfile.close()
 
 
 calc_stretching = False
@@ -1126,6 +1116,7 @@ calc_friction = False
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
+# Use median parcel
 for fn in np.arange(28,59):
     print(f"cm1out_{fn:06d}")
     
@@ -1268,8 +1259,244 @@ for fn in np.arange(28,59):
     
     del u,v,w,xvort,yvort,zvort,u_sr,v_sr,ws_sr,hvort
 
+#%% Calculate tendency plan views - parcel-centered composites, single time
 
-#%% Load data for plan views of tendency
+mvtime = 220
+fnum = 53
+
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000014.nc')
+xh = ds.variables['xh'][:].data
+yh = ds.variables['yh'][:].data
+zh = ds.variables['z'][:].data
+ds.close()
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+sm = pickle.load(dbfile)
+u_storm = sm['u_storm']
+v_storm = sm['v_storm']
+dbfile.close()
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime:.0f}min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+pids_ml = traj[f"{mvtime}min"]['pids'][(cc == 1)]
+x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]/1000
+y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]/1000
+z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]/1000
+
+
+ip = f"/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/"
+
+times = np.zeros(shape=(16,), dtype=float)
+
+sx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+sy = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+sz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+sh = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+ssw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+scw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+
+tx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+ty = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+tz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+th = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+tsw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+tcw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+
+bx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+by = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+bh = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+bsw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+bcw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+
+tilt_components = False
+
+if tilt_components: # individual tilting directions
+    t_xy = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_xz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_yx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_yz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_zx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_zy = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_zsw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_zcw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+
+
+m = 0
+for fn in np.arange(fnum-15,fnum+1):
+    print(f"cm1out_{fn:06d}")
+    
+    ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_{fn:06d}.nc")
+    stime = ds.variables['time'][:].data[0]
+    it = np.where(ptime == stime)[0][0]
+    
+    xmin = np.min(x_ml[it,:]); ix1 = np.abs(xh - xmin).argmin()
+    xmax = np.max(x_ml[it,:]); ix2 = np.abs(xh - xmax).argmin()
+    ymin = np.min(y_ml[it,:]); iy1 = np.abs(yh - ymin).argmin()
+    ymax = np.max(y_ml[it,:]); iy2 = np.abs(yh - ymax).argmin()
+    zmax = np.max(z_ml[it,:]); iz1 = np.abs(zh - zmax).argmin()
+    ix = slice(ix1-16, ix2+17)
+    iy = slice(iy1-16, iy2+17)
+    iz = slice(0, iz1+8)
+    
+    u = ds.variables['uinterp'][:].data[0,iz,iy,ix]
+    v = ds.variables['vinterp'][:].data[0,iz,iy,ix]
+    w = ds.variables['winterp'][:].data[0,iz,iy,ix]
+    xvort = ds.variables['xvort'][:].data[0,iz,iy,ix]
+    yvort = ds.variables['yvort'][:].data[0,iz,iy,ix]
+    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
+    rho = ds.variables['rho'][:].data[0,iz,iy,ix]
+    prs = ds.variables['prs'][:].data[0,iz,iy,ix]
+    
+    u_sr = u - u_storm[fn-13]
+    v_sr = v - v_storm[fn-13]
+    ws_sr = np.sqrt(u_sr**2 + v_sr**2)
+    hvort = np.sqrt(xvort**2 + yvort**2)
+    svort = (u_sr/ws_sr) * xvort + (v_sr/ws_sr) * yvort
+    cvort = (v_sr/ws_sr) * xvort - (u_sr/ws_sr) * yvort
+    ds.close()
+    
+    
+    # dudx = np.gradient(u, xh[ix]*1000, axis=2)
+    # dudy = np.gradient(u, yh[iy]*1000, axis=1)
+    # dudz = np.gradient(u, zh[iz]*1000, axis=0)
+    # dvdx = np.gradient(v, xh[ix]*1000, axis=2)
+    # dvdy = np.gradient(v, yh[iy]*1000, axis=1)
+    # dvdz = np.gradient(v, zh[iz]*1000, axis=0)
+    # dwdx = np.gradient(w, xh[ix]*1000, axis=2)
+    # dwdy = np.gradient(w, yh[iy]*1000, axis=1)
+    # dwdz = np.gradient(w, zh[iz]*1000, axis=0)
+    # drdx = np.gradient(rho, xh[ix]*1000, axis=2)
+    # drdy = np.gradient(rho, yh[iy]*1000, axis=1)
+    # drdz = np.gradient(rho, zh[iz]*1000, axis=0)
+    # dpdx = np.gradient(prs, xh[ix]*1000, axis=2)
+    # dpdy = np.gradient(prs, yh[iy]*1000, axis=1)
+    # dpdz = np.gradient(prs, zh[iz]*1000, axis=0)
+    # del u,v,w,rho,prs
+    
+    zz,yy,xx = np.meshgrid(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000, indexing='ij')
+    du = mc.gradient(u, coordinates=(zz,yy,xx))
+    dv = mc.gradient(v, coordinates=(zz,yy,xx))
+    dw = mc.gradient(w, coordinates=(zz,yy,xx))
+    drho = mc.gradient(rho, coordinates=(zz,yy,xx))
+    dprs = mc.gradient(prs, coordinates=(zz,yy,xx))
+    dudx = du[2]; dudy = du[1]; dudz = du[0]
+    dvdx = dv[2]; dvdy = dv[1]; dvdz = dv[0]
+    dwdx = dw[2]; dwdy = dw[1]; dwdz = dw[0]
+    drdx = drho[2]; drdy = drho[1]; drdz = drho[0]
+    dpdx = dprs[2]; dpdy = dprs[1]; dpdz = dprs[0]
+    del u,v,w,rho,prs,du,dv,dw,drho,dprs
+    
+    
+    for p in range(len(pids_ml)):
+        xp = x_ml[it,p]
+        yp = y_ml[it,p]
+        zp = z_ml[it,p]
+        
+        ixp = np.abs(xh[ix]-xp).argmin()
+        iyp = np.abs(yh[iy]-yp).argmin()
+        k = np.abs(zh[iz]-zp).argmin()
+        i = slice(ixp-8,ixp+9)
+        j = slice(iyp-8,iyp+9)
+        
+        
+        # Stretching
+        sx[p,m,:,:] = xvort[k,j,i] * dudx[k,j,i]
+        sy[p,m,:,:] = yvort[k,j,i] * dvdy[k,j,i]
+        sz[p,m,:,:] = zvort[k,j,i] * dwdz[k,j,i]
+        sh[p,m,:,:] = (xvort[k,j,i]/hvort[k,j,i]) * sx[p,m,:,:] + (yvort[k,j,i]/hvort[k,j,i]) * sy[p,m,:,:]
+        ssw[p,m,:,:] = (u_sr[k,j,i]/ws_sr[k,j,i]) * sx[p,m,:,:] + (v_sr[k,j,i]/ws_sr[k,j,i]) * sy[p,m,:,:]
+        scw[p,m,:,:] = (v_sr[k,j,i]/ws_sr[k,j,i]) * sx[p,m,:,:] - (u_sr[k,j,i]/ws_sr[k,j,i]) * sy[p,m,:,:]
+        
+        # Tilting
+        tx[p,m,:,:] = yvort[k,j,i] * dudy[k,j,i] + zvort[k,j,i] * dudz[k,j,i]
+        ty[p,m,:,:] = xvort[k,j,i] * dvdx[k,j,i] + zvort[k,j,i] * dvdz[k,j,i]
+        tz[p,m,:,:] = xvort[k,j,i] * dwdx[k,j,i] + yvort[k,j,i] * dwdy[k,j,i]
+        th[p,m,:,:] = (xvort[k,j,i]/hvort[k,j,i]) * tx[p,m,:,:] + (yvort[k,j,i]/hvort[k,j,i]) * ty[p,m,:,:]
+        tsw[p,m,:,:] = (u_sr[k,j,i]/ws_sr[k,j,i]) * tx[p,m,:,:] + (v_sr[k,j,i]/ws_sr[k,j,i]) * ty[p,m,:,:]
+        tcw[p,m,:,:] = (v_sr[k,j,i]/ws_sr[k,j,i]) * tx[p,m,:,:] - (u_sr[k,j,i]/ws_sr[k,j,i]) * ty[p,m,:,:]
+        
+        if tilt_components:
+            # x vorticity components
+            t_xy[p,m,:,:] = yvort[k,j,i] * dudy[k,j,i]
+            t_xz[p,m,:,:] = zvort[k,j,i] * dudz[k,j,i]
+            # y vorticity components
+            t_yx[p,m,:,:] = xvort[k,j,i] * dvdx[k,j,i]
+            t_yz[p,m,:,:] = zvort[k,j,i] * dvdz[k,j,i]
+            # z vorticity components
+            t_zx[p,m,:,:] = xvort[k,j,i] * dwdx[k,j,i]
+            t_zy[p,m,:,:] = yvort[k,j,i] * dwdy[k,j,i]
+            t_zsw[p,m,:,:] = svort[k,j,i] * ((u_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] + 
+                                           (v_sr[k,j,i]/ws_sr[k,j,i]) * dwdy[k,j,i])
+            t_zcw[p,m,:,:] = cvort[k,j,i] * ((v_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] -
+                                           (u_sr[k,j,i]/ws_sr[k,j,i]) * dwdy[k,j,i])
+            
+        # Baroclinic
+        bx[p,m,:,:] = (1/1.1)**2 * (drdy[k,j,i] * dpdz[k,j,i] - drdz[k,j,i] * dpdy[k,j,i])
+        by[p,m,:,:] = (1/1.1)**2 * (drdz[k,j,i] * dpdx[k,j,i] - drdx[k,j,i] * dpdz[k,j,i])
+        bh[p,m,:,:] = (xvort[k,j,i]/hvort[k,j,i]) * bx[p,m,:,:] + (yvort[k,j,i]/hvort[k,j,i]) * by[p,m,:,:]
+        bsw[p,m,:,:] = (u_sr[k,j,i]/ws_sr[k,j,i]) * bx[p,m,:,:] + (v_sr[k,j,i]/ws_sr[k,j,i]) * by[p,m,:,:]
+        bcw[p,m,:,:] = (v_sr[k,j,i]/ws_sr[k,j,i]) * bx[p,m,:,:] - (u_sr[k,j,i]/ws_sr[k,j,i]) * by[p,m,:,:]
+        
+    times[m] = stime/60
+    m = m + 1
+    
+    # del u_sr,v_sr,ws_sr,xvort,yvort,zvort,hvort,svort,cvort
+    del dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz,drdx,drdy,drdz,dpdx,dpdy,dpdz
+    
+stretch_x = np.mean(sx, axis=0)
+stretch_y = np.mean(sy, axis=0)
+stretch_z = np.mean(sz, axis=0)
+stretch_h = np.mean(sh, axis=0)
+stretch_sw = np.mean(ssw, axis=0)
+stretch_cw = np.mean(scw, axis=0)
+    
+tilt_x = np.mean(tx, axis=0)
+tilt_y = np.mean(ty, axis=0)
+tilt_z = np.mean(tz, axis=0)
+tilt_h = np.mean(th, axis=0)
+tilt_sw = np.mean(tsw, axis=0)
+tilt_cw = np.mean(tcw, axis=0)
+    
+bcl_x = np.mean(bx, axis=0)
+bcl_y = np.mean(by, axis=0)
+bcl_h = np.mean(bh, axis=0)
+bcl_sw = np.mean(bsw, axis=0)
+bcl_cw = np.mean(bcw, axis=0)
+
+if tilt_components:
+    tilt_xy = np.mean(t_xy, axis=0)
+    tilt_xz = np.mean(t_xz, axis=0)
+    tilt_yx = np.mean(t_yx, axis=0)
+    tilt_yz = np.mean(t_yz, axis=0)
+    tilt_zx = np.mean(t_zx, axis=0)
+    tilt_zy = np.mean(t_zy, axis=0)
+    tilt_zsw = np.mean(t_zsw, axis=0)
+    tilt_zcw = np.mean(t_zcw, axis=0)
+    #del t_xy,t_xz,t_yx,t_yz,t_zx,t_zy,t_zsw,t_zcw
+    
+# del sx,sy,sz,sh,ssw,scw,tx,ty,tz,th,tsw,tcw,bx,by,bh,bsw,bcw
+    
+if True:
+    data = {'time':times, 'stretch_x':stretch_x, 'stretch_y':stretch_y, 'stretch_z':stretch_z,
+            'stretch_h':stretch_h, 'stretch_sw':stretch_sw, 'stretch_cw':stretch_cw,
+            'tilt_x':tilt_x, 'tilt_y':tilt_y, 'tilt_z':tilt_z, 'tilt_h':tilt_h,
+            'tilt_sw':tilt_sw, 'tilt_cw':tilt_cw, 'bcl_x':bcl_x, 'bcl_y':bcl_y,
+            'bcl_h':bcl_h, 'bcl_sw':bcl_sw, 'bcl_cw':bcl_cw}
+    save_to_pickle(data, ip+f"vten_traj_{mvtime}min.pkl", new_pkl=True)
+
+
+#%% Load data for plan views of tendency - median parcel
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
@@ -1341,7 +1568,7 @@ z_mv = traj[f"{mvtime}min"]['z']/1000
 dbfile.close()
 
 # Load source regions
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime}min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime}min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -1415,7 +1642,7 @@ iyp = np.abs(yh - np.median(y_ml[it,:])).argmin()
 
 
 
-#%% Plot plan views of tendency terms
+#%% Plot plan views of tendency terms - median parcel, single time
 
 figsave = False
 
@@ -1654,13 +1881,13 @@ if figsave:
 
 
 
-#%% Load data for time composites of tendencies
+#%% Load data for time composites of tendencies, single time - median parcel
 
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
-times = np.arange(217, 222) # 203-208, 217-223/220-225
-mvtime = 225
+times = np.arange(218, 220) # 203-208, 217-223/220-225, 214-219/218-221
+mvtime = 220
 
 # Read parcel time
 ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
@@ -1676,7 +1903,7 @@ z_mv = traj[f"{mvtime}min"]['z']/1000
 dbfile.close()
 
 # Load source regions
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime}min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime}min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -1799,8 +2026,108 @@ ix = slice(i1-8,i1+9)
 iy = slice(i2-8,i2+9)
 
 
+#%% Load data for time composites of tendencies, single time - parcel-centered composites
 
-#%% Make plots, single time
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
+
+mvtime = 220
+
+times = np.arange(214,219) # 203-208, 217-223/220-225, 214-219/218-221
+
+# Read parcel time
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+# Load filtered parcel data
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+# Load source regions
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime}min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+# Mid-level source
+x_ml = traj[f"{mvtime}min"]['x'][:,(cc==1)]/1000
+y_ml = traj[f"{mvtime}min"]['y'][:,(cc==1)]/1000
+z_ml = traj[f"{mvtime}min"]['z'][:,(cc==1)]/1000
+
+x_median = np.median(x_ml, axis=1)
+y_median = np.median(y_ml, axis=1)
+z_median = np.median(z_ml, axis=1)
+
+
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000014.nc')
+xh = ds.variables['xh'][:].data
+yh = ds.variables['yh'][:].data
+zh = ds.variables['z'][:].data
+ds.close()
+
+itp = np.where(ptime/60 == times[-1])[0][0]
+ixp = np.abs(xh - x_median[itp]).argmin()
+iyp = np.abs(yh - y_median[itp]).argmin()
+ix = slice(ixp-8,ixp+9)
+iy = slice(iyp-8,iyp+9)
+
+xp = x_ml[itp,:]
+yp = y_ml[itp,:]
+zp = z_ml[itp,:]
+
+
+dbfile = open(ip+f"vten_traj_{mvtime}min.pkl", 'rb')
+vten = pickle.load(dbfile)
+stime = vten['time']
+dbfile.close()
+
+# it1 = np.where(stime == times[0])[0][0]
+# it2 = np.where(stime == times[-1])[0][0]
+# it = slice(it1,it2)
+
+# stretch_x_comp = np.mean(vten['stretch_x'][it,:,:], axis=0)
+# stretch_y_comp = np.mean(vten['stretch_y'][it,:,:], axis=0)
+# stretch_z_comp = np.mean(vten['stretch_z'][it,:,:], axis=0)
+# stretch_h_comp = np.mean(vten['stretch_h'][it,:,:], axis=0)
+# stretch_sw_comp = np.mean(vten['stretch_sw'][it,:,:], axis=0)
+# stretch_cw_comp = np.mean(vten['stretch_cw'][it,:,:], axis=0)
+
+# tilt_x_comp = np.mean(vten['tilt_x'][it,:,:], axis=0)
+# tilt_y_comp = np.mean(vten['tilt_y'][it,:,:], axis=0)
+# tilt_z_comp = np.mean(vten['tilt_z'][it,:,:], axis=0)
+# tilt_h_comp = np.mean(vten['tilt_h'][it,:,:], axis=0)
+# tilt_sw_comp = np.mean(vten['tilt_sw'][it,:,:], axis=0)
+# tilt_cw_comp = np.mean(vten['tilt_cw'][it,:,:], axis=0)
+
+# bcl_x_comp = np.mean(vten['bcl_x'][it,:,:], axis=0)
+# bcl_y_comp = np.mean(vten['bcl_y'][it,:,:], axis=0)
+# bcl_h_comp = np.mean(vten['bcl_h'][it,:,:], axis=0)
+# bcl_sw_comp = np.mean(vten['bcl_sw'][it,:,:], axis=0)
+# bcl_cw_comp = np.mean(vten['bcl_cw'][it,:,:], axis=0)
+
+time = 219
+
+it = np.where(stime == time)[0][0]
+
+itp = np.where(ptime/60 == time)[0][0]
+ixp = np.abs(xh - x_median[itp]).argmin()
+iyp = np.abs(yh - y_median[itp]).argmin()
+ix = slice(ixp-8,ixp+9)
+iy = slice(iyp-8,iyp+9)
+
+xp = x_ml[itp,:]
+yp = y_ml[itp,:]
+zp = z_ml[itp,:]
+
+tilt_z_comp = vten['tilt_z'][it,:,:]
+stretch_z_comp = vten['stretch_z'][it,:,:]
+tilt_h_comp = vten['tilt_h'][it,:,:]
+stretch_h_comp = vten['stretch_h'][it,:,:]
+bcl_h_comp = vten['bcl_h'][it,:,:]
+
+
+#%% Make plan view plots of tendency terms - parcel-centered composites, single time
 
 figsave = False
 
@@ -1808,14 +2135,13 @@ figsave = False
 xlims = [xh[ix][0], xh[ix][-1]] # [-19,-14] at 205-210 / [-11,-5] at 220-225
 ylims = [yh[iy][0], yh[iy][-1]] # [-72,-67]+0.75 at 205-210 / ?[-55,-49]+1 at 220-225
 
-sz = 200
+sz = 80
 
-m = 6
+m = 2
 
-tlims = [-0.002, 0.002]; tlims = [m*-1e-4, m*1e-4]; tlevs = np.linspace(tlims[0], tlims[1], 41) # 0.0008
-slims = [-0.002, 0.002]; slims = [m*-1e-4, m*1e-4]; slevs = np.linspace(slims[0], slims[1], 41) # 0.0008
-blims = [-1e-3, 1e-3]; blims = [m*-1e-4, m*1e-4]; blevs = np.linspace(blims[0], blims[1], 41) # 2e-4
-flims = [-1e-9, 1e-9]; flims = [m*-1e-4, m*1e-4]; flevs = np.linspace(flims[0], flims[1], 41) # 2e-10
+tlims = [m*-1e-4, m*1e-4]; tlevs = np.linspace(tlims[0], tlims[1], 41)
+slims = [m*-1e-4, m*1e-4]; slevs = np.linspace(slims[0], slims[1], 41)
+blims = [m*-1e-4, m*1e-4]; blevs = np.linspace(blims[0], blims[1], 41)
 
 zvort_levs = [-0.04, -0.02, 0.02, 0.04]
 
@@ -1832,8 +2158,8 @@ c = plot_contourf(xh[ix], yh[iy], tilt_z_comp, 'zvort', ax[0], levels=tlevs, dat
 # cb = plt.colorbar(c, ax=ax[0], extend='both')
 # cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
 # cb.formatter.set_powerlimits((0,0))
-ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
-ax[0].set_title(f"Tilting")
+ax[0].scatter(np.median(xp), np.median(yp), s=sz, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[0].set_title(f"Tilting")
 ax[0].set_xlabel('x (km)', fontsize=12)
 ax[0].set_ylabel('y (km)', fontsize=12)
 
@@ -1841,17 +2167,52 @@ c = plot_contourf(xh[ix], yh[iy], stretch_z_comp, 'zvort', ax[1], levels=slevs, 
 cb = plt.colorbar(c, ax=ax[1], extend='both')
 cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
 cb.formatter.set_powerlimits((0,0))
-ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
-ax[1].set_title(f"Stretching")
+ax[1].scatter(np.median(xp), np.median(yp), s=sz, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[1].set_title(f"Stretching")
 ax[1].set_xlabel('x (km)', fontsize=12)
 
-plt.suptitle(f"Composite \u03B6 tendency ({times[0]}-{times[-1]} min)")
+# plt.suptitle(f"Composite \u03B6 tendency ({times[0]}-{times[-1]} min)")
+plt.suptitle(f"Composite \u03B6 tendency ({time} min)", fontsize=14)
 
 if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/zvort_comp_{mvtime}min.png", dpi=300)
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/comp_zvort_{time}min.png", dpi=300)
+
+
+fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+c = plot_contourf(xh[ix], yh[iy], tilt_h_comp, 'zvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[0], extend='both')
+# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[0].scatter(np.median(xp), np.median(yp), s=sz, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[0].set_title(f"Tilting")
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], stretch_h_comp, 'zvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+# cb = plt.colorbar(c, ax=ax[1], extend='both')
+# cb.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
+# cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(np.median(xp), np.median(yp), s=sz, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[1].set_title(f"Stretching")
+ax[1].set_xlabel('x (km)', fontsize=12)
+
+c = plot_contourf(xh[ix], yh[iy], bcl_h_comp, 'zvort', ax[2], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=12)
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(np.median(xp), np.median(yp), s=sz, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[2].set_title(f"Baroclinic")
+ax[2].set_xlabel('x (km)', fontsize=12)
+
+plt.suptitle(f"Composite |\u03c9$_H$| tendency ({time} min)", fontsize=16)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/comp_hvort_{time}min.png", dpi=300)
 
 
 
+#%%
 
 fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
@@ -1919,42 +2280,6 @@ plt.suptitle(f"Composite \u03B7 tendency ({times[0]}-{times[-1]} min)")
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/yvort_comp_{mvtime}min.png", dpi=300)
-
-
-
-
-fig,ax = plt.subplots(1, 3, figsize=(11.5,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
-
-c = plot_contourf(xh[ix], yh[iy], tilt_h_comp, 'zvort', ax[0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cbar=False)
-# cb = plt.colorbar(c, ax=ax[0], extend='both')
-# cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
-# cb.formatter.set_powerlimits((0,0))
-ax[0].scatter(xp, yp, s=sz, color='k', marker='.')
-ax[0].set_title(f"Tilting")
-ax[0].set_xlabel('x (km)', fontsize=12)
-ax[0].set_ylabel('y (km)', fontsize=12)
-
-c = plot_contourf(xh[ix], yh[iy], stretch_h_comp, 'zvort', ax[1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
-# cb = plt.colorbar(c, ax=ax[1], extend='both')
-# cb.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
-# cb.formatter.set_powerlimits((0,0))
-ax[1].scatter(xp, yp, s=sz, color='k', marker='.')
-ax[1].set_title(f"Stretching")
-ax[1].set_xlabel('x (km)', fontsize=12)
-
-c = plot_contourf(xh[ix], yh[iy], bcl_h_comp, 'zvort', ax[2], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cbar=False)
-cb = plt.colorbar(c, ax=ax[2], extend='both')
-cb.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=12)
-cb.formatter.set_powerlimits((0,0))
-ax[2].scatter(xp, yp, s=sz, color='k', marker='.')
-ax[2].set_title(f"Baroclinic")
-ax[2].set_xlabel('x (km)', fontsize=12)
-
-plt.suptitle(f"Composite |\u03c9$_H$| tendency ({times[0]}-{times[-1]} min)")
-
-if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/hvort_comp_{mvtime}min.png", dpi=300)
-
 
 
 
@@ -2026,13 +2351,10 @@ if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/cwvort_comp_{mvtime}min.png", dpi=300)
 
 
-#%% Load data for composite vorticity tendency plots, all times
-
+#%% Load data for composite vorticity tendency plots, all times - median parcel
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
-times = np.arange(217, 222) # 203-208, 217-222/220-225
-mvtime = 225
 
 # Read parcel time
 ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
@@ -2045,13 +2367,13 @@ traj = pickle.load(dbfile)
 x1_mv = traj[f"210min"]['x']/1000
 y1_mv = traj[f"210min"]['y']/1000
 z1_mv = traj[f"210min"]['z']/1000
-x2_mv = traj[f"225min"]['x']/1000
-y2_mv = traj[f"225min"]['y']/1000
-z2_mv = traj[f"225min"]['z']/1000
+x2_mv = traj[f"220min"]['x']/1000
+y2_mv = traj[f"220min"]['y']/1000
+z2_mv = traj[f"220min"]['z']/1000
 dbfile.close()
 
 # Load source regions and pull mid-level source
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_210min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_210min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -2060,7 +2382,7 @@ x1_ml = x1_mv[:,(cc==1)]
 y1_ml = y1_mv[:,(cc==1)]
 z1_ml = z1_mv[:,(cc==1)]
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_225min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_220min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -2085,7 +2407,7 @@ yh1 = tmp['y']
 zh1 = tmp['z']
 dbfile.close()
 
-dbfile = open(ip+f"plan225_tilt.pkl", 'rb')
+dbfile = open(ip+f"plan220_tilt.pkl", 'rb')
 tmp = pickle.load(dbfile)
 xh2 = tmp['x']
 yh2 = tmp['y']
@@ -2177,7 +2499,7 @@ del bcl_x,bcl_y,bcl_h,bcl_sw,bcl_cw
 
 
 ### Time 2 ###
-times2 = np.arange(217, 222) # 225 min, downdraft
+times2 = np.arange(214, 220) # [217, 222] for 225 min downdraft
 tilt_x = np.zeros(shape=(len(times2),17,17), dtype=float)
 tilt_y = np.zeros(shape=(len(times2),17,17), dtype=float)
 tilt_z = np.zeros(shape=(len(times2),17,17), dtype=float)
@@ -2258,7 +2580,7 @@ del bcl_x,bcl_y,bcl_h,bcl_sw,bcl_cw
 
 
 ### Time 3 ###
-times3 = np.arange(220, 225) # 225 min, rotor
+times3 = np.arange(218, 220) # [220, 225] for 225 min rotor
 tilt_x = np.zeros(shape=(len(times3),17,17), dtype=float)
 tilt_y = np.zeros(shape=(len(times3),17,17), dtype=float)
 tilt_z = np.zeros(shape=(len(times3),17,17), dtype=float)
@@ -2382,11 +2704,184 @@ ix3 = slice(i1-8,i1+9)
 iy3 = slice(i2-8,i2+9)
 
 
+#%% Load data for composite vorticity tendency plots, all times - parcel-centered composites
 
-#%% Make the plots
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 
-figsave = False
 
+# Load parcel time
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+# Load filtered parcel data
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+# Load 210 min source regions and pull mid-level source
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_210min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+x1_ml = traj[f"210min"]['x'][:,(cc==1)]/1000
+y1_ml = traj[f"210min"]['y'][:,(cc==1)]/1000
+z1_ml = traj[f"210min"]['z'][:,(cc==1)]/1000
+
+# Load 220 min source regions and pull mid-level source
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_220min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+x2_ml = traj[f"220min"]['x'][:,(cc==1)]/1000
+y2_ml = traj[f"220min"]['y'][:,(cc==1)]/1000
+z2_ml = traj[f"220min"]['z'][:,(cc==1)]/1000
+
+x1_median = np.median(x1_ml, axis=1)
+y1_median = np.median(y1_ml, axis=1)
+z1_median = np.median(z1_ml, axis=1)
+x2_median = np.median(x2_ml, axis=1)
+y2_median = np.median(y2_ml, axis=1)
+z2_median = np.median(z2_ml, axis=1)
+
+
+# Load model grid
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000014.nc')
+xh = ds.variables['xh'][:].data
+yh = ds.variables['yh'][:].data
+zh = ds.variables['z'][:].data
+ds.close()
+
+# Load vorticity tendencies
+dbfile = open(ip+f"vten_traj_210min.pkl", 'rb')
+vten1 = pickle.load(dbfile)
+stime1 = vten1['time']
+dbfile.close()
+
+dbfile = open(ip+f"vten_traj_220min.pkl", 'rb')
+vten2 = pickle.load(dbfile)
+stime2 = vten2['time']
+dbfile.close()
+
+
+
+### Choose averaging times ###
+times1 = np.arange(203,209)
+times2 = np.arange(214,219)
+times3 = np.arange(218,220)
+
+
+### Time 1 ###
+it0 = np.where(stime1 == times1[0])[0][0]
+itf = np.where(stime1 == times1[-1])[0][0]
+it1 = slice(it0,itf)
+
+stretch_x1 = np.mean(vten1['stretch_x'][it1,:,:], axis=0)
+stretch_y1 = np.mean(vten1['stretch_y'][it1,:,:], axis=0)
+stretch_z1 = np.mean(vten1['stretch_z'][it1,:,:], axis=0)
+stretch_h1 = np.mean(vten1['stretch_h'][it1,:,:], axis=0)
+stretch_sw1 = np.mean(vten1['stretch_sw'][it1,:,:], axis=0)
+stretch_cw1 = np.mean(vten1['stretch_cw'][it1,:,:], axis=0)
+
+tilt_x1 = np.mean(vten1['tilt_x'][it1,:,:], axis=0)
+tilt_y1 = np.mean(vten1['tilt_y'][it1,:,:], axis=0)
+tilt_z1 = np.mean(vten1['tilt_z'][it1,:,:], axis=0)
+tilt_h1 = np.mean(vten1['tilt_h'][it1,:,:], axis=0)
+tilt_sw1 = np.mean(vten1['tilt_sw'][it1,:,:], axis=0)
+tilt_cw1 = np.mean(vten1['tilt_cw'][it1,:,:], axis=0)
+
+bcl_x1 = np.mean(vten1['bcl_x'][it1,:,:], axis=0)
+bcl_y1 = np.mean(vten1['bcl_y'][it1,:,:], axis=0)
+bcl_h1 = np.mean(vten1['bcl_h'][it1,:,:], axis=0)
+bcl_sw1 = np.mean(vten1['bcl_sw'][it1,:,:], axis=0)
+bcl_cw1 = np.mean(vten1['bcl_cw'][it1,:,:], axis=0)
+
+
+### Time 2 ###
+it0 = np.where(stime2 == times2[0])[0][0]
+itf = np.where(stime2 == times2[-1])[0][0]
+it2 = slice(it0,itf)
+
+stretch_x2 = np.mean(vten2['stretch_x'][it2,:,:], axis=0)
+stretch_y2 = np.mean(vten2['stretch_y'][it2,:,:], axis=0)
+stretch_z2 = np.mean(vten2['stretch_z'][it2,:,:], axis=0)
+stretch_h2 = np.mean(vten2['stretch_h'][it2,:,:], axis=0)
+stretch_sw2 = np.mean(vten2['stretch_sw'][it2,:,:], axis=0)
+stretch_cw2 = np.mean(vten2['stretch_cw'][it2,:,:], axis=0)
+
+tilt_x2 = np.mean(vten2['tilt_x'][it2,:,:], axis=0)
+tilt_y2 = np.mean(vten2['tilt_y'][it2,:,:], axis=0)
+tilt_z2 = np.mean(vten2['tilt_z'][it2,:,:], axis=0)
+tilt_h2 = np.mean(vten2['tilt_h'][it2,:,:], axis=0)
+tilt_sw2 = np.mean(vten2['tilt_sw'][it2,:,:], axis=0)
+tilt_cw2 = np.mean(vten2['tilt_cw'][it2,:,:], axis=0)
+
+bcl_x2 = np.mean(vten2['bcl_x'][it2,:,:], axis=0)
+bcl_y2 = np.mean(vten2['bcl_y'][it2,:,:], axis=0)
+bcl_h2 = np.mean(vten2['bcl_h'][it2,:,:], axis=0)
+bcl_sw2 = np.mean(vten2['bcl_sw'][it2,:,:], axis=0)
+bcl_cw2 = np.mean(vten2['bcl_cw'][it2,:,:], axis=0)
+
+
+### Time 3 ###
+it0 = np.where(stime2 == times3[0])[0][0]
+itf = np.where(stime2 == times3[-1])[0][0]
+it3 = slice(it0,itf)
+
+stretch_x3 = np.mean(vten2['stretch_x'][it3,:,:], axis=0)
+stretch_y3 = np.mean(vten2['stretch_y'][it3,:,:], axis=0)
+stretch_z3 = np.mean(vten2['stretch_z'][it3,:,:], axis=0)
+stretch_h3 = np.mean(vten2['stretch_h'][it3,:,:], axis=0)
+stretch_sw3 = np.mean(vten2['stretch_sw'][it3,:,:], axis=0)
+stretch_cw3 = np.mean(vten2['stretch_cw'][it3,:,:], axis=0)
+
+tilt_x3 = np.mean(vten2['tilt_x'][it3,:,:], axis=0)
+tilt_y3 = np.mean(vten2['tilt_y'][it3,:,:], axis=0)
+tilt_z3 = np.mean(vten2['tilt_z'][it3,:,:], axis=0)
+tilt_h3 = np.mean(vten2['tilt_h'][it3,:,:], axis=0)
+tilt_sw3 = np.mean(vten2['tilt_sw'][it3,:,:], axis=0)
+tilt_cw3 = np.mean(vten2['tilt_cw'][it3,:,:], axis=0)
+
+bcl_x3 = np.mean(vten2['bcl_x'][it3,:,:], axis=0)
+bcl_y3 = np.mean(vten2['bcl_y'][it3,:,:], axis=0)
+bcl_h3 = np.mean(vten2['bcl_h'][it3,:,:], axis=0)
+bcl_sw3 = np.mean(vten2['bcl_sw'][it3,:,:], axis=0)
+bcl_cw3 = np.mean(vten2['bcl_cw'][it3,:,:], axis=0)
+
+
+itp1 = np.where(ptime/60 == times1[-1])[0][0]
+xp1 = x1_ml[itp1,:]
+yp1 = y1_ml[itp1,:]
+ixp = np.abs(xh - x1_median[itp1]).argmin()
+iyp = np.abs(yh - y1_median[itp1]).argmin()
+ix1 = slice(ixp-8,ixp+9)
+iy1 = slice(iyp-8,iyp+9)
+
+itp2 = np.where(ptime/60 == times2[-1])[0][0]
+xp2 = x2_ml[itp2,:]
+yp2 = y2_ml[itp2,:]
+ixp = np.abs(xh - x2_median[itp2]).argmin()
+iyp = np.abs(yh - y2_median[itp2]).argmin()
+ix2 = slice(ixp-8,ixp+9)
+iy2 = slice(iyp-8,iyp+9)
+
+itp3 = np.where(ptime/60 == times3[-1])[0][0]
+xp3 = x2_ml[itp3,:]
+yp3 = y2_ml[itp3,:]
+ixp = np.abs(xh - x2_median[itp3]).argmin()
+iyp = np.abs(yh - y2_median[itp3]).argmin()
+ix3 = slice(ixp-8,ixp+9)
+iy3 = slice(iyp-8,iyp+9)
+
+
+#%% Make the tendency plan view plots ***PAPER FIG***
+
+figsave = True
+
+# if using parcel-centered composites
+xh1 = xh; yh1 = yh; xh2 = xh; yh2 = yh
 
 xl1 = [xh1[ix1][0], xh1[ix1][-1]] # [-19,-14] at 205-210 / [-11,-5] at 220-225
 yl1 = [yh1[iy1][0], yh1[iy1][-1]] # [-72,-67]+0.75 at 205-210 / ?[-55,-49]+1 at 220-225
@@ -2396,54 +2891,60 @@ xl3 = [xh2[ix3][0], xh2[ix3][-1]]
 yl3 = [yh2[iy3][0], yh2[iy3][-1]]
 
 
-lims1 = [-2e-4, 2e-4]; levs1 = np.linspace(lims1[0], lims1[1], 41)
-lims2 = [-6e-4, 6e-4]; levs2 = np.linspace(lims2[0], lims2[1], 41)
+lims1 = [-1e-4, 1e-4]; levs1 = np.linspace(lims1[0], lims1[1], 41)
+lims2 = [-1e-4, 1e-4]; levs2 = np.linspace(lims2[0], lims2[1], 41)
+lims3 = [-2e-4, 2e-4]; levs3 = np.linspace(lims3[0], lims3[1], 41)
 levs1 = np.append(np.append([-0.01], levs1), [0.01])
 levs2 = np.append(np.append([-0.01], levs2), [0.01])
+levs3 = np.append(np.append([-0.01], levs3), [0.01])
 
+cm = 'pyart_balance'
 
 ### Vertical ###
 fig,ax = plt.subplots(3,2, figsize=(7,8.5), layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh1[ix1], yh1[iy1], tilt_z1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+plot_contourf(xh1[ix1], yh1[iy1], tilt_z1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_title(f"                                             {times1[0]}-{times1[-1]} min", fontsize=14)
 ax[0,0].set_ylabel('y (km)', fontsize=12)
 
-c1 = plot_contourf(xh1[ix1], yh1[iy1], stretch_z1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+c1 = plot_contourf(xh1[ix1], yh1[iy1], stretch_z1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 cb1 = plt.colorbar(c1, ax=ax[0,1], extend='both')
 cb1.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
 cb1.formatter.set_powerlimits((0,0))
-ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=12)
+# ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
-plot_contourf(xh2[ix2], yh2[iy2], tilt_z2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
+plot_contourf(xh2[ix2], yh2[iy2], tilt_z2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_title(f"                                             {times2[0]}-{times2[-1]} min", fontsize=14)
 ax[1,0].set_ylabel('y (km)', fontsize=12)
 
-c2 = plot_contourf(xh2[ix2], yh2[iy2], stretch_z2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+c2 = plot_contourf(xh2[ix2], yh2[iy2], stretch_z2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 cb2 = plt.colorbar(c2, ax=ax[1,1], extend='both')
 cb2.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
 cb2.formatter.set_powerlimits((0,0))
-ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=12)
+# ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
-plot_contourf(xh2[ix3], yh2[iy3], tilt_z3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
+plot_contourf(xh2[ix3], yh2[iy3], tilt_z3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_title(f"                                             {times3[0]}-{times3[-1]} min", fontsize=14)
 ax[2,0].set_xlabel('x (km)', fontsize=12)
 ax[2,0].set_ylabel('y (km)', fontsize=12)
 
-c3 = plot_contourf(xh2[ix3], yh2[iy3], stretch_z3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+c3 = plot_contourf(xh2[ix3], yh2[iy3], stretch_z3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 cb3 = plt.colorbar(c3, ax=ax[2,1], extend='both')
 cb3.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=10)
 cb3.formatter.set_powerlimits((0,0))
-ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=12)
+# ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_xlabel('x (km)', fontsize=12)
 
-plt.suptitle(f"Composite \u03B6 tendency", fontsize=14)
+plt.suptitle(f"Composite \u03B6 tendency (parcel-centered)", fontsize=14)
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/zvort_composite.png", dpi=300)
@@ -2454,60 +2955,63 @@ if figsave:
 ### Horizontal ###
 fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh1[ix1], yh1[iy1], tilt_h1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+plot_contourf(xh1[ix1], yh1[iy1], tilt_h1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh1[ix1], yh1[iy1], stretch_h1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+plot_contourf(xh1[ix1], yh1[iy1], stretch_h1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
 
-c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_h1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_h1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=10)
 cb1.formatter.set_powerlimits((0,0))
-ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+# ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix2], yh2[iy2], tilt_h2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+plot_contourf(xh2[ix2], yh2[iy2], tilt_h2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix2], yh2[iy2], stretch_h2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+plot_contourf(xh2[ix2], yh2[iy2], stretch_h2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
 
-c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_h2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_h2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=10)
 cb2.formatter.set_powerlimits((0,0))
-ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+# ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix3], yh2[iy3], tilt_h3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+plot_contourf(xh2[ix3], yh2[iy3], tilt_h3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=12)
 ax[2,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix3], yh2[iy3], stretch_h3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+plot_contourf(xh2[ix3], yh2[iy3], stretch_h3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
 ax[2,1].set_xlabel('x (km)', fontsize=12)
 
-c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_h3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_h3, 'zvort', ax[2,2], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=10)
 cb3.formatter.set_powerlimits((0,0))
-ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+# ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=12)
 
-plt.suptitle(f"Composite |\u03c9$_H$| tendency", fontsize=14)
+plt.suptitle(f"Composite |\u03c9$_H$| tendency (parcel-centered)", fontsize=14)
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/hvort_composite.png", dpi=300)
@@ -2518,60 +3022,63 @@ if figsave:
 ### X vorticity ###
 fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh1[ix1], yh1[iy1], tilt_x1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+plot_contourf(xh1[ix1], yh1[iy1], tilt_x1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh1[ix1], yh1[iy1], stretch_x1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+plot_contourf(xh1[ix1], yh1[iy1], stretch_x1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
 
-c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_x1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_x1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=10)
 cb1.formatter.set_powerlimits((0,0))
-ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+# ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix2], yh2[iy2], tilt_x2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+plot_contourf(xh2[ix2], yh2[iy2], tilt_x2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix2], yh2[iy2], stretch_x2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+plot_contourf(xh2[ix2], yh2[iy2], stretch_x2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
 
-c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_x2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_x2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=10)
 cb2.formatter.set_powerlimits((0,0))
-ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+# ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix3], yh2[iy3], tilt_x3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+plot_contourf(xh2[ix3], yh2[iy3], tilt_x3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=12)
 ax[2,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix3], yh2[iy3], stretch_x3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+plot_contourf(xh2[ix3], yh2[iy3], stretch_x3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
 ax[2,1].set_xlabel('x (km)', fontsize=12)
 
-c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_x3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_x3, 'zvort', ax[2,2], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=10)
 cb3.formatter.set_powerlimits((0,0))
-ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+# ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=12)
 
-plt.suptitle(f"Composite \u03BE tendency", fontsize=14)
+plt.suptitle(f"Composite \u03BE tendency (parcel-centered)", fontsize=14)
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/xvort_composite.png", dpi=300)
@@ -2582,60 +3089,63 @@ if figsave:
 ### Y vorticity ###
 fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh1[ix1], yh1[iy1], tilt_y1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+plot_contourf(xh1[ix1], yh1[iy1], tilt_y1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh1[ix1], yh1[iy1], stretch_y1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+plot_contourf(xh1[ix1], yh1[iy1], stretch_y1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
 
-c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_y1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_y1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
 cb1.formatter.set_powerlimits((0,0))
-ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+# ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix2], yh2[iy2], tilt_y2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+plot_contourf(xh2[ix2], yh2[iy2], tilt_y2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix2], yh2[iy2], stretch_y2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+plot_contourf(xh2[ix2], yh2[iy2], stretch_y2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
 
-c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_y2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_y2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
 cb2.formatter.set_powerlimits((0,0))
-ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+# ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix3], yh2[iy3], tilt_y3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+plot_contourf(xh2[ix3], yh2[iy3], tilt_y3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=12)
 ax[2,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix3], yh2[iy3], stretch_y3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+plot_contourf(xh2[ix3], yh2[iy3], stretch_y3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
 ax[2,1].set_xlabel('x (km)', fontsize=12)
 
-c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_y3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_y3, 'zvort', ax[2,2], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=10)
 cb3.formatter.set_powerlimits((0,0))
-ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+# ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=12)
 
-plt.suptitle(f"Composite \u03B7 tendency", fontsize=14)
+plt.suptitle(f"Composite \u03B7 tendency (parcel-centered)", fontsize=14)
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/yvort_composite.png", dpi=300)
@@ -2647,60 +3157,63 @@ if figsave:
 ### Streamwise ###
 fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh1[ix1], yh1[iy1], tilt_sw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
+plot_contourf(xh1[ix1], yh1[iy1], tilt_sw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh1[ix1], yh1[iy1], stretch_sw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+plot_contourf(xh1[ix1], yh1[iy1], stretch_sw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
 
-c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_sw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_sw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=10)
 cb1.formatter.set_powerlimits((0,0))
-ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
+# ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix2], yh2[iy2], tilt_sw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
+plot_contourf(xh2[ix2], yh2[iy2], tilt_sw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix2], yh2[iy2], stretch_sw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
+plot_contourf(xh2[ix2], yh2[iy2], stretch_sw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
 
-c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_sw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_sw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=10)
 cb2.formatter.set_powerlimits((0,0))
-ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
+# ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix3], yh2[iy3], tilt_sw3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
+plot_contourf(xh2[ix3], yh2[iy3], tilt_sw3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=12)
 ax[2,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix3], yh2[iy3], stretch_sw3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
+plot_contourf(xh2[ix3], yh2[iy3], stretch_sw3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
 ax[2,1].set_xlabel('x (km)', fontsize=12)
 
-c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_sw3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_sw3, 'zvort', ax[2,2], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=10)
 cb3.formatter.set_powerlimits((0,0))
-ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
+# ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=12)
 
-plt.suptitle(f"Composite streamwise \u03c9 tendency", fontsize=14)
+plt.suptitle(f"Composite streamwise \u03c9 tendency (parcel-centered)", fontsize=14)
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/swvort_composite.png", dpi=300)
@@ -2711,72 +3224,318 @@ if figsave:
 ### Crosswise ###
 fig,ax = plt.subplots(3,3, figsize=(10,8.5), sharex=False, sharey=False, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh1[ix1], yh1[iy1], tilt_cw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,0].set_title(f"Tilting ({times1[0]}-{times1[-1]} min)")
-# ax[0,0].set_title(f"{times1[0]}-{times1[-1]} min")
+plot_contourf(xh1[ix1], yh1[iy1], tilt_cw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh1[ix1], yh1[iy1], stretch_cw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
-ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,1].set_title(f"Stretching ({times1[0]}-{times1[-1]} min)")
+plot_contourf(xh1[ix1], yh1[iy1], stretch_cw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
+# ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=14)
 
-c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_cw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cbar=False)
+c1 = plot_contourf(xh1[ix1], yh1[iy1], bcl_cw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=10)
 cb1.formatter.set_powerlimits((0,0))
-ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-# ax[0,2].set_title(f"Baroclinic ({times1[0]}-{times1[-1]} min)")
-# ax[0,2].set_title(f"{times1[0]}-{times1[-1]} min")
+# ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
+ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix2], yh2[iy2], tilt_cw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,0].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,0].set_title(f"Tilting ({times2[0]}-{times2[-1]} min)")
-# ax[1,0].set_title(f"{times2[0]}-{times2[-1]} min")
+plot_contourf(xh2[ix2], yh2[iy2], tilt_cw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix2], yh2[iy2], stretch_cw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
-ax[1,1].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,1].set_title(f"Stretching ({times2[0]}-{times2[-1]} min)")
+plot_contourf(xh2[ix2], yh2[iy2], stretch_cw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
+# ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=14)
 
-c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_cw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cbar=False)
+c2 = plot_contourf(xh2[ix2], yh2[iy2], bcl_cw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=10)
 cb2.formatter.set_powerlimits((0,0))
-ax[1,2].scatter(xp2, yp2, s=200, color='k', marker='.')
-# ax[1,2].set_title(f"Baroclinic ({times2[0]}-{times2[-1]} min)")
-# ax[1,2].set_title(f"{times2[0]}-{times2[-1]} min")
+# ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
+ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
-plot_contourf(xh2[ix3], yh2[iy3], tilt_cw3, 'zvort', ax[2,0], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,0].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,0].set_title(f"Tilting ({times3[0]}-{times3[-1]} min)")
-# ax[2,0].set_title(f"{times3[0]}-{times3[-1]} min")
+plot_contourf(xh2[ix3], yh2[iy3], tilt_cw3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=12)
 ax[2,0].set_ylabel('y (km)', fontsize=12)
 
-plot_contourf(xh2[ix3], yh2[iy3], stretch_cw3, 'zvort', ax[2,1], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
-ax[2,1].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,1].set_title(f"Stretching ({times3[0]}-{times3[-1]} min)")
+plot_contourf(xh2[ix3], yh2[iy3], stretch_cw3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
+# ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=14)
 ax[2,1].set_xlabel('x (km)', fontsize=12)
 
-c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_cw3, 'zvort', ax[2,2], levels=levs2, datalims=lims2, xlims=xl3, ylims=yl3, cbar=False)
+c3 = plot_contourf(xh2[ix3], yh2[iy3], bcl_cw3, 'zvort', ax[2,2], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=10)
 cb3.formatter.set_powerlimits((0,0))
-ax[2,2].scatter(xp3, yp3, s=200, color='k', marker='.')
-# ax[2,2].set_title(f"Baroclinic ({times3[0]}-{times3[-1]} min)")
-# ax[2,2].set_title(f"{times3[0]}-{times3[-1]} min")
+# ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
+ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=12)
 
-plt.suptitle(f"Composite crosswise \u03c9 tendency", fontsize=14)
+plt.suptitle(f"Composite crosswise \u03c9 tendency (parcel-centered)", fontsize=14)
 
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/cwvort_composite.png", dpi=300)
 
 
+
+#%% Composite tendency animations?
+
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
+
+
+# Load parcel time
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+# Load filtered parcel data
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+# Load 210 min source regions and pull mid-level source
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_210min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+x1_ml = traj[f"210min"]['x'][:,(cc==1)]/1000
+y1_ml = traj[f"210min"]['y'][:,(cc==1)]/1000
+z1_ml = traj[f"210min"]['z'][:,(cc==1)]/1000
+
+# Load 220 min source regions and pull mid-level source
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_220min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+x2_ml = traj[f"220min"]['x'][:,(cc==1)]/1000
+y2_ml = traj[f"220min"]['y'][:,(cc==1)]/1000
+z2_ml = traj[f"220min"]['z'][:,(cc==1)]/1000
+
+x1_median = np.median(x1_ml, axis=1)
+y1_median = np.median(y1_ml, axis=1)
+z1_median = np.median(z1_ml, axis=1)
+x2_median = np.median(x2_ml, axis=1)
+y2_median = np.median(y2_ml, axis=1)
+z2_median = np.median(z2_ml, axis=1)
+
+
+# Load model grid
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000014.nc')
+xh = ds.variables['xh'][:].data
+yh = ds.variables['yh'][:].data
+zh = ds.variables['z'][:].data
+ds.close()
+
+# Load vorticity tendencies
+dbfile = open(ip+f"vten_traj_210min.pkl", 'rb')
+vten1 = pickle.load(dbfile)
+stime1 = vten1['time']
+dbfile.close()
+
+dbfile = open(ip+f"vten_traj_220min.pkl", 'rb')
+vten2 = pickle.load(dbfile)
+stime2 = vten2['time']
+dbfile.close()
+
+
+
+### Choose averaging times ###
+times1 = np.arange(195,211)
+times2 = np.arange(205,221)
+
+
+### Time 1 ###
+it0 = np.where(stime1 == times1[0])[0][0]
+itf = np.where(stime1 == times1[-1])[0][0]
+it1 = slice(it0,itf)
+
+stretch_z1 = vten1['stretch_z']
+stretch_h1 = vten1['stretch_h']
+tilt_z1 = vten1['tilt_z']
+tilt_h1 = vten1['tilt_h']
+bcl_h1 = vten1['bcl_h']
+
+
+### Time 2 ###
+it0 = np.where(stime2 == times2[0])[0][0]
+itf = np.where(stime2 == times2[-1])[0][0]
+it2 = slice(it0,itf)
+
+stretch_z2 = vten2['stretch_z']
+stretch_h2 = vten2['stretch_h']
+tilt_z2 = vten2['tilt_z']
+tilt_h2 = vten2['tilt_h']
+bcl_h2 = vten2['bcl_h']
+
+
+itp1 = np.where(ptime/60 == times1[-1])[0][0]
+xp1 = x1_ml[itp1,:]
+yp1 = y1_ml[itp1,:]
+ixp = np.abs(xh - x1_median[itp1]).argmin()
+iyp = np.abs(yh - y1_median[itp1]).argmin()
+ix1 = slice(ixp-8,ixp+9)
+iy1 = slice(iyp-8,iyp+9)
+
+itp2 = np.where(ptime/60 == times2[-1])[0][0]
+xp2 = x2_ml[itp2,:]
+yp2 = y2_ml[itp2,:]
+ixp = np.abs(xh - x2_median[itp2]).argmin()
+iyp = np.abs(yh - y2_median[itp2]).argmin()
+ix2 = slice(ixp-8,ixp+9)
+iy2 = slice(iyp-8,iyp+9)
+
+
+
+
+# if using parcel-centered composites
+xh1 = xh; yh1 = yh; xh2 = xh; yh2 = yh
+
+xl1 = [xh1[ix1][0], xh1[ix1][-1]] # [-19,-14] at 205-210 / [-11,-5] at 220-225
+yl1 = [yh1[iy1][0], yh1[iy1][-1]] # [-72,-67]+0.75 at 205-210 / ?[-55,-49]+1 at 220-225
+xl2 = [xh2[ix2][0], xh2[ix2][-1]]
+yl2 = [yh2[iy2][0], yh2[iy2][-1]]
+
+
+lims = [-1e-4, 1e-4]; levs = np.linspace(lims[0], lims[1], 41)
+levs = np.append(np.append([-0.01], levs), [0.01])
+
+cm = 'pyart_balance'
+
+
+plot_time = 210
+
+if plot_time == 210:
+    x = xh1[ix1]
+    y = yh1[iy1]
+    tilt_z = tilt_z1
+    stretch_z = stretch_z1
+    tilt_h = tilt_h1
+    stretch_h = stretch_h1
+    bcl_h = bcl_h1
+    xp = xp1
+    yp = yp1
+    xl = xl1
+    yl = yl1
+    times = times1
+elif plot_time == 220:
+    x = xh1[ix2]
+    y = yh2[iy2]
+    tilt_z = tilt_z2
+    stretch_z = stretch_z2
+    tilt_h = tilt_h2
+    stretch_h = stretch_h2
+    bcl_h = bcl_h2
+    xp = xp2
+    yp = yp2
+    xl = xl2
+    yl = yl2
+    times = times2
+
+
+# zvort tendency animation
+if False:
+    fig,ax = plt.subplots(1, 2, figsize=(9,4), sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    plot_contourf(x, y, tilt_z[0,:,:], 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+    # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+    ax[0].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+    ax[0].set_title(f"                                                  {times[0]} min", fontsize=16)
+    ax[0].set_ylabel('y (km)', fontsize=12)
+    ax[0].set_xlabel('x (km)', fontsize=12)
+
+    c1 = plot_contourf(x, y, stretch_z[0,:,:], 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+    cb1 = plt.colorbar(c1, ax=ax[1], extend='both')
+    cb1.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
+    cb1.formatter.set_powerlimits((0,0))
+    # ax[1].scatter(xp1, yp1, s=30, color='k', marker='.')
+    ax[1].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+    ax[1].set_xlabel('x (km)', fontsize=12)
+    # plt.tight_layout()
+    
+    def animate_zten(i):
+        global ax
+        ax[0].clear()
+        ax[1].clear()
+        
+        plot_contourf(x, y, tilt_z[i,:,:], 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+        ax[0].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+        ax[0].set_title(f"                                                  {times[i]} min", fontsize=16)
+        ax[0].set_xlabel('x (km)', fontsize=12)
+        ax[0].set_ylabel('y (km)', fontsize=12)
+        
+        plot_contourf(x, y, stretch_z[i,:,:], 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+        ax[1].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+        ax[1].set_xlabel('x (km)', fontsize=12)
+        
+    
+    figsave = True
+    
+    anim = FuncAnimation(fig, animate_zten, frames=16, interval=500, repeat=False, blit=False)
+    if figsave:
+        anim.save(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/composite_zvort_{plot_time}min.gif", dpi=300)
+    plt.show()
+
+
+
+# hvort tendency animation
+if True:
+    fig,ax = plt.subplots(1, 3, figsize=(9.25,3), sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    plot_contourf(x, y, tilt_h[0,:,:], 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+    # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
+    ax[0].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+    ax[0].set_ylabel('y (km)', fontsize=12)
+    ax[0].set_xlabel('x (km)', fontsize=12)
+    
+    plot_contourf(x, y, stretch_h[0,:,:], 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+    # ax[1].scatter(xp1, yp1, s=30, color='k', marker='.')
+    ax[1].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+    ax[1].set_xlabel('x (km)', fontsize=12)
+    ax[1].set_title(f"{times[0]} min", fontsize=16)
+
+    c1 = plot_contourf(x, y, bcl_h[0,:,:], 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+    cb1 = plt.colorbar(c1, ax=ax[2], extend='both')
+    cb1.set_label("d|\u03c9$_H$|/dt (s$^{-2}$)", fontsize=12)
+    cb1.formatter.set_powerlimits((0,0))
+    # ax[1].scatter(xp1, yp1, s=30, color='k', marker='.')
+    ax[2].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+    ax[2].set_xlabel('x (km)', fontsize=12)
+    # plt.tight_layout()
+    
+    def animate_hten(i):
+        global ax
+        ax[0].clear()
+        ax[1].clear()
+        ax[2].clear()
+        
+        plot_contourf(x, y, tilt_h[i,:,:], 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+        ax[0].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+        ax[0].set_xlabel('x (km)', fontsize=12)
+        ax[0].set_ylabel('y (km)', fontsize=12)
+        
+        plot_contourf(x, y, stretch_h[i,:,:], 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+        ax[1].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+        ax[1].set_xlabel('x (km)', fontsize=12)
+        ax[1].set_title(f"{times[i]} min", fontsize=16)
+        
+        plot_contourf(x, y, bcl_h[i,:,:], 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+        ax[2].scatter(np.median(xp), np.median(yp), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+        ax[2].set_xlabel('x (km)', fontsize=12)
+        # plt.tight_layout()
+    
+    figsave = True
+    
+    anim = FuncAnimation(fig, animate_hten, frames=16, interval=500, repeat=False, blit=False)
+    if figsave:
+        anim.save(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/composite_hvort_{plot_time}min.gif", dpi=300)
+    plt.show()
 
