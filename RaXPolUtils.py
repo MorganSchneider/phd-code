@@ -22,6 +22,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from datetime import datetime
 import cmocean
 import wrf
+import pickle
 # import cartopy.crs as ccrs
 
 import warnings
@@ -302,7 +303,24 @@ def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None,
     return c
 
 
-
+# Automate saving data to new or existing pickle file
+def save_to_pickle(data, pkl_fname, new_pkl=False):
+    # data: dict of variables to save
+    # pkl_fname: filename to save data to (includes path)
+    # new_pkl: True or False (if True, will overwrite any existing file)
+    if (not exists(pkl_fname)) | new_pkl:
+        dbfile = open(pkl_fname, 'wb')
+        pickle.dump(data, dbfile)
+        dbfile.close()
+    elif exists(pkl_fname):
+        dbfile = open(pkl_fname, 'rb')
+        save_data = pickle.load(dbfile)
+        dbfile.close()
+        
+        save_data.update(data)
+        dbfile = open(pkl_fname, 'wb')
+        pickle.dump(save_data, dbfile)
+        dbfile.close()
 
 
 

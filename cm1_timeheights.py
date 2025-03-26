@@ -643,7 +643,7 @@ if False:
 
 
 # Complete UH 0-2 and 2-5 km time series
-if True:
+if False:
     fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
     
     ax1.plot(times, uh02_max_q, 'k', linewidth=1.5)
@@ -669,7 +669,7 @@ if True:
 
 
 # UH 0-2 and 2-5 time series split by supercell and qlcs
-if False:
+if True:
     ti = np.where(times == 210)[0][0]
     
     fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
@@ -679,20 +679,38 @@ if False:
     ax1.plot(times, uh25_max_m, 'r', linewidth=2)
     ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax1.set_xlabel('Time (min)')
+    ax1.set_ylabel("2-5 km UH", fontsize=14)
     ax1.set_xlim([180,240])
     ax1.set_ylim([0,2000])
-    ax1.set_title(f"Maximum 2-5 km updraft helicity (supercell)")
-    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    # ax1.set_title(f"Maximum 2-5 km updraft helicity (supercell)")
+    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right', fontsize=11)
+    ax1.tick_params(axis='x', which='major', labelsize=12)
+    ax1.tick_params(axis='y', which='major', labelsize=12)
+    ax1.grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax1.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax1.xaxis.set_major_locator(MultipleLocator(10))
+    ax1.xaxis.set_minor_locator(MultipleLocator(5))
+    ax1.yaxis.set_major_locator(MultipleLocator(500))
+    ax1.yaxis.set_minor_locator(MultipleLocator(250))
     
     ax2.plot(times, uh25_max_q, 'k', linewidth=2)
     ax2.plot(times[ti:], uh25_max_s[ti:], 'dodgerblue', linewidth=2)
     ax2.plot(times, np.append(uh25_max_mq[0:ti], uh25_max_m[ti:]), 'r', linewidth=2)
     ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
-    ax2.set_xlabel('Time (min)')
+    ax2.set_xlabel('Time (min)', fontsize=14)
+    ax2.set_ylabel("2-5 km UH", fontsize=14)
     ax2.set_xlim([180,240])
     ax2.set_ylim([0,2000])
-    ax2.set_title(f"Maximum 2-5 km updraft helicity (qlcs)")
-    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    # ax2.set_title(f"Maximum 2-5 km updraft helicity (qlcs)")
+    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right', fontsize=11)
+    ax2.tick_params(axis='x', which='major', labelsize=12)
+    ax2.tick_params(axis='y', which='major', labelsize=12)
+    ax2.grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax2.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax2.xaxis.set_major_locator(MultipleLocator(10))
+    ax2.xaxis.set_minor_locator(MultipleLocator(5))
+    ax2.yaxis.set_major_locator(MultipleLocator(500))
+    ax2.yaxis.set_minor_locator(MultipleLocator(250))
     if figsave:
         plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH25.png", dpi=300)
         
@@ -704,20 +722,38 @@ if False:
     ax1.plot(times, uh02_max_m, 'r', linewidth=2)
     ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax1.set_xlabel('Time (min)')
+    ax1.set_ylabel("0-2 km UH", fontsize=14)
     ax1.set_xlim([180,240])
     ax1.set_ylim([0,2000])
-    ax1.set_title(f"Maximum 0-2 km updraft helicity (supercell)")
-    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    # ax1.set_title(f"Maximum 0-2 km updraft helicity (supercell)")
+    ax1.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right', fontsize=11)
+    ax1.tick_params(axis='x', which='major', labelsize=12)
+    ax1.tick_params(axis='y', which='major', labelsize=12)
+    ax1.grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax1.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax1.xaxis.set_major_locator(MultipleLocator(10))
+    ax1.xaxis.set_minor_locator(MultipleLocator(5))
+    ax1.yaxis.set_major_locator(MultipleLocator(500))
+    ax1.yaxis.set_minor_locator(MultipleLocator(250))
     
     ax2.plot(times, uh02_max_q, 'k', linewidth=2)
     ax2.plot(times[ti:], uh02_max_s[ti:], 'dodgerblue', linewidth=2)
     ax2.plot(times, np.append(uh02_max_mq[0:ti], uh02_max_m[ti:]), 'r', linewidth=2)
     ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
-    ax2.set_xlabel('Time (min)')
+    ax2.set_xlabel('Time (min)', fontsize=14)
+    ax2.set_ylabel("0-2 km UH", fontsize=14)
     ax2.set_xlim([180,240])
     ax2.set_ylim([0,2000])
-    ax2.set_title(f"Maximum 0-2 km updraft helicity (qlcs)")
-    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right')
+    # ax2.set_title(f"Maximum 0-2 km updraft helicity (qlcs)")
+    ax2.legend(['QLCSONLY', 'SUPERCELL', 'MERGER'], loc='upper right', fontsize=11)
+    ax2.tick_params(axis='x', which='major', labelsize=12)
+    ax2.tick_params(axis='y', which='major', labelsize=12)
+    ax2.grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax2.grid(visible=True, which='minor', color='lightgray', linestyle='--')
+    ax2.xaxis.set_major_locator(MultipleLocator(10))
+    ax2.xaxis.set_minor_locator(MultipleLocator(5))
+    ax2.yaxis.set_major_locator(MultipleLocator(500))
+    ax2.yaxis.set_minor_locator(MultipleLocator(250))
     if figsave:
         plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH02.png", dpi=300)
 

@@ -1401,17 +1401,17 @@ col4 = 'mediumblue'
 fig,axs = plt.subplots(2, 2, figsize=(10,6))
 
 axs[0,0].fill_between(ptime[it1], np.percentile(w_ml1, 25, axis=1),
-                     np.percentile(w_ml1, 75, axis=1), alpha=0.3, color=col1)
+                     np.percentile(w_ml1, 75, axis=1), alpha=0.3, color=col3)
 axs[1,0].fill_between(ptime[it1], np.percentile(zvort_ml1, 25, axis=1),
-                     np.percentile(zvort_ml1, 75, axis=1), alpha=0.3, color=col3)
+                     np.percentile(zvort_ml1, 75, axis=1), alpha=0.3, color=col1)
 axs[0,1].fill_between(ptime[it2], np.percentile(w_ml2, 25, axis=1),
-                     np.percentile(w_ml2, 75, axis=1), alpha=0.3, color=col1)
+                     np.percentile(w_ml2, 75, axis=1), alpha=0.3, color=col3)
 axs[1,1].fill_between(ptime[it2], np.percentile(zvort_ml2, 25, axis=1),
-                     np.percentile(zvort_ml2, 75, axis=1), alpha=0.3, color=col3)
-axs[0,0].plot(ptime[it1], np.median(w_ml1,axis=1), col1, linewidth=2)
-axs[1,0].plot(ptime[it1], np.median(zvort_ml1,axis=1), col3, linewidth=2)
-axs[0,1].plot(ptime[it2], np.median(w_ml2,axis=1), col1, linewidth=2)
-axs[1,1].plot(ptime[it2], np.median(zvort_ml2,axis=1), col3, linewidth=2)
+                     np.percentile(zvort_ml2, 75, axis=1), alpha=0.3, color=col1)
+axs[0,0].plot(ptime[it1], np.median(w_ml1,axis=1), col3, linewidth=2)
+axs[1,0].plot(ptime[it1], np.median(zvort_ml1,axis=1), col1, linewidth=2)
+axs[0,1].plot(ptime[it2], np.median(w_ml2,axis=1), col3, linewidth=2)
+axs[1,1].plot(ptime[it2], np.median(zvort_ml2,axis=1), col1, linewidth=2)
 
 
 
@@ -1474,7 +1474,7 @@ fig.align_ylabels(axs[:,0])
 plt.subplots_adjust(wspace=0.05, hspace=0.1)
 # plt.show()
 
-figsave = True
+figsave = False
 
 if figsave:
     fig.savefig('/Users/morgan.schneider/Documents/merger/traj_mv1_timeseries_zoomed.png', dpi=300)
@@ -2153,7 +2153,7 @@ if False:
 from matplotlib.ticker import MultipleLocator
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
-traj_mv1 = pickle.load(dbfile)
+traj = pickle.load(dbfile)
 dbfile.close()
 
 times = [210, 220]
@@ -2178,12 +2178,12 @@ for i in range(len(times)):
     it = slice(it1,it2)
     
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{t:.0f}min_v2.pkl", 'rb')
-    cc = pickle.load(dbfile)
-    cc_mv1 = cc['mv1']
+    c = pickle.load(dbfile)
+    cc = c['mv1']
     dbfile.close()
     
-    w_ml = traj_mv1[f"{t:.0f}min"]['w'][:,(cc_mv1 == 1)]
-    zvort_ml = traj_mv1[f"{t:.0f}min"]['zvort'][:,(cc_mv1 == 1)]
+    w_ml = traj[f"{t:.0f}min"]['w'][:,(cc == 1)]
+    zvort_ml = traj[f"{t:.0f}min"]['zvort'][:,(cc == 1)]
     
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{t:.0f}min.pkl", 'rb')
     vort_traj = pickle.load(dbfile)
@@ -2278,7 +2278,7 @@ if figsave:
 from matplotlib.ticker import MultipleLocator
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
-traj_mv1 = pickle.load(dbfile)
+traj = pickle.load(dbfile)
 dbfile.close()
 
 times = [210, 220]
@@ -2303,12 +2303,12 @@ for i in range(len(times)):
     it = slice(it1,it2)
     
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{t:.0f}min_v2.pkl", 'rb')
-    cc = pickle.load(dbfile)
-    cc_mv1 = cc['mv1']
+    c = pickle.load(dbfile)
+    cc = c['mv1']
     dbfile.close()
     
-    w_ml = traj_mv1[f"{t:.0f}min"]['w'][:,(cc_mv1 == 1)]
-    zvort_ml = traj_mv1[f"{t:.0f}min"]['zvort'][:,(cc_mv1 == 1)]
+    w_ml = traj[f"{t:.0f}min"]['w'][:,(cc == 1)]
+    zvort_ml = traj[f"{t:.0f}min"]['zvort'][:,(cc == 1)]
     
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{t:.0f}min.pkl", 'rb')
     vort_traj = pickle.load(dbfile)
@@ -2320,7 +2320,7 @@ for i in range(len(times)):
     
     
     # colorblind-friendly colors
-    col = ['black', 'midnightblue', 'mediumblue', 'red', 'purple', 'deepskyblue']
+    col = ['black', 'midnightblue', 'mediumblue', 'red', 'deepskyblue', 'purple']
     al = [0.2, 0.2, 0.3, 0.3, 0.3, 0.3]
     
     
@@ -2356,6 +2356,15 @@ axs[2,0].legend(handles=[s3,s4], labels=["|\u03c9$_H$|", "\u03B6"], loc=3, fonts
 axs[3,0].legend(handles=[s5,s6], labels=["Streamwise", "Crosswise"], loc=3, fontsize=10, ncol=2)
 axs[3,0].set_xlabel('                                                        Time (min)', fontsize=14)
 
+axs[0,0].set_ylabel("Vertical\n velocity ", fontsize=12)
+axs[1,0].set_ylabel("Total\n vorticity ", fontsize=12)
+axs[2,0].set_ylabel("Horiz. and\n vert. vorticity ", fontsize=12)
+axs[3,0].set_ylabel("Horiz. vorticity\n components ", fontsize=12)
+
+# axs[0,0].set_ylabel("Vertical\n velocity ", fontsize=12)
+# axs[1,0].set_ylabel("Vorticity\n Total |\u03c9| ", fontsize=12)
+# axs[2,0].set_ylabel("Vorticity\n |\u03c9$_H$| and \u03B6 ", fontsize=12)
+# axs[3,0].set_ylabel("Vorticity\n \u03c9$_H$ components ", fontsize=12)
 
 
 for i in range(2):
@@ -2403,6 +2412,8 @@ axs[3,1].set_xticklabels(["    205", "210", "215", "220   "])
 # axs[0].set_title("Mid-level parcel vorticity for merger MV at 210/225 min", fontsize=14)
 axs[0,0].text(200.5, 16, '210 min', fontsize=16)
 axs[0,1].text(210.5, 16, '220 min', fontsize=16)
+
+fig.align_ylabels(axs[:,0])
 
 plt.subplots_adjust(wspace=0.06, hspace=0.15)
 

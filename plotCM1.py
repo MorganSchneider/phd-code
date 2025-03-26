@@ -15,10 +15,12 @@ from CM1utils import *
 
 #%% One big overview plot
 
-xlims = [[-70,10], [-62,18], [-54,26], [-46,34], [-38,42]]
-ylims = [[-140,-60], [-122,-42], [-104,-24], [-86,-6], [-68,12]]
+# xlims = [[-70,10], [-62,18], [-54,26], [-46,34], [-38,42]]
+# ylims = [[-140,-60], [-122,-42], [-104,-24], [-86,-6], [-68,12]]
 
-w_lims = [-15,15]
+xlims = [[-60,-10], [-52,-2], [-44,6], [-36,14], [-28,22]]
+ylims = [[-130,-80], [-112,-62], [-94,-44], [-76,-26], [-58,-8]]
+
 thr_lims = [-14,0]
 dbz_lims = [0,70]
 
@@ -26,7 +28,6 @@ fnums = [13, 28, 43, 58, 73]
 
 fig1,axs1 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
 fig2,axs2 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
-fig3,axs3 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
 
 # MERGER data
 for i in np.arange(0,5):
@@ -58,7 +59,8 @@ for i in np.arange(0,5):
     iz1 = np.where(z >= 1)[0][0]
     iz = slice(0,iz1+1)
     
-    qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/60)*2)
+    # qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/60)*2)
+    qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/48)*2)
     
     if i == 0:
         dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
@@ -87,22 +89,21 @@ for i in np.arange(0,5):
         ds.close()
     
     
-    c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[0,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False)
+    if i == 4:
+        cb_flag = True
+    else:
+        cb_flag = False
+    
+    c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[0,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
     axs1[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
     # axs1[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
     axs1[0,i].set_title(f"t={time:.0f} min", fontsize=14)
     
-    c2 = plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[0,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False)
+    c2 = plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[0,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
     axs2[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-    axs2[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
-    axs2[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    axs2[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+    axs2[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
     axs2[0,i].set_title(f"t={time:.0f} min", fontsize=14)
-    
-    c3 = plot_cfill(xh[ix], yh[iy], winterp[iz1,:,:], 'w', axs3[0,i], datalims=w_lims, xlims=xl, ylims=yl, cbar=False)
-    axs3[0,i].contour(xh[ix], yh[iy], thrpert, levels=[-5], colors='g', linewidths=1, linestyles='-')
-    axs3[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='k', linewidths=1.25, linestyles='-')
-    axs3[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    axs3[0,i].set_title(f"t={time:.0f} min", fontsize=14)
 
 
 
@@ -163,22 +164,21 @@ for i in np.arange(0,5):
         ds.close()
     
     
-    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[1,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False)
+    if i == 4:
+        cb_flag = True
+    else:
+        cb_flag = False
+    
+    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[1,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
     axs1[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
     # axs1[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
     # axs1[1,i].set_title(f"t={time:.0f} min", fontsize=14)
     
-    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[1,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False)
+    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[1,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
     axs2[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-    axs2[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
-    axs2[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    axs2[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+    axs2[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
     # axs2[1,i].set_title(f"t={time:.0f} min", fontsize=14)
-    
-    plot_cfill(xh[ix], yh[iy], winterp[iz1,:,:], 'w', axs3[1,i], datalims=w_lims, xlims=xl, ylims=yl, cbar=False)
-    axs3[1,i].contour(xh[ix], yh[iy], thrpert, levels=[-5], colors='g', linewidths=1, linestyles='-')
-    axs3[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='k', linewidths=1.25, linestyles='-')
-    axs3[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    # axs3[1,i].set_title(f"t={time:.0f} min", fontsize=14)
 
 
 
@@ -240,41 +240,44 @@ for i in np.arange(0,5):
         ds.close()
     
     
-    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[2,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False)
-    axs1[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
-    # axs1[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    # axs1[2,i].set_title(f"t={time:.0f} min", fontsize=14)
-    
     if i == 4:
         cb_flag = True
     else:
         cb_flag = False
-    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[2,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag)
+    
+    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[2,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
+    axs1[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+    # axs1[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    # axs1[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+    
+    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[2,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
     axs2[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-    axs2[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
-    axs2[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+    axs2[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+    axs2[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
     # axs2[2,i].set_title(f"t={time:.0f} min", fontsize=14)
     
-    plot_cfill(xh[ix], yh[iy], winterp[iz1,:,:], 'w', axs3[2,i], datalims=w_lims, xlims=xl, ylims=yl, cbar=False)
-    axs3[2,i].contour(xh[ix], yh[iy], thrpert, levels=[-5], colors='g', linewidths=1, linestyles='-')
-    axs3[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='k', linewidths=1.25, linestyles='-')
-    axs3[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    # axs3[2,i].set_title(f"t={time:.0f} min", fontsize=14)
 
 
 
-cb1 = plt.colorbar(c1, ax=axs1[:,4], extend='min')
-cb1.set_label('DBZ', fontsize=18)
-cb2 = plt.colorbar(c2, ax=axs2[0:2,4], extend='min')
-cb2.set_label("\u03B8'\u1D68 (K)", fontsize=18)
-cb3 = plt.colorbar(c3, ax=axs3[:,4], extend='min')
-cb3.set_label("w (m s$^{-1}$)", fontsize=18)
+# cb1 = plt.colorbar(c1, ax=axs1[:,4], extend='min')
+# cb1.set_label('DBZ', fontsize=18)
+# cb2 = plt.colorbar(c2, ax=axs2[0:2,4], extend='min')
+# cb2.set_label("\u03B8'\u1D68 (K)", fontsize=18)
 
+for i in range(5):
+    axs1[2,i].set_xlabel('x (km)', fontsize=14)
+    axs2[2,i].set_xlabel('x (km)', fontsize=14)
+
+for j in range(3):
+    axs1[j,0].set_ylabel('y (km)', fontsize=14)
+    axs2[j,0].set_ylabel('y (km)', fontsize=14)
+
+
+figsave = False
 
 if figsave:
     fig1.savefig('/Users/morgan.schneider/Documents/merger/overview_dbz.png', dpi=300)
     fig2.savefig('/Users/morgan.schneider/Documents/merger/overview_thrpert.png', dpi=300)
-    fig3.savefig('/Users/morgan.schneider/Documents/merger/overview_w.png', dpi=300)
 
 
 
@@ -357,16 +360,14 @@ if figsave:
 
 #%% Load data for zoomed overview plots
 
-from CM1utils import *
-
-fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
+fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
 fn = 73
 # 181 min -> 14 | 195 min -> 28 | 210 min -> 43 | 225 min -> 58 | 240 min -> 73
 
-xlims = [-38,42]
-ylims = [-68,12]
+xlims = [-28,22] # [-60,-10] + 8
+ylims = [-58,-8] # [-130,-80] + 18
 
 # Read output file
 ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
@@ -443,7 +444,7 @@ if fn > 13:
 #%% Make zoomed overview plots (dBZ, w, thrpert, zvort)
 
 w_lims = [-15,15]
-thr_lims = [-10,0]
+thr_lims = [-14,0]
 pp_lims = [-4,4]
 vort_lims = [-0.1,0.1]
 dbz_lims = [0,70]
@@ -460,12 +461,12 @@ figsave = False
 qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/48)*2)
 
 
-# dbz, w and OW contoured
+# dbz, w contoured
 if True:
     # TLV criteria - dbz, 1km w and sfc OW contoured
     fig,ax = plt.subplots(1,1,figsize=(8,6))
     
-    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz_sfc, dbz_sfc<1), 'dbz', ax, datalims=dbz_lims)
+    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz_sfc, dbz_sfc<1), 'dbz', ax, datalims=dbz_lims, cbfs=12, alpha=0.75)
     # ax.contour(xh[ix], yh[iy], thrpert, levels=[-5], colors='w', linewidths=1, linestyles='-')
     ax.contour(xh[ix], yh[iy], np.max(winterp[0:iz1,:,:],axis=0), levels=[5], colors='k', linewidths=1)
     # ax.contour(xh[ix], yh[iy], zvort[0,:,:], levels=[0.01,0.05,0.1], colors='k', linewidths=1)
@@ -497,7 +498,7 @@ if True:
     #     plt.savefig(ip+f"1km_dbz_{time:03.0f}min.png", dpi=300)
 
 
-# w, OW and thrpert contoured
+#thrpert, OW and w contoured
 # --> shade zvort to check if MVs are cyclonic or couplets! for formation mechanisms
 if True:
     # wspd = ((uinterp[iz1,:,:]+6)**2 + vinterp[iz1,:,:]**2)**0.5
@@ -520,10 +521,10 @@ if True:
     # wspd = ((uinterp[0,:,:])**2 + vinterp[0,:,:]**2)**0.5
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
-    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', ax, datalims=thr_lims, cmap='YlGnBu_r')
+    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', ax, datalims=thr_lims, cmap='YlGnBu_r', alpha=0.75, cbfs=12)
     ax.contour(xh[ix], yh[iy], np.max(winterp[0:iz1,:,:],axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-    ax.contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW[0:iz1,:,:],axis=0), winterp[iz1,:,:]<5), levels=[-0.001], colors='hotpink', linewidths=1.25, linestyles='-')
-    ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=400, width=0.002, pivot='tail')
+    ax.contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW[0:iz1,:,:],axis=0), winterp[iz1,:,:]<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+    ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
     # ax.quiver(xh[ix][::qix], yh[iy][::qix], uinterp[iz1,::qix,::qix]+6, vinterp[iz1,::qix,::qix], color='gray', scale=600, width=0.002, pivot='tail')
     # ax.set_xlabel('x (km)', fontsize=12)
     # ax.set_ylabel('y (km)', fontsize=12)
