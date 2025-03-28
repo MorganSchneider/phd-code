@@ -422,7 +422,7 @@ xlims = [-25, 0] # was [-30, 5]
 
 
 
-figsave = False
+figsave = True
 
 # CROSS SECTION, 1 PANEL - shade w; contour thrpert; gray parcels
 if False:
@@ -446,7 +446,7 @@ if False:
     
 
 # CROSS SECTION, 1 PANEL - shade thrpert; contour p'; parcels colored by w
-if True: # this one is True
+if False: # this one is True
     # parcel_cm = 'pyart_ChaseSpectral'
     import matplotlib as mpl
     # parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
@@ -549,7 +549,7 @@ elif mv_time == 225:
 # figsave = False
 
 # PLAN VIEW, 1 PANEL - shade thrpert; parcels colored by w
-if True:
+if False:
     import matplotlib as mpl
     # parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
     #                     np.vstack((plt.cm.Spectral_r(np.linspace(0,0.5,128)),
@@ -650,12 +650,16 @@ def add_vectors(ax, x, y, dx, dy, z, lengthscale=10, *args, **kwargs):
         
     return arrow
 
+from matplotlib.colors import LinearSegmentedColormap
+cmap = LinearSegmentedColormap.from_list('cmap', pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.9,205)))
+
+
 
 fig,ax = plt.subplots(1,1, figsize=(5,6), subplot_kw=dict(box_aspect=2), layout='constrained')
 
 l, = ax.plot([xh[0], xh[1]], [yh[0], yh[1]], 'gray', linewidth=1)
 ax.contour(xh[ix], yh[iy], dbz, levels=[30], colors='gray', linewidths=1, zorder=0)
-p = ax.scatter(x_median, y_median, s=40, c=z_median, cmap='pyart_ChaseSpectral', vmin=0, vmax=3)
+p = ax.scatter(x_median, y_median, s=40, c=z_median, cmap=cmap, vmin=0, vmax=3)
 cb = plt.colorbar(p, ax=ax, extend='max')
 cb.set_label("Parcel height (km)", fontsize=13)
 # p = ax.scatter(x_median, y_median, s=30, c=zvort_median, cmap='pyart_ChaseSpectral', vmin=-0.04, vmax=0.04)

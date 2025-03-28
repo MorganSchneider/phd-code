@@ -15,19 +15,28 @@ from CM1utils import *
 
 #%% One big overview plot
 
+from matplotlib.ticker import MultipleLocator
+
 # xlims = [[-70,10], [-62,18], [-54,26], [-46,34], [-38,42]]
 # ylims = [[-140,-60], [-122,-42], [-104,-24], [-86,-6], [-68,12]]
 
 xlims = [[-60,-10], [-52,-2], [-44,6], [-36,14], [-28,22]]
 ylims = [[-130,-80], [-112,-62], [-94,-44], [-76,-26], [-58,-8]]
 
-thr_lims = [-14,0]
+thr_lims = [-12,0]
 dbz_lims = [0,70]
 
 fnums = [13, 28, 43, 58, 73]
 
-fig1,axs1 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
-fig2,axs2 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
+horiz_layout = False
+vert_layout = True
+
+if horiz_layout:
+    fig1,axs1 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
+    fig2,axs2 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
+elif vert_layout:
+    fig1,axs1 = plt.subplots(5, 3, figsize=(9,13.5), subplot_kw=dict(box_aspect=1), layout='constrained')
+    fig2,axs2 = plt.subplots(5, 3, figsize=(9,14), subplot_kw=dict(box_aspect=1), layout='constrained')
 
 # MERGER data
 for i in np.arange(0,5):
@@ -89,21 +98,41 @@ for i in np.arange(0,5):
         ds.close()
     
     
-    if i == 4:
-        cb_flag = True
-    else:
-        cb_flag = False
+    if horiz_layout:
+        # Horizontal layout
+        if i == 4:
+            cb_flag = True
+        else:
+            cb_flag = False
+        c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[0,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs1[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        # axs1[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+        axs1[0,i].set_title(f"t={time:.0f} min", fontsize=14)
+        
+        c2 = plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[0,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs2[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        axs2[0,i].set_title(f"t={time:.0f} min", fontsize=14)
     
-    c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[0,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-    axs1[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
-    # axs1[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    axs1[0,i].set_title(f"t={time:.0f} min", fontsize=14)
-    
-    c2 = plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[0,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-    axs2[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-    axs2[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-    axs2[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
-    axs2[0,i].set_title(f"t={time:.0f} min", fontsize=14)
+    elif vert_layout:
+        # Vertical layout
+        plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[i,0], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False, alpha=0.75)
+        axs1[i,0].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        # axs1[i,0].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+        # axs1[i,0].set_title(f"t={time:.0f} min", fontsize=14)
+        axs1[i,0].set_ylabel('y (km)', fontsize=15)
+        axs1[i,0].xaxis.set_major_locator(MultipleLocator(10))
+        axs1[i,0].yaxis.set_major_locator(MultipleLocator(10))
+        
+        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[i,0], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False, alpha=0.75)
+        axs2[i,0].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[i,0].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[i,0].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        # axs2[i,0].set_title(f"t={time:.0f} min", fontsize=14)
+        axs2[i,0].set_ylabel('y (km)', fontsize=15)
+        axs2[i,0].xaxis.set_major_locator(MultipleLocator(10))
+        axs2[i,0].yaxis.set_major_locator(MultipleLocator(10))
 
 
 
@@ -164,21 +193,40 @@ for i in np.arange(0,5):
         ds.close()
     
     
-    if i == 4:
-        cb_flag = True
-    else:
-        cb_flag = False
-    
-    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[1,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-    axs1[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
-    # axs1[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    # axs1[1,i].set_title(f"t={time:.0f} min", fontsize=14)
-    
-    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[1,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-    axs2[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-    axs2[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-    axs2[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
-    # axs2[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+    if horiz_layout:
+        # Horizontal layout
+        if i == 4:
+            cb_flag = True
+        else:
+            cb_flag = False
+        
+        plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[1,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs1[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        # axs1[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+        # axs1[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+        
+        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[1,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs2[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        # axs2[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+        
+    elif vert_layout:
+        # Vertical layout
+        plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[i,1], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False, alpha=0.75)
+        axs1[i,1].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        # axs1[i,1].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+        axs1[i,1].set_title(f"t={time:.0f} min", fontsize=16)
+        axs1[i,1].xaxis.set_major_locator(MultipleLocator(10))
+        axs1[i,1].yaxis.set_major_locator(MultipleLocator(10))
+        
+        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[i,1], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False, alpha=0.75)
+        axs2[i,1].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[i,1].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[i,1].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        axs2[i,1].set_title(f"t={time:.0f} min", fontsize=16)
+        axs2[i,1].xaxis.set_major_locator(MultipleLocator(10))
+        axs2[i,1].yaxis.set_major_locator(MultipleLocator(10))
 
 
 
@@ -190,7 +238,7 @@ for i in np.arange(0,5):
         fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
     
     print(f"SUPERCELL - cm1out_{fnums[i]:06d}")
-    thr_lims = [-10,0]
+    # thr_lims = [-10,0]
     
     ds = nc.Dataset(fp+f"cm1out_{fnums[i]:06d}.nc")
     time = ds.variables['time'][:].data[0]/60
@@ -240,21 +288,42 @@ for i in np.arange(0,5):
         ds.close()
     
     
-    if i == 4:
-        cb_flag = True
-    else:
-        cb_flag = False
-    
-    plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[2,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-    axs1[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
-    # axs1[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
-    # axs1[2,i].set_title(f"t={time:.0f} min", fontsize=14)
-    
-    plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[2,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-    axs2[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-    axs2[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-    axs2[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
-    # axs2[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+    if horiz_layout:
+        # Horizontal layout
+        if i == 4:
+            cb_flag = True
+        else:
+            cb_flag = False
+        
+        plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[2,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs1[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        # axs1[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+        # axs1[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+        
+        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[2,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs2[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        # axs2[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+        
+    elif vert_layout:
+        # Vertical layout
+        c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[i,2], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False, alpha=0.75)
+        axs1[i,2].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        # axs1[i,2].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
+        # axs1[i,2].set_title(f"t={time:.0f} min", fontsize=14)
+        axs1[i,2].xaxis.set_major_locator(MultipleLocator(10))
+        axs1[i,2].yaxis.set_major_locator(MultipleLocator(10))
+        cb1 = plt.colorbar(c1, ax=axs1[i,2], extend='both', ticks=np.linspace(0,70,8))
+        cb1.set_label("$Z_H$ (dBZ)", fontsize=14)
+        
+        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[i,2], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=True, cbfs=15, alpha=0.75)
+        axs2[i,2].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[i,2].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[i,2].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        # axs2[i,2].set_title(f"t={time:.0f} min", fontsize=14)
+        axs2[i,2].xaxis.set_major_locator(MultipleLocator(10))
+        axs2[i,2].yaxis.set_major_locator(MultipleLocator(10))
     
 
 
@@ -264,20 +333,28 @@ for i in np.arange(0,5):
 # cb2 = plt.colorbar(c2, ax=axs2[0:2,4], extend='min')
 # cb2.set_label("\u03B8'\u1D68 (K)", fontsize=18)
 
-for i in range(5):
-    axs1[2,i].set_xlabel('x (km)', fontsize=14)
-    axs2[2,i].set_xlabel('x (km)', fontsize=14)
+if horiz_layout:
+    for i in range(5):
+        axs1[2,i].set_xlabel('x (km)', fontsize=14)
+        axs2[2,i].set_xlabel('x (km)', fontsize=14)
+    for j in range(3):
+        axs1[j,0].set_ylabel('y (km)', fontsize=14)
+        axs2[j,0].set_ylabel('y (km)', fontsize=14)
 
-for j in range(3):
-    axs1[j,0].set_ylabel('y (km)', fontsize=14)
-    axs2[j,0].set_ylabel('y (km)', fontsize=14)
+elif vert_layout:
+    # for i in range(5):
+    #     axs1[i,0].set_ylabel('y (km)', fontsize=12)
+    #     axs2[i,0].set_ylabel('y (km)', fontsize=12)
+    for j in range(3):
+        axs1[4,j].set_xlabel('x (km)', fontsize=15)
+        axs2[4,j].set_xlabel('x (km)', fontsize=15)
 
 
-figsave = False
+figsave = True
 
 if figsave:
-    fig1.savefig('/Users/morgan.schneider/Documents/merger/overview_dbz.png', dpi=300)
-    fig2.savefig('/Users/morgan.schneider/Documents/merger/overview_thrpert.png', dpi=300)
+    fig1.savefig('/Users/morgan.schneider/Documents/merger/overview_dbz_v2.png', dpi=300)
+    fig2.savefig('/Users/morgan.schneider/Documents/merger/overview_thrpert_v2.png', dpi=300)
 
 
 
@@ -360,14 +437,14 @@ if figsave:
 
 #%% Load data for zoomed overview plots
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
 
-fn = 73
+fn = 43
 # 181 min -> 14 | 195 min -> 28 | 210 min -> 43 | 225 min -> 58 | 240 min -> 73
 
-xlims = [-28,22] # [-60,-10] + 8
-ylims = [-58,-8] # [-130,-80] + 18
+xlims = [-44,6]   # [-60,-10]+8   -> [-60,-10],  [-52,-2],   [-44,6],   [-36,14],  [-28,22]
+ylims = [-94,-44] # [-130,-80]+18 -> [-130,-80], [-112,-62], [-94,-44], [-76,-26], [-58,-8]
 
 # Read output file
 ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
@@ -444,7 +521,7 @@ if fn > 13:
 #%% Make zoomed overview plots (dBZ, w, thrpert, zvort)
 
 w_lims = [-15,15]
-thr_lims = [-14,0]
+thr_lims = [-12,0]
 pp_lims = [-4,4]
 vort_lims = [-0.1,0.1]
 dbz_lims = [0,70]

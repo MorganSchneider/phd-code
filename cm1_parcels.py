@@ -921,43 +921,45 @@ for i in range(3):
     axs[2,i].add_patch(r3)
     axs[2,i].set_xlim(xl)
     axs[2,i].set_ylim(yl)
+    axs[2,i].set_xlabel('x (km)', fontsize=14)
     
-    if i == 0:
-        # axs[0,0].text(xl[1]-10, yl[1]-10, "Z", fontsize=20, fontweight='bold')
-        # axs[1,0].text(xl[1]-10, yl[1]-10, "B", fontsize=20, fontweight='bold')
-        # axs[2,0].text(xl[1]-40, yl[1]-10, "Source", fontsize=19, fontweight='bold')
-        axs[1,0].set_ylabel('y distance (km)', fontsize=14)
-        if True:
-            l1, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='gold')
-            l2, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='red')
-            l3, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='deepskyblue')
-            l4, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='mediumblue')
-        axs[2,0].legend(handles=[l1,l2,l3,l4],
-                        labels=['Low-level inflow', 'Mid-level inflow',
-                                'Supercell outflow', 'QLCS outflow'], loc='upper right', fontsize=8)
-    
-    if i == 1:
-        axs[2,1].set_xlabel('x distance (km)', fontsize=14)
-    
-    if i == 2:
-        cb1 = plt.colorbar(p1, ax=axs[0,2], extend='both', ticks=np.linspace(0,3,7))
-        cb1.set_label("Height (km)", fontsize=12)
-        # tl = cb1.ax.get_yticklabels()
-        # cb1.ax.set_yticklabels(tl, ha='right')
-        # cb1.ax.yaxis.set_tick_params(pad=30)
-        
-        cb2 = plt.colorbar(p2, ax=axs[1,2], extend='both', ticks=np.linspace(-0.3,0.1,5))
-        cb2.set_label("Buoyancy (m s$^{-2}$)", fontsize=12)
-        # tl = cb2.ax.get_yticklabels()
-        # cb2.ax.set_yticklabels(tl, ha='right')
-        # cb2.ax.yaxis.set_tick_params(pad=30)
-        
-        cb3 = plt.colorbar(p3, ax=axs[2,2], ticks=[0,1,2,3])
-        cb3.ax.set_yticklabels(['','','',''])
-        cb3.set_label("Source region", fontsize=12)
 
 
-figsave = False
+if False:
+    l1, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='gold')
+    l2, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='red')
+    l3, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='deepskyblue')
+    l4, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='mediumblue')
+    axs[2,0].legend(handles=[l1,l2,l3,l4],
+                    labels=['Low-level inflow', 'Mid-level inflow',
+                            'Supercell outflow', 'QLCS outflow'], loc='upper right', fontsize=8)
+
+cb1 = plt.colorbar(p1, ax=axs[0,2], extend='both', ticks=np.linspace(0,3,7))
+cb1.set_label("Height (km)", fontsize=12)
+# tl = cb1.ax.get_yticklabels()
+# cb1.ax.set_yticklabels(tl, ha='right')
+# cb1.ax.yaxis.set_tick_params(pad=30)
+
+cb2 = plt.colorbar(p2, ax=axs[1,2], extend='both', ticks=np.linspace(-0.3,0.1,5))
+cb2.set_label("Buoyancy (m s$^{-2}$)", fontsize=12)
+# tl = cb2.ax.get_yticklabels()
+# cb2.ax.set_yticklabels(tl, ha='right')
+# cb2.ax.yaxis.set_tick_params(pad=30)
+
+cb3 = plt.colorbar(p3, ax=axs[2,2], ticks=[0,1,2,3])
+cb3.ax.set_yticklabels(['Low-level\n inflow', 'Mid-level\n inflow', 
+                        'Supercell\n outflow', 'QLCS\n outflow'])
+# cb3.set_label("Source region", fontsize=12)
+
+axs[0,0].set_ylabel('y (km)', fontsize=14)
+axs[1,0].set_ylabel('y (km)', fontsize=14)
+axs[2,0].set_ylabel('y (km)', fontsize=14)
+
+axs[2,0].set_xlabel('x (km)', fontsize=14)
+axs[2,1].set_xlabel('x (km)', fontsize=14)
+axs[2,2].set_xlabel('x (km)', fontsize=14)
+
+figsave = True
 
 if figsave:
     # fig_m.savefig('/Users/morgan.schneider/Documents/merger/traj_mv1_z+B.png', dpi=300)

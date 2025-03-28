@@ -274,16 +274,6 @@ ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/'
 
 figsave = False
 
-rlim = 6 # 8, 6 or 4
-zlim = 2 # 2.5, 2 or 1.4
-
-vi = 8
-eli = 1
-filetime = vol[vi]['scan_time'][eli]
-azimuth = 300
-azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
-rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
-
 # i1 = np.where(P1['time'] == int(vol[vi]['scan_time'][eli]))[0][0]
 # i2 = np.where(P2['time'] == int(vol[vi]['scan_time'][eli]))[0][0]
 
@@ -293,23 +283,36 @@ datalims = T_lims
 vort_lim = 0.003
 div_lim = 0.1
 
-plot_flag = [1,1,0,0,1,0]
+
+rlim = 6 # 8, 6 or 4
+zlim = 2 # 2.5, 2 or 1.4
+
+vi = 10
+eli = 1
+filetime = vol[vi]['scan_time'][eli]
+azimuth = 335
+
+azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
+rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
+
+
+plot_flag = [1,1,0,1,1,0]
 # dbz/vel PPIs, dbz/vel RHIs, dbz/vel cross sections, vort PPIs, vort RHIs, vort cross sections
 
 
 
 if vi == 7: # 082000 UTC
-    az_rot = np.array([290, 291, 292, 293, 294, 295,
+    az_rot1 = np.array([290, 291, 292, 293, 294, 295,
                        296, 297, 298, 299, 300,
                        301, 302, 303, 304, 305,
                        306, 307, 308, 309, 310,
                        311, 312, 313, 314])
-    r_rot = np.array([2.02, 2.06, 2.06, 2.09, 2.10, 2.11,
+    r_rot1 = np.array([2.02, 2.06, 2.06, 2.09, 2.10, 2.11,
                       2.10, 2.13, 2.15, 2.17, 2.17,
                       2.19, 2.19, 2.17, 2.19, 2.21,
                       2.23, 2.26, 2.27, 2.23, 2.25,
                       2.27, 2.3, 2.3, 2.28])
-    z_rot = np.array([0.18, 0.20, 0.20, 0.21, 0.23, 0.24,
+    z_rot1 = np.array([0.18, 0.20, 0.20, 0.21, 0.23, 0.24,
                       0.26, 0.30, 0.32, 0.35, 0.38,
                       0.41, 0.44, 0.47, 0.48, 0.50,
                       0.56, 0.61, 0.63, 0.66, 0.68,
@@ -317,104 +320,185 @@ if vi == 7: # 082000 UTC
 
 
 # there's also maybe a rotor around 293-295 deg?? look at this more
-if vi == 8: # 082030 UTC
-    # closer vortex
-    az_rot = np.array([291, 292, 293, 294, 295,
+if vi == 8:
+    # farther vortex
+    az_rot1 = np.array([300, 301, 302, 303, 304, 305,
+                        306, 307, 308, 309, 310,
+                        311, 312, 313, 314, 315,
+                        316, 317, 318, 319, 320,
+                        321, 322, 323, 324, 325])
+    r_rot1 = np.array([2.12, 2.12, 2.12, 2.12, 2.13, 2.14,
+                       2.14, 2.15, 2.15, 2.15, 2.15,
+                       2.16, 2.17, 2.18, 2.19, 2.20,
+                       2.20, 2.20, 2.21, 2.22, 2.24,
+                       2.23, 2.23, 2.23, 2.23, 2.23])
+    z_rot1 = np.array([0.04, 0.04, 0.06, 0.08, 0.10, 0.11,
+                       0.12, 0.15, 0.18, 0.22, 0.26,
+                       0.29, 0.32, 0.35, 0.38, 0.42,
+                       0.46, 0.48, 0.51, 0.52, 0.57,
+                       0.58, 0.60, 0.63, 0.68, 0.70])
+    
+    # closest vortex
+    az_rot2 = np.array([291, 292, 293, 294, 295,
                         296, 297, 298, 299, 300,
                         301, 302, 303, 304, 305,
                         306, 307, 308, 309, 310,
-                        311, 312, 313, 314, 315])
-    r_rot = np.array([1.85, 1.85, 1.83, 1.82, 1.83,
-                      1.83, 1.82, 1.81, 1.80, 1.80,
-                      1.80, 1.80, 1.75, 1.74, 1.72,
-                      1.70, 1.70, 1.71, 1.72, 1.75,
-                      1.80, 1.83, 1.86, 1.87, 1.90])
-    z_rot = np.array([0.03, 0.04, 0.05, 0.07, 0.09,
-                      0.12, 0.14, 0.16, 0.17, 0.19,
-                      0.21, 0.25, 0.30, 0.32, 0.35,
-                      0.38, 0.41, 0.42, 0.43, 0.44,
-                      0.45, 0.48, 0.56, 0.59, 0.65])
-    # farther vortex
-    az_rot = np.array([300, 301, 302, 303, 304, 305,
-                       306, 307, 308, 309, 310,
-                       311, 312, 313, 314, 315,
-                       316, 317, 318, 319, 320,
-                       321, 322, 323, 324, 325])
-    r_rot = np.array([2.12, 2.12, 2.12, 2.12, 2.13, 2.14,
-                      2.14, 2.15, 2.15, 2.15, 2.15,
-                      2.16, 2.17, 2.18, 2.19, 2.20,
-                      2.20, 2.20, 2.21, 2.22, 2.24,
-                      2.23, 2.23, 2.23, 2.23, 2.23])
-    z_rot = np.array([0.04, 0.04, 0.06, 0.08, 0.10, 0.11,
-                      0.12, 0.15, 0.18, 0.22, 0.26,
-                      0.29, 0.32, 0.35, 0.38, 0.42,
-                      0.46, 0.48, 0.51, 0.52, 0.57,
-                      0.58, 0.60, 0.63, 0.68, 0.70])
+                        311, 312])
+    r_rot2 = np.array([1.85, 1.85, 1.83, 1.82, 1.83,
+                       1.83, 1.82, 1.81, 1.80, 1.80,
+                       1.80, 1.80, 1.75, 1.74, 1.72,
+                       1.70, 1.70, 1.71, 1.72, 1.75,
+                       1.80, 1.83])
+    z_rot2 = np.array([0.03, 0.04, 0.05, 0.07, 0.09,
+                       0.12, 0.14, 0.16, 0.17, 0.19,
+                       0.21, 0.25, 0.30, 0.32, 0.35,
+                       0.38, 0.41, 0.42, 0.43, 0.44,
+                       0.45, 0.48])
+    
+    # farthest vortex
+    az_rot3 = np.array([320, 321, 322, 323, 324, 325,
+                        326, 327])
+    r_rot3 = np.array([2.70, 2.72, 2.73, 2.75, 2.79, 2.82,
+                       2.85, 2.88, 2.90, 0, 0])
+    z_rot3 = np.array([0.50, 0.55, 0.62, 0.67, 0.72, 0.76,
+                       0.78, 0.82])
+    
+    # rotor?
+    az_rot4 = np.array([281, 282, 283, 284, 285,
+                        286, 287, 288, 289, 290,
+                        291, 292, 293, 294, 295])
+    r_rot4 = np.array([2.24, 2.18, 2.13, 2.08, 2.04,
+                       2.01, 1.99, 1.97, 1.96, 1.95,
+                       1.94, 1.92, 1.90, 1.90, 1.90])
+    z_rot4 = np.array([0.18, 0.18, 0.20, 0.20, 0.16,
+                       0.18, 0.20, 0.22, 0.25, 0.28,
+                       0.31, 0.34, 0.37, 0.38, 0.40])
+    
+    az_rot = az_rot4
+    r_rot = r_rot4
+    z_rot = z_rot4
 
+
+# there is a 4th vortex farthest north ):
 if vi == 9: # 082100 UTC
-    az_rot = np.array([305, 306, 307, 308, 309, 310,
-                       311, 312, 313, 314, 315,
-                       316, 317, 318, 319, 320,
-                       321, 322, 323, 324, 325,
-                       326, 327, 328, 329, 330])
-    r_rot = np.array([1.72, 1.71, 1.71, 1.70, 1.70, 1.69,
-                      1.68, 1.68, 1.68, 1.68, 1.67,
-                      1.68, 1.68, 1.67, 1.68, 1.68,
-                      1.68, 1.69, 1.70, 1.70, 1.72,
-                      1.72, 1.72, 1.73, 1.74, 1.74])
-    z_rot = np.array([0.0, 0.0, 0.0, 0.03, 0.04, 0.06,
-                      0.08, 0.13, 0.16, 0.17, 0.18,
-                      0.21, 0.22, 0.23, 0.26, 0.30,
-                      0.33, 0.39, 0.41, 0.44, 0.46,
-                      0.49, 0.53, 0.54, 0.56, 0.60])
+    # farther vortex
+    az_rot1 = np.array([321, 322, 323, 324, 325,
+                        326, 327, 328, 329, 330,
+                        331, 332, 333, 334, 335])
+    r_rot1 = np.array([2.12, 2.14, 2.16, 2.18, 2.19,
+                       2.20, 2.21, 2.21, 2.19, 2.18,
+                       2.18, 2.17, 2.17, 2.16, 2.15])
+    z_rot1 = np.array([0.15, 0.18, 0.21, 0.24, 0.28,
+                       0.30, 0.32, 0.34, 0.36, 0.38,
+                       0.40, 0.42, 0.45, 0.50, 0.54])
+    
+    # closest vortex
+    az_rot2 = np.array([305, 306, 307, 308, 309, 310,
+                        311, 312, 313, 314, 315,
+                        316, 317, 318, 319, 320,
+                        321, 322, 323, 324, 325,
+                        326, 327, 328, 329, 330])
+    r_rot2 = np.array([1.72, 1.71, 1.71, 1.70, 1.70, 1.69,
+                       1.68, 1.68, 1.68, 1.68, 1.67,
+                       1.68, 1.68, 1.67, 1.68, 1.68,
+                       1.68, 1.69, 1.70, 1.70, 1.72,
+                       1.72, 1.72, 1.73, 1.74, 1.74])
+    z_rot2 = np.array([0.0, 0.0, 0.0, 0.03, 0.04, 0.06,
+                       0.08, 0.13, 0.16, 0.17, 0.18,
+                       0.21, 0.22, 0.23, 0.26, 0.30,
+                       0.33, 0.39, 0.41, 0.44, 0.46,
+                       0.49, 0.53, 0.54, 0.56, 0.60])
+    
+    # not actually the farthest vortex
+    az_rot3 = np.array([323, 324, 325,
+                        326, 327, 328, 329, 330,
+                        331, 332, 333, 334, 335,
+                        336, 337, 338, 339, 340])
+    r_rot3 = np.array([2.51, 2.55, 2.59,
+                       2.62, 2.64, 2.66, 2.68, 2.69,
+                       2.70, 2.72, 2.73, 2.74, 2.75,
+                       2.76, 2.76, 2.77, 2.78, 2.79])
+    z_rot3 = np.array([0.13, 0.15, 0.18,
+                       0.22, 0.26, 0.31, 0.36, 0.42,
+                       0.48, 0.55, 0.62, 0.68, 0.74,
+                       0.79, 0.84, 0.88, 0.91, 0.93])
+    
+    az_rot = az_rot3
+    r_rot = r_rot3
+    z_rot = z_rot3
+
 
 if vi == 10: # 082130 UTC
-    az_rot = np.array([320, 321, 322, 323, 324, 325,
+    # closest vortex
+    az_rot2 = np.array([323, 324, 325,
                        326, 327, 328, 329, 330,
-                       331, 332, 333, 334])
-    r_rot = np.array([])
-    z_rot = np.array([])
+                       331, 332])
+    r_rot2 = np.array([1.62, 1.63, 1.65,
+                      1.66, 1.67, 1.66, 1.66, 1.66,
+                      1.66, 1.66])
+    z_rot2 = np.array([0.05, 0.06, 0.08,
+                      0.10, 0.12, 0.13, 0.14, 0.15,
+                      0.17, 0.18])
+    
+    # farthest vortex
+    az_rot3 = np.array([335])
+    r_rot3 = np.array([0])
+    z_rot3 = np.array([0])
+    
+    az_rot = az_rot3
+    r_rot = r_rot3
+    z_rot = z_rot3
 
 # if vi == 11: # 082200 UTC -- this volume might just be irredeemably bad
 #     az_rot = np.array([])
 #     r_rot = np.array([])
 #     z_rot = np.array([])
 
+
 if vi == 12: # 082230 UTC --> another vortex here at r=2 km around 0 deg?
     az_rot = np.array([350, 351, 352, 353, 354, 355,
-                       356, 357, 358, 359, 0,
-                       1, 2, 3, 4, 5,
-                       6, 7, 8])
-    r_rot = np.array([])
-    z_rot = np.array([])
+                       356, 357, 358])
+    r_rot = np.array([3.15, 3.16, 3.18, 3.14, 3.12, 3.11,
+                      3.12, 3.13, 3.14])
+    z_rot = np.array([0.17, 0.20, 0.23, 0.24, 0.24, 0.25,
+                      0.28, 0.31, 0.34])
+
 
 if vi == 13: # 082300 UTC
     az_rot = np.array([356, 357, 358, 359, 0,
                        1, 2, 3, 4, 5,
                        6, 7, 8])
-    r_rot = np.array([])
-    z_rot = np.array([])
+    r_rot = np.array([0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0,
+                      0, 0, 0])
+    z_rot = np.array([0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0,
+                      0, 0, 0])
+
 
 # might need to look at the ppis for these
 if vi == 14: # 082330 UTC
     az_rot = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-    r_rot = np.array([])
-    z_rot = np.array([])
+    r_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    z_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
 
 if vi == 15: # 082400 UTC
     az_rot = np.array([7, 8, 9, 10, 11, 12, 13, 14])
-    r_rot = np.array([])
-    z_rot = np.array([])
+    r_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    z_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+
 
 if vi == 16: # 082430 UTC
     az_rot = np.array([7, 8, 9, 10, 11, 12, 13])
-    r_rot = np.array([])
-    z_rot = np.array([])
+    r_rot = np.array([0, 0, 0, 0, 0, 0, 0])
+    z_rot = np.array([0, 0, 0, 0, 0, 0, 0])
+
 
 if vi == 17: # 082500 UTC
     az_rot = np.array([7, 8, 9, 10, 11, 12, 13, 14])
-    r_rot = np.array([])
-    z_rot = np.array([])
+    r_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    z_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
 
 
 x_rot = r_rot * np.sin(az_rot*np.pi/180)
@@ -425,13 +509,13 @@ irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
 
 if plot_flag[0]:
-    xl = [-6, 0] # was [-rlim/2, 0]
-    yl = [-3, 3] # was [0, rlim/2]
+    xl = [-3, 0] # was [-rlim/2, 0]. [-6,0] until vi 12
+    yl = [0, 3] # was [0, rlim/2]. [-3,3] until vi 12
     
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][eli,:,:], 'dbz', ax1, datalims=[0,70], xlims=xl, ylims=yl)
-    ax1.scatter(x_rot, y_rot, s=25, c='k', marker='.')
+    ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
     ax1.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} reflectivity", fontsize=14)
     ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
@@ -446,7 +530,7 @@ if plot_flag[0]:
     ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2, datalims=[-va,va], xlims=xl, ylims=yl)
-    ax2.scatter(x_rot, y_rot, s=25, c='k', marker='.')
+    ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
     ax2.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=14)
     ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
@@ -520,16 +604,22 @@ if plot_flag[2]:
     zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
     
     if vi == 7:
-        yl = [0,0.7]
+        zl = [0,0.7]
+    elif vi == 8:
+        zl = [0,0.75]
     elif vi == 9:
-        yl = [0,0.6]
+        zl = [0,0.6]
+    elif vi == 10:
+        zl = [0,0.6]
+    elif vi == 12:
+        zl = [0,0.6]
     
     if az_rot.shape[0] < dbz_cross.shape[1]:
         az_rot = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
     
     fig,(ax1,ax2) = plt.subplots(2,1, figsize=(9,7), sharex=True, layout='constrained')
     
-    plot_cfill(az_rot, zz_rot, dbz_cross, 'dbz', ax1, datalims=[0,70], xlims=[az_rot[0],az_rot[-1]], ylims=yl)
+    plot_cfill(az_rot, zz_rot, dbz_cross, 'dbz', ax1, datalims=[0,70], xlims=[az_rot[0],az_rot[-1]], ylims=zl)
     ax1.set_title(f"{filetime} UTC Reflectivity cross-section", fontsize=14, fontweight='bold')
     ax1.set_ylabel('Height ARL (km)', fontsize=12)
     ax1_ppi = inset_axes(ax1, '21%', '52%', loc=2) # 21, 52 OR 23, 56
@@ -541,7 +631,7 @@ if plot_flag[2]:
     ax1_ppi.set_xticks([])
     ax1_ppi.set_yticks([])
     
-    plot_cfill(az_rot, zz_rot, vel_cross, 'vel', ax2, datalims=[-va,va], xlims=[az_rot[0],az_rot[-1]], ylims=yl)
+    plot_cfill(az_rot, zz_rot, vel_cross, 'vel', ax2, datalims=[-va,va], xlims=[az_rot[0],az_rot[-1]], ylims=zl)
     ax2.set_title(f"{filetime} UTC Radial velocity cross-section", fontsize=14, fontweight='bold')
     ax2.set_xlabel('Azimuth (deg)', fontsize=12)
     ax2.set_ylabel('Height ARL (km)', fontsize=12)
@@ -566,14 +656,14 @@ if plot_flag[3]:
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(vol[vi]['zvort'][2:,:,:],axis=0), 'vort', ax1, datalims=[0,vort_lim], xlims=xl, ylims=yl)
-    # ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    ax1.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
     ax1.set_title(f"{filetime} UTC Max vertical pseudovorticity", fontsize=14)
     ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
     ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2, datalims=[0,vort_lim], xlims=xl, ylims=yl)
-    # ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    ax2.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
     ax2.set_title(f"{filetime} UTC Max horizontal pseudovorticity", fontsize=14)
     ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
@@ -597,7 +687,7 @@ if plot_flag[4]:
     fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,6), sharex=True, sharey=True, layout='constrained')
     
     plot_cfill(rr, vol[vi]['zz'][:,azi,:], vol[vi]['zvort'][:,azi,:], 'vort', ax1, datalims=[-vort_lim,vort_lim], xlims=[0,rlim], ylims=[0,zlim])
-    ax1.scatter(r_rot[irot], z_rot[irot], s=10, c='w', marker='x')
+    ax1.scatter(r_rot[irot], z_rot[irot], s=10, c='k', marker='x')
     ax1.set_ylabel('Height ARL (km)', fontsize=14)
     ax1.set_title(f"{filetime} UTC (Azimuth = {azimuth}\N{DEGREE SIGN})\n Vertical pseudovorticity", fontsize=14, fontweight='bold')
     ax1.invert_xaxis()
@@ -608,7 +698,7 @@ if plot_flag[4]:
     ax1_ppi.set_yticks([])
     
     plot_cfill(rr, vol[vi]['zz'][:,azi,:], vol[vi]['hvort'][:,azi,:], 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=[0,rlim], ylims=[0,zlim])
-    ax2.scatter(r_rot[irot], z_rot[irot], s=10, c='w', marker='x')
+    ax2.scatter(r_rot[irot], z_rot[irot], s=10, c='k', marker='x')
     ax2.set_xlabel('Range from radar (km)', fontsize=14)
     ax2.set_ylabel('Height ARL (km)', fontsize=14)
     ax2.set_title(f"Horizontal pseudovorticity", fontsize=14, fontweight='bold')
