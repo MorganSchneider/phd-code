@@ -36,7 +36,7 @@ if horiz_layout:
     fig2,axs2 = plt.subplots(3, 5, figsize=(15,8), subplot_kw=dict(box_aspect=1), layout='constrained')
 elif vert_layout:
     fig1,axs1 = plt.subplots(5, 3, figsize=(9,13.5), subplot_kw=dict(box_aspect=1), layout='constrained')
-    fig2,axs2 = plt.subplots(5, 3, figsize=(9,14), subplot_kw=dict(box_aspect=1), layout='constrained')
+    fig2,axs2 = plt.subplots(5, 3, figsize=(9,13), subplot_kw=dict(box_aspect=1), layout='constrained')
 
 # MERGER data
 for i in np.arange(0,5):
