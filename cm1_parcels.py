@@ -28,8 +28,8 @@ from matplotlib import patches
 
 # Parcel data dimensions (time, pid)
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
 
 # Read parcel data
 ds = nc.Dataset(fp+'cm1out_pdata.nc')
@@ -38,9 +38,11 @@ pid = ds.variables['xh'][:].data
 x = ds.variables['x'][:].data
 y = ds.variables['y'][:].data
 z = ds.variables['z'][:].data
-u = ds.variables['u'][:].data
-v = ds.variables['v'][:].data
+# u = ds.variables['u'][:].data
+# v = ds.variables['v'][:].data
 w = ds.variables['w'][:].data
+b = ds.variables['b'][:].data
+zvort = ds.variables['zvort'][:].data
 # th = ds.variables['th'][:].data
 # prs = ds.variables['prs'][:].data
 # qv = ds.variables['qv'][:].data
@@ -54,27 +56,25 @@ w = ds.variables['w'][:].data
 # qg = ds.variables['qg'][:].data
 # qhl = ds.variables['qhl'][:].data
 # dbz = ds.variables['dbz'][:].data
-b = ds.variables['b'][:].data
 # vpg = ds.variables['vpg'][:].data
-zvort = ds.variables['zvort'][:].data
 ds.close()
 
 
 #%% Load data and filter trajectories
 
 # Read gridded output
-fnum = 58
+fnum = 53
 ds = nc.Dataset(fp+f"cm1out_{fnum:06d}.nc")
 stime = ds.variables['time'][:].data[0]
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
-# dbz = ds.variables['dbz'][:].data[0,0,:,:]
+dbz = ds.variables['dbz'][:].data[0,0,:,:]
 ds.close()
 
-# ds = nc.Dataset(fp+"base/cm1out_000013.nc")
-# dbz0 = ds.variables['dbz2'][:].data[0,0,:,:]
-# ds.close()
+ds = nc.Dataset(fp+"base/cm1out_000013.nc")
+dbz0 = ds.variables['dbz2'][:].data[0,0,:,:]
+ds.close()
 
 # Filter trajectories
 
@@ -82,7 +82,7 @@ ds.close()
 
 ti = np.where(ptime == stime)[0][0]
 
-box_name = 'MERGER (MV1)'
+box_name = 'SUPERCELL'
 
 dbfile = open(ip+'boxes_s1.pkl', 'rb')
 box = pickle.load(dbfile)
@@ -101,8 +101,8 @@ z_mv = z[:, wvort_cond]
 w_mv = w[:, wvort_cond]
 zvort_mv = zvort[:, wvort_cond]
 b_mv = b[:, wvort_cond]
-u_mv = u[:, wvort_cond]
-v_mv = v[:, wvort_cond]
+# u_mv = u[:, wvort_cond]
+# v_mv = v[:, wvort_cond]
 
 
 
@@ -111,7 +111,7 @@ v_mv = v[:, wvort_cond]
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 
-n = 5
+n = 2
 X1 = np.array([b_mv[0,:], z_mv[0,:], w_mv[0,:], x_mv[0,:], y_mv[0,:]]).transpose()
 # X2 = np.array([b_mv[0,:], z_mv[0,:], x_mv[0,:], y_mv[0,:]]).transpose()
 gm1 = GaussianMixture(n_components=n, init_params='k-means++', max_iter=1000).fit(X1)
@@ -211,7 +211,27 @@ if np.equal(box_name, 'QLCS'):
     img_str = 'Q'
     xl = [-50,30]
     yl = [-115,-35]
+
+if np.equal(box_name, 'SUPERCELL'):
+    dbfile = open(ip+f"traj_clusters_{stime/60:.0f}min.pkl", 'rb')
+    ccs = pickle.load(dbfile)
+    cc = ccs['s1']
+    dbfile.close()
     
+    c0 = (cc == 0) # low-level inflow
+    c1 = (cc == 1) # mid-level inflow
+    c2 = (cc == 2) # supercell outflow
+    
+    print(f"{len(pids[c0])} parcels from low-level inflow ({len(pids[c0])/len(pids)*100:.02f}%)")
+    print(f"{len(pids[c1])} parcels from mid-level inflow ({len(pids[c1])/len(pids)*100:.02f}%)")
+    print(f"{len(pids[c2])} parcels from supercell outflow ({len(pids[c2])/len(pids)*100:.02f}%)")
+    print(f"{len(pids)} total parcels")
+    
+    img_str = 'S'
+    xl = [-60,30]
+    yl = [-130,-40]
+
+
 
 #%% Save source regions to pkl
 
@@ -233,18 +253,18 @@ if False:
     dbfile.close()
 
 
-if False:
+if True:
     cc = labels1
     cc_new = np.zeros(shape=cc.shape, dtype=cc.dtype)
-    cc_new[(cc == 0)] = 4
-    cc_new[(cc == 1)] = 3
-    cc_new[(cc == 2)] = 2
-    cc_new[(cc == 3)] = 1
-    cc_new[(cc == 4)] = 0
+    cc_new[(cc == 0)] = 1
+    cc_new[(cc == 1)] = 0
+    # cc_new[(cc == 2)] = 2
+    # cc_new[(cc == 3)] = 1
+    # cc_new[(cc == 4)] = 0
     # cc_new[(labels1 == 3)] = 1
     # cc_new[(cc == 4)] = 3
     
-    # cc_new[(cc==2) & (x_mv[0,:]<-10000) & (y_mv[0,:]>-110000)] = 0
+    # cc_new[(cc==1) & (x_mv[0,:]>-15000)] = 0
     # cc_new[(z_mv[0,:]>1100)] = 2
     # cc_new[(x_mv[0,:]<-30000)] = 3
     # cc_new[(cc_new == 1) & (b_mv[0,:] > -0.03)] = 0
@@ -402,7 +422,7 @@ if True:
 
     
 # Plot trajectories colored by source
-if False:
+if True:
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(12,5))
     ax1.scatter(x_mv[:ti,:]/1000, y_mv[:ti,:]/1000, s=1, c=np.tile(cc, (len(x_mv[:ti,0]),1)), marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=4)
     ax1.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
