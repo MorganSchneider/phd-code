@@ -287,10 +287,10 @@ div_lim = 0.1
 rlim = 6 # 8, 6 or 4
 zlim = 2 # 2.5, 2 or 1.4
 
-vi = 10
+vi = 14
 eli = 1
 filetime = vol[vi]['scan_time'][eli]
-azimuth = 335
+azimuth = 11
 
 azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
 rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
@@ -301,7 +301,8 @@ plot_flag = [1,1,0,1,1,0]
 
 
 
-if vi == 7: # 082000 UTC
+
+if vi == 7: # 082000 UTC --> vortex 1
     az_rot1 = np.array([290, 291, 292, 293, 294, 295,
                        296, 297, 298, 299, 300,
                        301, 302, 303, 304, 305,
@@ -319,8 +320,7 @@ if vi == 7: # 082000 UTC
                       0.7, 0.72, 0.74, 0.76])
 
 
-# there's also maybe a rotor around 293-295 deg?? look at this more
-if vi == 8:
+if vi == 8: # 082030 UTC --> vortices 1-3 + rotor
     # farther vortex
     az_rot1 = np.array([300, 301, 302, 303, 304, 305,
                         306, 307, 308, 309, 310,
@@ -356,12 +356,9 @@ if vi == 8:
                        0.45, 0.48])
     
     # farthest vortex
-    az_rot3 = np.array([320, 321, 322, 323, 324, 325,
-                        326, 327])
-    r_rot3 = np.array([2.70, 2.72, 2.73, 2.75, 2.79, 2.82,
-                       2.85, 2.88, 2.90, 0, 0])
-    z_rot3 = np.array([0.50, 0.55, 0.62, 0.67, 0.72, 0.76,
-                       0.78, 0.82])
+    az_rot3 = np.array([320, 321, 322, 323, 324, 325, 326, 327])
+    r_rot3 = np.array([2.70, 2.72, 2.73, 2.75, 2.79, 2.82, 2.85, 2.88])
+    z_rot3 = np.array([0.50, 0.55, 0.62, 0.67, 0.72, 0.76, 0.78, 0.82])
     
     # rotor?
     az_rot4 = np.array([281, 282, 283, 284, 285,
@@ -374,13 +371,13 @@ if vi == 8:
                        0.18, 0.20, 0.22, 0.25, 0.28,
                        0.31, 0.34, 0.37, 0.38, 0.40])
     
-    az_rot = az_rot4
-    r_rot = r_rot4
-    z_rot = z_rot4
+    az_rot = az_rot3
+    r_rot = r_rot3
+    z_rot = z_rot3
 
 
-# there is a 4th vortex farthest north ):
-if vi == 9: # 082100 UTC
+
+if vi == 9: # 082100 UTC --> vortices 1-4
     # farther vortex
     az_rot1 = np.array([321, 322, 323, 324, 325,
                         326, 327, 328, 329, 330,
@@ -409,45 +406,46 @@ if vi == 9: # 082100 UTC
                        0.33, 0.39, 0.41, 0.44, 0.46,
                        0.49, 0.53, 0.54, 0.56, 0.60])
     
-    # not actually the farthest vortex
-    az_rot3 = np.array([323, 324, 325,
-                        326, 327, 328, 329, 330,
+    # almost the farthest vortex
+    az_rot3 = np.array([323, 324, 325, 326, 327, 328, 329, 330,
                         331, 332, 333, 334, 335,
                         336, 337, 338, 339, 340])
-    r_rot3 = np.array([2.51, 2.55, 2.59,
-                       2.62, 2.64, 2.66, 2.68, 2.69,
+    r_rot3 = np.array([2.51, 2.55, 2.59, 2.62, 2.64, 2.66, 2.68, 2.69,
                        2.70, 2.72, 2.73, 2.74, 2.75,
                        2.76, 2.76, 2.77, 2.78, 2.79])
-    z_rot3 = np.array([0.13, 0.15, 0.18,
-                       0.22, 0.26, 0.31, 0.36, 0.42,
+    z_rot3 = np.array([0.13, 0.15, 0.18, 0.22, 0.26, 0.31, 0.36, 0.42,
                        0.48, 0.55, 0.62, 0.68, 0.74,
                        0.79, 0.84, 0.88, 0.91, 0.93])
     
-    az_rot = az_rot3
-    r_rot = r_rot3
-    z_rot = z_rot3
+    # actually the farthest vortex
+    az_rot4 = np.array([327, 328, 329, 330, 331, 332, 333, 334, 335])
+    r_rot4 = np.array([2.92, 2.95, 2.98, 3.01, 3.05, 3.08, 3.12, 3.16, 3.20])
+    z_rot4 = np.array([0.05, 0.12, 0.28, 0.34, 0.40, 0.45, 0.50, 0.55, 0.62])
+    
+    az_rot = az_rot4
+    r_rot = r_rot4
+    z_rot = z_rot4
 
 
-if vi == 10: # 082130 UTC
+if vi == 10: # 082130 UTC --> vortices 2-4
     # closest vortex
-    az_rot2 = np.array([323, 324, 325,
-                       326, 327, 328, 329, 330,
-                       331, 332])
-    r_rot2 = np.array([1.62, 1.63, 1.65,
-                      1.66, 1.67, 1.66, 1.66, 1.66,
-                      1.66, 1.66])
-    z_rot2 = np.array([0.05, 0.06, 0.08,
-                      0.10, 0.12, 0.13, 0.14, 0.15,
-                      0.17, 0.18])
+    az_rot2 = np.array([323, 324, 325, 326, 327, 328, 329, 330, 331, 332])
+    r_rot2 = np.array([1.62, 1.63, 1.65, 1.66, 1.67, 1.66, 1.66, 1.66, 1.66, 1.66])
+    z_rot2 = np.array([0.05, 0.06, 0.08, 0.10, 0.12, 0.13, 0.14, 0.15, 0.17, 0.18])
+    
+    # farther vortex
+    az_rot3 = np.array([330, 331, 332, 333, 334, 335, 336, 337])
+    r_rot3 = np.array([2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.67])
+    z_rot3 = np.array([0.04, 0.06, 0.08, 0.12, 0.16, 0.20, 0.23, 0.27])
     
     # farthest vortex
-    az_rot3 = np.array([335])
-    r_rot3 = np.array([0])
-    z_rot3 = np.array([0])
+    az_rot4 = np.array([333, 334, 335, 336, 337, 338, 339])
+    r_rot4 = np.array([2.93, 2.96, 2.99, 3.02, 3.05, 3.08, 3.11])
+    z_rot4 = np.array([0.03, 0.07, 0.11, 0.18, 0.25, 0.27, 0.31])
     
-    az_rot = az_rot3
-    r_rot = r_rot3
-    z_rot = z_rot3
+    az_rot = az_rot2
+    r_rot = r_rot2
+    z_rot = z_rot2
 
 # if vi == 11: # 082200 UTC -- this volume might just be irredeemably bad
 #     az_rot = np.array([])
@@ -455,50 +453,72 @@ if vi == 10: # 082130 UTC
 #     z_rot = np.array([])
 
 
-if vi == 12: # 082230 UTC --> another vortex here at r=2 km around 0 deg?
-    az_rot = np.array([350, 351, 352, 353, 354, 355,
-                       356, 357, 358])
-    r_rot = np.array([3.15, 3.16, 3.18, 3.14, 3.12, 3.11,
-                      3.12, 3.13, 3.14])
-    z_rot = np.array([0.17, 0.20, 0.23, 0.24, 0.24, 0.25,
-                      0.28, 0.31, 0.34])
+if vi == 12: # 082230 UTC --> vortices 2-4?
+    # closest vortex --> this one is hard bc there's a lot of little areas of rotation
+    az_rot2 = np.array([357, 358, 359, 0, 1, 2, 3, 4, 5, 6, 7, 8])
+    r_rot2 = np.array([1.87, 1.91, 1.95, 2.00, 2.05, 2.10, 2.15, 2.20, 2.25, 2.32, 2.38, 2.45])
+    z_rot2 = np.array([0.09, 0.12, 0.14, 0.16, 0.18, 0.22, 0.27, 0.33, 0.41, 0.48, 0.56, 0.65])
+    
+    # farther vortex
+    az_rot3 = np.array([352, 353,  354,  355,  356,  357])
+    r_rot3 = np.array([2.95, 3.01, 3.07, 3.12, 3.18, 3.22])
+    z_rot3 = np.array([0.16, 0.18, 0.21, 0.24, 0.27, 0.32])
+    
+    # farthest vortex
+    az_rot4 = np.array([350, 351,  352,  353,  354,  355,  356,  357,  358,  359])
+    r_rot4 = np.array([3.12, 3.14, 3.16, 3.18, 3.20, 3.25, 3.30, 3.38, 3.46, 3.55])
+    z_rot4 = np.array([0.15, 0.18, 0.23, 0.26, 0.31, 0.38, 0.42, 0.47, 0.53, 0.60])
+    
+    az_rot = az_rot2
+    r_rot = r_rot2
+    z_rot = z_rot2
 
 
-if vi == 13: # 082300 UTC
-    az_rot = np.array([356, 357, 358, 359, 0,
-                       1, 2, 3, 4, 5,
-                       6, 7, 8])
-    r_rot = np.array([0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0,
-                      0, 0, 0])
-    z_rot = np.array([0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0,
-                      0, 0, 0])
+if vi == 13: # 082300 UTC --> vortices 2-3
+    # closest vortex
+    az_rot2 = np.array([356, 357, 358, 359, 0,
+                        1, 2, 3, 4, 5])
+    r_rot2 = np.array([1.77, 1.82, 1.85, 1.89, 1.93,
+                       1.97, 2.01, 2.05, 2.08, 2.10])
+    z_rot2 = np.array([0.04, 0.05, 0.06, 0.07, 0.08,
+                       0.09, 0.10, 0.12, 0.15, 0.18])
+    
+    # farther vortex
+    az_rot3 = np.array([356, 357, 358, 359, 0,
+                        1, 2, 3, 4, 5])
+    r_rot3 = np.array([3.35, 3.40, 3.45, 3.52, 3.58,
+                       3.67, 3.78, 3.90, 4.02, 4.16])
+    z_rot3 = np.array([0.08, 0.10, 0.13, 0.20, 0.28,
+                       0.38, 0.50, 0.58, 0.66, 0.75])
+    
+    az_rot = az_rot3
+    r_rot = r_rot3
+    z_rot = z_rot3
 
 
-# might need to look at the ppis for these
-if vi == 14: # 082330 UTC
-    az_rot = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-    r_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    z_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+# probably redo these with zvort ppi
+if vi == 14: # 082330 UTC --> not done
+    az_rot = np.array([2, 3, 4, 5, 6, 7, 8, 9, 10])
+    r_rot = np.array([3.79, 3.85, 3.92, 4.00, 4.10, 4.23, 4.37, 0, 0])
+    z_rot = np.array([0.10, 0.12, 0.20, 0.30, 0.38, 0.46, 0.70, 0, 0])
 
 
 if vi == 15: # 082400 UTC
-    az_rot = np.array([7, 8, 9, 10, 11, 12, 13, 14])
-    r_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
-    z_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+    az_rot = np.array([7, 8, 9, 10, 11])
+    r_rot = np.array([4.20, 4.28, 4.40, 4.55, 4.70])
+    z_rot = np.array([0.10, 0.13, 0.25, 0.35, 0.50])
 
 
-if vi == 16: # 082430 UTC
+if vi == 16: # 082430 UTC --> not done bc idk if this is useful
     az_rot = np.array([7, 8, 9, 10, 11, 12, 13])
     r_rot = np.array([0, 0, 0, 0, 0, 0, 0])
     z_rot = np.array([0, 0, 0, 0, 0, 0, 0])
 
 
-if vi == 17: # 082500 UTC
-    az_rot = np.array([7, 8, 9, 10, 11, 12, 13, 14])
-    r_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
-    z_rot = np.array([0, 0, 0, 0, 0, 0, 0, 0])
+if vi == 17: # 082500 UTC --> not done bc idk if this is useful
+    az_rot = np.array([7, 8, 9, 10, 11, 12])
+    r_rot = np.array([5.81, 5.86, 5.91, 5.97, 6.04, 6.11])
+    z_rot = np.array([0.15, 0.20, 0.30, 0.48, 0.65, 0.85])
 
 
 x_rot = r_rot * np.sin(az_rot*np.pi/180)
@@ -509,8 +529,8 @@ irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
 
 if plot_flag[0]:
-    xl = [-3, 0] # was [-rlim/2, 0]. [-6,0] until vi 12
-    yl = [0, 3] # was [0, rlim/2]. [-3,3] until vi 12
+    xl = [-1, 2] # was [-rlim/2, 0]. [-6,0]/[-3,0] until vi 12
+    yl = [3, 6] # was [0, rlim/2]. [-3,3]/[0,3] until vi 12
     
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
     

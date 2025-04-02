@@ -122,15 +122,15 @@ for fnum in fnums1:
     ds = nc.Dataset(fp+f"cm1out_{fnum:06d}.nc")
     time = ds.variables['time'][:].data[0]
     
-    u = ds.variables['u'][:].data[0,iz,iy,ix]
+    u = ds.variables['uinterp'][:].data[0,iz,iy,ix]
     make_pickle(ip+"u.pkl", u, time/60)
     del u
     
-    v = ds.variables['v'][:].data[0,iz,iy,ix]
+    v = ds.variables['vinterp'][:].data[0,iz,iy,ix]
     make_pickle(ip+"v.pkl", v, time/60)
     del v
     
-    w = ds.variables['w'][:].data[0,iz,iy,ix]
+    w = ds.variables['winterp'][:].data[0,iz,iy,ix]
     make_pickle(ip+"w.pkl", w, time/60)
     del w
     
