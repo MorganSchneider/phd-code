@@ -24,6 +24,7 @@ import cmocean
 import wrf
 import pickle
 # import cartopy.crs as ccrs
+from os.path import exists
 
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -158,7 +159,7 @@ def read_raxpol(fn):
 
 
 # Read mobile mesonet .dat files and load data into struct
-def read_MM(fn):
+def read_MM_dat(fn):
     # 3 - Derived_WS (m/s)
     # 4 - Derived_WD (deg)
     # 5 - SlowT (C)
