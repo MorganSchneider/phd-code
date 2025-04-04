@@ -68,7 +68,7 @@ def latlon2xy(lat, lon, lat_o, lon_o):
     # lat, lon:     1-D vectors of lat/lon in decimal deg N/deg E
     # lat_o, lon_o: lat/lon of origin in decimal deg N/deg E
     
-    r_earth = 6378.1
+    r_earth = 6378.1 # km
     
     thy = lat_o*np.pi/180
     thz = -lon_o*np.pi/180
@@ -92,7 +92,29 @@ def latlon2xy(lat, lon, lat_o, lon_o):
     return posx,posy
 
 
-# Read RaXPol .nc files and load data into struct
+# Convert x/y distances relative to an origin point to lat/lon
+def xy2latlon(x, y, lat_o, lon_o):
+    # x, y: 1-D vectors of xy positions relative to an origin point in km
+    # lat_o, lon_o: lat/lon of origin in decimal deg N/deg E
+    
+    r_earth = 6378.1 # km
+    
+    x_o = r_earth * np.cos(lat_o*np.pi/180) * np.sin(lon_o*np.pi/180)
+    y_o = r_earth * np.sin(lat_o*np.pi/180)
+    
+    x_abs = x + x_o
+    y_abs = y + y_o
+    
+    lat = np.arcsin(y_abs / r_earth)
+    lon = np.arcsin(x_abs / (r_earth * np.cos(lat)))
+    
+    lat_deg = lat * 180/np.pi
+    lon_deg = lon * 180/np.pi
+    
+    return lat_deg,lon_deg
+
+
+# Read RaXPol .nc files and load data into dict
 def read_raxpol(fn):
     # fn: full path and filename
     
@@ -158,7 +180,7 @@ def read_raxpol(fn):
     return dat
 
 
-# Read mobile mesonet .dat files and load data into struct
+# Read mobile mesonet .dat files and load data into dict
 def read_MM_dat(fn):
     # 3 - Derived_WS (m/s)
     # 4 - Derived_WD (deg)

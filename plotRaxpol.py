@@ -53,13 +53,13 @@ ax.set_ylim([-1,6])
 plt.text(-1, 0.4, 'RaXPol', fontsize=10, fontweight='bold')
 # b1 = ax.barbs(P1['xx'][i1], P1['yy'][i1], P1['uwind'][i1], P1['vwind'][i1], barbcolor='k', length=9)
 # b2 = ax.barbs(P2['xx'][i2], P2['yy'][i2], P2['uwind'][i2], P2['vwind'][i2], barbcolor='k', length=9)
-# s1 = ax.scatter(P1['xx'][i1], P1['yy'][i1], s=150, c=P1['Utube'][i1], cmap=cmaps['temp']['cm'],
-#                 vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k')
-# s2 = ax.scatter(P2['xx'][i2], P2['yy'][i2], s=175, c=P2['Utube'][i2], cmap=cmaps['temp']['cm'],
-#                 vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k')
-# ax.scatter(0, 0, s=30, c='k')
-# plt.colorbar(s1,label='Sfc temperature (C)')
-# plt.legend([s1,s2], ['Probe 1', 'Probe 2'], loc='upper right')
+s1 = ax.scatter(P1['xx'][i1], P1['yy'][i1], s=150, c=P1['Utube'][i1], cmap=cmaps['temp']['cm'],
+                vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k')
+s2 = ax.scatter(P2['xx'][i2], P2['yy'][i2], s=175, c=P2['Utube'][i2], cmap=cmaps['temp']['cm'],
+                vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k')
+ax.scatter(0, 0, s=30, c='k')
+plt.colorbar(s1,label='Sfc temperature (C)')
+plt.legend([s1,s2], ['Probe 1', 'Probe 2'], loc='upper right')
 plt.show()
 
 if figsave:
@@ -892,7 +892,9 @@ for vi in np.arange(7,18):
                            0.41, 0.44, 0.47, 0.48, 0.50,
                            0.56, 0.61, 0.63, 0.66, 0.68,
                            0.7, 0.72, 0.74, 0.76])
-        datv1 = {'az':az_rot1, 'r':r_rot1, 'z':z_rot1}
+        x_rot1 = r_rot1 * np.sin(az_rot1*np.pi/180)
+        y_rot1 = r_rot1 * np.cos(az_rot1*np.pi/180)
+        datv1 = {'az':az_rot1, 'r':r_rot1, 'z':z_rot1, 'x':x_rot1, 'y':y_rot1}
         datv = {'vortex1':datv1}
         dat.update({f"{filetime}":datv})
     
@@ -915,7 +917,9 @@ for vi in np.arange(7,18):
                            0.29, 0.32, 0.35, 0.38, 0.42,
                            0.46, 0.48, 0.51, 0.52, 0.57,
                            0.58, 0.60, 0.63, 0.68, 0.70])
-        datv1 = {'az':az_rot1, 'r':r_rot1, 'z':z_rot1}
+        x_rot1 = r_rot1 * np.sin(az_rot1*np.pi/180)
+        y_rot1 = r_rot1 * np.cos(az_rot1*np.pi/180)
+        datv1 = {'az':az_rot1, 'r':r_rot1, 'z':z_rot1, 'x':x_rot1, 'y':y_rot1}
         
         # vortex 2
         az_rot2 = np.array([291, 292, 293, 294, 295,
@@ -933,13 +937,17 @@ for vi in np.arange(7,18):
                            0.21, 0.25, 0.30, 0.32, 0.35,
                            0.38, 0.41, 0.42, 0.43, 0.44,
                            0.45, 0.48])
-        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2}
+        x_rot2 = r_rot2 * np.sin(az_rot2*np.pi/180)
+        y_rot2 = r_rot2 * np.cos(az_rot2*np.pi/180)
+        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2, 'x':x_rot2, 'y':y_rot2}
         
         # vortex 3
         az_rot3 = np.array([320, 321, 322, 323, 324, 325, 326, 327])
         r_rot3 = np.array([2.70, 2.72, 2.73, 2.75, 2.79, 2.82, 2.85, 2.88])
         z_rot3 = np.array([0.50, 0.55, 0.62, 0.67, 0.72, 0.76, 0.78, 0.82])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         # rotor?
         az_rot4 = np.array([281, 282, 283, 284, 285,
@@ -951,7 +959,9 @@ for vi in np.arange(7,18):
         z_rot4 = np.array([0.18, 0.18, 0.20, 0.20, 0.16,
                            0.18, 0.20, 0.22, 0.25, 0.28,
                            0.31, 0.34, 0.37, 0.38, 0.40])
-        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4}
+        x_rot4 = r_rot4 * np.sin(az_rot4*np.pi/180)
+        y_rot4 = r_rot4 * np.cos(az_rot4*np.pi/180)
+        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4, 'x':x_rot4, 'y':y_rot4}
         
         datv = {'vortex1':datv1, 'vortex2':datv2, 'vortex3':datv3, 'rotor':datv4}
         dat.update({f"{filetime}":datv})
@@ -969,7 +979,9 @@ for vi in np.arange(7,18):
         z_rot1 = np.array([0.15, 0.18, 0.21, 0.24, 0.28,
                            0.30, 0.32, 0.34, 0.36, 0.38,
                            0.40, 0.42, 0.45, 0.50, 0.54])
-        datv1 = {'az':az_rot1, 'r':r_rot1, 'z':z_rot1}
+        x_rot1 = r_rot1 * np.sin(az_rot1*np.pi/180)
+        y_rot1 = r_rot1 * np.cos(az_rot1*np.pi/180)
+        datv1 = {'az':az_rot1, 'r':r_rot1, 'z':z_rot1, 'x':x_rot1, 'y':y_rot1}
         
         # vortex 2
         az_rot2 = np.array([305, 306, 307, 308, 309, 310,
@@ -987,7 +999,9 @@ for vi in np.arange(7,18):
                            0.21, 0.22, 0.23, 0.26, 0.30,
                            0.33, 0.39, 0.41, 0.44, 0.46,
                            0.49, 0.53, 0.54, 0.56, 0.60])
-        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2}
+        x_rot2 = r_rot2 * np.sin(az_rot2*np.pi/180)
+        y_rot2 = r_rot2 * np.cos(az_rot2*np.pi/180)
+        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2, 'x':x_rot2, 'y':y_rot2}
         
         # vortex 3
         az_rot3 = np.array([323, 324, 325, 326, 327, 328, 329, 330,
@@ -999,13 +1013,17 @@ for vi in np.arange(7,18):
         z_rot3 = np.array([0.13, 0.15, 0.18, 0.22, 0.26, 0.31, 0.36, 0.42,
                            0.48, 0.55, 0.62, 0.68, 0.74,
                            0.79, 0.84, 0.88, 0.91, 0.93])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         # vortex 4
         az_rot4 = np.array([327, 328, 329, 330, 331, 332, 333, 334, 335])
         r_rot4 = np.array([2.92, 2.95, 2.98, 3.01, 3.05, 3.08, 3.12, 3.16, 3.20])
         z_rot4 = np.array([0.05, 0.12, 0.28, 0.34, 0.40, 0.45, 0.50, 0.55, 0.62])
-        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4}
+        x_rot4 = r_rot4 * np.sin(az_rot4*np.pi/180)
+        y_rot4 = r_rot4 * np.cos(az_rot4*np.pi/180)
+        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4, 'x':x_rot4, 'y':y_rot4}
         
         datv = {'vortex1':datv1, 'vortex2':datv2, 'vortex3':datv3, 'vortex4':datv4}
         dat.update({f"{filetime}":datv})
@@ -1017,19 +1035,25 @@ for vi in np.arange(7,18):
         az_rot2 = np.array([323, 324, 325, 326, 327, 328, 329, 330, 331, 332])
         r_rot2 = np.array([1.62, 1.63, 1.65, 1.66, 1.67, 1.66, 1.66, 1.66, 1.66, 1.66])
         z_rot2 = np.array([0.05, 0.06, 0.08, 0.10, 0.12, 0.13, 0.14, 0.15, 0.17, 0.18])
-        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2}
+        x_rot2 = r_rot2 * np.sin(az_rot2*np.pi/180)
+        y_rot2 = r_rot2 * np.cos(az_rot2*np.pi/180)
+        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2, 'x':x_rot2, 'y':y_rot2}
         
         # vortex 3
         az_rot3 = np.array([330, 331, 332, 333, 334, 335, 336, 337])
         r_rot3 = np.array([2.59, 2.60, 2.61, 2.62, 2.63, 2.64, 2.65, 2.67])
         z_rot3 = np.array([0.04, 0.06, 0.08, 0.12, 0.16, 0.20, 0.23, 0.27])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         # vortex 4
         az_rot4 = np.array([333, 334, 335, 336, 337, 338, 339])
         r_rot4 = np.array([2.93, 2.96, 2.99, 3.02, 3.05, 3.08, 3.11])
         z_rot4 = np.array([0.03, 0.07, 0.11, 0.18, 0.25, 0.27, 0.31])
-        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4}
+        x_rot4 = r_rot4 * np.sin(az_rot4*np.pi/180)
+        y_rot4 = r_rot4 * np.cos(az_rot4*np.pi/180)
+        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4, 'x':x_rot4, 'y':y_rot4}
         
         datv = {'vortex2':datv2, 'vortex3':datv3, 'vortex4':datv4}
         dat.update({f"{filetime}":datv})
@@ -1041,19 +1065,25 @@ for vi in np.arange(7,18):
         az_rot2 = np.array([357, 358, 359, 0, 1, 2, 3, 4, 5, 6, 7, 8])
         r_rot2 = np.array([1.87, 1.91, 1.95, 2.00, 2.05, 2.10, 2.15, 2.20, 2.25, 2.32, 2.38, 2.45])
         z_rot2 = np.array([0.09, 0.12, 0.14, 0.16, 0.18, 0.22, 0.27, 0.33, 0.41, 0.48, 0.56, 0.65])
-        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2}
+        x_rot2 = r_rot2 * np.sin(az_rot2*np.pi/180)
+        y_rot2 = r_rot2 * np.cos(az_rot2*np.pi/180)
+        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2, 'x':x_rot2, 'y':y_rot2}
         
         # vortex 3
         az_rot3 = np.array([352, 353,  354,  355,  356,  357])
         r_rot3 = np.array([2.95, 3.01, 3.07, 3.12, 3.18, 3.22])
         z_rot3 = np.array([0.16, 0.18, 0.21, 0.24, 0.27, 0.32])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         # vortex 4
         az_rot4 = np.array([350, 351,  352,  353,  354,  355,  356,  357,  358,  359])
         r_rot4 = np.array([3.12, 3.14, 3.16, 3.18, 3.20, 3.25, 3.30, 3.38, 3.46, 3.55])
         z_rot4 = np.array([0.15, 0.18, 0.23, 0.26, 0.31, 0.38, 0.42, 0.47, 0.53, 0.60])
-        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4}
+        x_rot4 = r_rot4 * np.sin(az_rot4*np.pi/180)
+        y_rot4 = r_rot4 * np.cos(az_rot4*np.pi/180)
+        datv4 = {'az':az_rot4, 'r':r_rot4, 'z':z_rot4, 'x':x_rot4, 'y':y_rot4}
         
         datv = {'vortex2':datv2, 'vortex3':datv3, 'vortex4':datv4}
         dat.update({f"{filetime}":datv})
@@ -1065,13 +1095,17 @@ for vi in np.arange(7,18):
         az_rot2 = np.array([356, 357, 358, 359, 0, 1, 2, 3, 4, 5])
         r_rot2 = np.array([1.77, 1.82, 1.85, 1.89, 1.93, 1.97, 2.01, 2.05, 2.08, 2.10])
         z_rot2 = np.array([0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.12, 0.15, 0.18])
-        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2}
+        x_rot2 = r_rot2 * np.sin(az_rot2*np.pi/180)
+        y_rot2 = r_rot2 * np.cos(az_rot2*np.pi/180)
+        datv2 = {'az':az_rot2, 'r':r_rot2, 'z':z_rot2, 'x':x_rot2, 'y':y_rot2}
         
         # vortex 3
         az_rot3 = np.array([356, 357, 358, 359, 0, 1, 2, 3, 4, 5])
         r_rot3 = np.array([3.35, 3.40, 3.45, 3.52, 3.58, 3.67, 3.78, 3.90, 4.02, 4.16])
         z_rot3 = np.array([0.08, 0.10, 0.13, 0.20, 0.28, 0.38, 0.50, 0.58, 0.66, 0.75])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         datv = {'vortex2':datv2, 'vortex3':datv3}
         dat.update({f"{filetime}":datv})
@@ -1083,7 +1117,9 @@ for vi in np.arange(7,18):
         az_rot3 = np.array([2, 3, 4, 5, 6, 7, 8])
         r_rot3 = np.array([3.79, 3.85, 3.92, 4.00, 4.10, 4.20, 4.30]) # 7-8 could be 4.50, 4.55
         z_rot3 = np.array([0.10, 0.12, 0.20, 0.30, 0.38, 0.46, 0.56]) # 7-8 could be 0.70, 0.75
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         datv = {'vortex3':datv3}
         dat.update({f"{filetime}":datv})
@@ -1095,7 +1131,9 @@ for vi in np.arange(7,18):
         az_rot3 = np.array([7, 8, 9, 10, 11])
         r_rot3 = np.array([4.20, 4.28, 4.40, 4.55, 4.70])
         z_rot3 = np.array([0.10, 0.13, 0.25, 0.35, 0.50])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         datv = {'vortex3':datv3}
         dat.update({f"{filetime}":datv})
@@ -1106,7 +1144,9 @@ for vi in np.arange(7,18):
         az_rot3 = np.array([10, 11, 12, 13, 14])
         r_rot3 = np.array([4.80, 4.85, 4.90, 4.98, 5.05])
         z_rot3 = np.array([0.10, 0.15, 0.20, 0.30, 0.40])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         datv = {'vortex3':datv3}
         dat.update({f"{filetime}":datv})
@@ -1118,7 +1158,9 @@ for vi in np.arange(7,18):
         az_rot3 = np.array([7, 8, 9, 10, 11, 12])
         r_rot3 = np.array([5.81, 5.86, 5.91, 5.97, 6.04, 6.11])
         z_rot3 = np.array([0.15, 0.20, 0.30, 0.48, 0.65, 0.85])
-        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3}
+        x_rot3 = r_rot3 * np.sin(az_rot3*np.pi/180)
+        y_rot3 = r_rot3 * np.cos(az_rot3*np.pi/180)
+        datv3 = {'az':az_rot3, 'r':r_rot3, 'z':z_rot3, 'x':x_rot3, 'y':y_rot3}
         
         datv = {'vortex3':datv3}
         dat.update({f"{filetime}":datv})
