@@ -289,10 +289,10 @@ if 'vol' not in locals():
     # P2 = dat['P2']
     dbfile.close()
 
-if 'locs' not in locals():
-    dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/raxpol_vortex_locs.pkl', 'rb')
-    locs = pickle.load(dbfile)
-    dbfile.close()
+
+dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/raxpol_vortex_locs.pkl', 'rb')
+locs = pickle.load(dbfile)
+dbfile.close()
 
 # i1 = np.where(P1['time'] == int(vol[vi]['scan_time'][eli]))[0][0]
 # i2 = np.where(P2['time'] == int(vol[vi]['scan_time'][eli]))[0][0]
@@ -322,7 +322,7 @@ az_rot = locs[filetime][f"vortex{vortex_num}"]['az']
 r_rot = locs[filetime][f"vortex{vortex_num}"]['r']
 z_rot = locs[filetime][f"vortex{vortex_num}"]['z']
 
-azimuth = 303
+azimuth = 290
 
 if azimuth not in az_rot:
     print(f"Invalid azimuth, must be between {az_rot[0]}-{az_rot[-1]} degrees")
@@ -882,11 +882,11 @@ for vi in np.arange(7,18):
                             301, 302, 303, 304, 305,
                             306, 307, 308, 309, 310,
                             311, 312, 313, 314])
-        r_rot1 = np.array([2.02, 2.06, 2.06, 2.09, 2.10, 2.11,
-                           2.10, 2.13, 2.15, 2.17, 2.17,
-                           2.19, 2.19, 2.17, 2.19, 2.21,
-                           2.23, 2.26, 2.27, 2.23, 2.25,
-                           2.27, 2.30, 2.30, 2.28])
+        r_rot1 = np.array([2.02, 2.04, 2.06, 2.08, 2.10, 2.11,
+                           2.12, 2.13, 2.15, 2.16, 2.17,
+                           2.19, 2.19, 2.20, 2.20, 2.21,
+                           2.23, 2.23, 2.23, 2.24, 2.25,
+                           2.27, 2.28, 2.30, 2.30])
         z_rot1 = np.array([0.18, 0.20, 0.20, 0.21, 0.23, 0.24,
                            0.26, 0.30, 0.32, 0.35, 0.38,
                            0.41, 0.44, 0.47, 0.48, 0.50,
