@@ -273,8 +273,7 @@ dbfile.close()
 
 #%% IOP2 plot reconstructed RHIs and azimuth-height cross sections
 
-# Scatter plot of rotor(s) location on top of PPIs for each volume?
-# Azimuth-height pcolor plot of velocity through MV/rotor
+
 # Do I need to advection correct for the reconstructed RHIs?? Check storm motion
 # If couplet translation is due to advection, storm motion is about 15 m/s to the ~NE
 
@@ -305,10 +304,10 @@ div_lim = 0.1
 
 
 
-vi = 7
+vi = 13
 eli = 1
 filetime = vol[vi]['scan_time'][eli]
-vortex_num = 1
+vortex_num = 3
 # vortex 1: vi = 7-9
 # vortex 2: vi = 8-13
 # vortex 3: vi = 8-17
@@ -318,11 +317,17 @@ vortex_num = 1
 az_rot = locs[filetime][f"vortex{vortex_num}"]['az']
 r_rot = locs[filetime][f"vortex{vortex_num}"]['r']
 z_rot = locs[filetime][f"vortex{vortex_num}"]['z']
+x_rot = locs[filetime][f"vortex{vortex_num}"]['x']
+y_rot = locs[filetime][f"vortex{vortex_num}"]['y']
+
+# x_rot = np.append(locs[filetime]['vortex2']['x'], locs[filetime]['vortex3']['x'])
+# y_rot = np.append(locs[filetime]['vortex2']['y'], locs[filetime]['vortex3']['y'])
+# vortex_num = '-all'
 
 # azimuth = round(np.mean(az_rot))
 azimuth = az_rot[round(len(az_rot)/2)]
-# if az_rot[-1] < az_rot[0]:
-#     az_tmp = [az_rot[i]+360 if az_rot[i] < 180 else az_rot[i] for i in range(len(az_rot))]
+
+irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
 # if azimuth not in az_rot:
 #     print(f"Invalid azimuth, must be between {az_rot[0]}-{az_rot[-1]} degrees")
@@ -332,27 +337,21 @@ azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
 rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
 
 
-x_rot = r_rot * np.sin(az_rot*np.pi/180)
-y_rot = r_rot * np.cos(az_rot*np.pi/180)
-irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
+xl = [-1,2]
+yl = [1.5,4.5]
 
 if vi <= 12:
     rlim = 6
     zlim = 2
-    xl = [-6,0]
-    yl = [-3,3]
 else:
     rlim = 8
     zlim = 2.5
-    xl = [-3,3]
-    yl = [0,6]
-
 
 
 
 # dbz/vel PPIs, dbz/vel RHIs, dbz/vel cross sections, vort PPIs, vort RHIs, vort cross sections
-plot_flag = [1,1,1,1,1,1]
+plot_flag = [1,0,0,1,0,0]
 
 figsave = False
 
@@ -377,7 +376,7 @@ if plot_flag[0]:
     # ax1.text(-1, 0.4, 'RaXPol', fontsize=10, fontweight='bold')
     # plt.colorbar(s1,label='Sfc temperature (C)')
     # plt.legend([s1,s2], ['Probe 1', 'Probe 2'], loc='upper right')
-    ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
+    # ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2, datalims=[-va,va], xlims=xl, ylims=yl)
     ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
@@ -392,7 +391,7 @@ if plot_flag[0]:
     # ax2.text(-1, 0.4, 'RaXPol', fontsize=10, fontweight='bold')
     # plt.colorbar(s1,label='Sfc temperature (C)')
     # plt.legend([s1,s2], ['Probe 1', 'Probe 2'], loc='upper right')
-    ax2.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
+    # ax2.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     # plt.suptitle(f"{filetime} UTC, azimuth = {azimuth}\N{DEGREE SIGN}", fontsize=14)
     # plt.suptitle(f"{filetime} UTC", fontsize=14)
@@ -454,7 +453,6 @@ if plot_flag[2]:
         zdr_cs = wrf.interp2dxy(vol[vi]['zdr'], raz)
         zdr_cross = zdr_cs.data
         
-        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
         az_rot2 = az_rot
         if az_rot.shape[0] < dbz_cross.shape[1]:
             az_rot2 = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
@@ -478,33 +476,16 @@ if plot_flag[2]:
         zdr_cs2 = wrf.interp2dxy(vol[vi]['zdr'], raz2)
         zdr_cross = np.append(zdr_cs1.data, zdr_cs2.data, axis=1)
         
-        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
         az_rot2 = np.array([az_rot[i]+360 if az_rot[i]<az_rot[0] else az_rot[i] for i in range(len(az_rot))])
         if az_rot2.shape[0] < dbz_cross.shape[1]:
             az_rot2 = np.linspace(az_rot2[0]-0.5, az_rot2[-1]+0.5, len(az_rot2)+1)
     
+    if ir2 > ir1:
+        zz_rot = np.nanmean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+    else:
+        zz_rot = np.nanmean(vol[vi]['zz'][:,ia1,slice(ir2,ir1+1)], axis=1)
     
     zl = [0, np.max(zz_rot)]
-    # if vi == 7:
-    #     zl = [0, 0.7]
-    # elif vi == 8:
-    #     zl = [0, 0.75]
-    # elif vi == 9:
-    #     zl = [0, 0.6]
-    # elif vi == 10:
-    #     zl = [0, 0.6]
-    # elif vi == 12:
-    #     zl = [0, 0.6]
-    # elif vi == 13:
-    #     zl = [0, 1.25]
-    # elif vi == 14:
-    #     zl = [0, 1.4]
-    # elif vi == 15:
-    #     zl = [0, 1.5]
-    # elif vi == 16:
-    #     zl = [0, 1.6]
-    # elif vi == 17:
-    #     zl = [0, 2]
     
     
     
@@ -552,14 +533,14 @@ if plot_flag[3]:
     ax1.set_title(f"{filetime} UTC Max vertical pseudovorticity", fontsize=14)
     ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
-    ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
+    # ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2, datalims=[0,vort_lim], xlims=xl, ylims=yl)
     ax2.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
     ax2.set_title(f"{filetime} UTC Max horizontal pseudovorticity", fontsize=14)
     ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
-    ax2.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
+    # ax2.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.min(vol[vi]['div'], axis=0), 'div', ax1, 
     #            datalims=[-0.16,0], xlims=xl, ylims=yl, cmap='pyart_ChaseSpectral_r')
@@ -637,7 +618,6 @@ if plot_flag[5]:
         div_cs = wrf.interp2dxy(vol[vi]['div'], raz)
         div_cross = div_cs.data
         
-        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
         if az_rot.shape[0] < dbz_cross.shape[1]:
             az_rot2 = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
     else:
@@ -659,33 +639,15 @@ if plot_flag[5]:
         div_cs2 = wrf.interp2dxy(vol[vi]['div'], raz2)
         div_cross = np.append(div_cs1.data, div_cs2.data, axis=1)
         
-        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
         az_rot2 = np.array([az_rot[i]+360 if az_rot[i]<az_rot[0] else az_rot[i] for i in range(len(az_rot))])
         if az_rot2.shape[0] < dbz_cross.shape[1]:
             az_rot2 = np.linspace(az_rot2[0]-0.5, az_rot2[-1]+0.5, len(az_rot2)+1)
     
+    if ir2 > ir1:
+        zz_rot = np.nanmean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+    else:
+        zz_rot = np.nanmean(vol[vi]['zz'][:,ia1,slice(ir2,ir1+1)], axis=1)
     zl = [0, np.max(zz_rot)]
-    
-    # if vi == 7:
-    #     zl = [0, 0.7]
-    # elif vi == 8:
-    #     zl = [0, 0.75]
-    # elif vi == 9:
-    #     zl = [0, 0.6]
-    # elif vi == 10:
-    #     zl = [0, 0.6]
-    # elif vi == 12:
-    #     zl = [0, 0.6]
-    # elif vi == 13:
-    #     zl = [0, 1.25]
-    # elif vi == 14:
-    #     zl = [0, 1.4]
-    # elif vi == 15:
-    #     zl = [0, 1.5]
-    # elif vi == 16:
-    #     zl = [0, 1.6]
-    # elif vi == 17:
-    #     zl = [0, 2]
     
     
     

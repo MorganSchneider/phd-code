@@ -63,6 +63,8 @@ dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/raxpol_vortex_l
 vortex_locs = pickle.load(dbfile)
 dbfile.close()
 
+
+
 # convert all the vortex loc x/y to lat/lons, then figure out how to find and track a center point
 # --> center on the visible couplet (vortex 3)? use the scans where it's visible to get couplet motion
 # and then back out the position for the earlier times
