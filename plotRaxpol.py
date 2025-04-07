@@ -304,29 +304,29 @@ vort_lim = 0.003
 div_lim = 0.1
 
 
-rlim = 6 # 8, 6 or 4
-zlim = 2 # 2.5, 2 or 1.4
 
 vi = 7
 eli = 1
 filetime = vol[vi]['scan_time'][eli]
-
+vortex_num = 1
 # vortex 1: vi = 7-9
 # vortex 2: vi = 8-13
 # vortex 3: vi = 8-17
 # vortex 4: vi = 9-12
 # rotor: vi = 8
-vortex_num = 1
 
 az_rot = locs[filetime][f"vortex{vortex_num}"]['az']
 r_rot = locs[filetime][f"vortex{vortex_num}"]['r']
 z_rot = locs[filetime][f"vortex{vortex_num}"]['z']
 
-azimuth = 290
+# azimuth = round(np.mean(az_rot))
+azimuth = az_rot[round(len(az_rot)/2)]
+# if az_rot[-1] < az_rot[0]:
+#     az_tmp = [az_rot[i]+360 if az_rot[i] < 180 else az_rot[i] for i in range(len(az_rot))]
 
-if azimuth not in az_rot:
-    print(f"Invalid azimuth, must be between {az_rot[0]}-{az_rot[-1]} degrees")
-    azimuth = az_rot[0]
+# if azimuth not in az_rot:
+#     print(f"Invalid azimuth, must be between {az_rot[0]}-{az_rot[-1]} degrees")
+#     azimuth = az_rot[0]
 
 azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
 rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
@@ -337,16 +337,30 @@ y_rot = r_rot * np.cos(az_rot*np.pi/180)
 irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
 
+if vi <= 12:
+    rlim = 6
+    zlim = 2
+    xl = [-6,0]
+    yl = [-3,3]
+else:
+    rlim = 8
+    zlim = 2.5
+    xl = [-3,3]
+    yl = [0,6]
+
+
+
+
 # dbz/vel PPIs, dbz/vel RHIs, dbz/vel cross sections, vort PPIs, vort RHIs, vort cross sections
-plot_flag = [1,1,0,0,0,0]
+plot_flag = [1,1,1,1,1,1]
 
 figsave = False
 
 
 
 if plot_flag[0]:
-    xl = [-3, 0] # was [-rlim/2, 0]. [-6,0]/[-3,0] until vi 12
-    yl = [0, 3] # was [0, rlim/2]. [-3,3]/[0,3] until vi 12
+    # xl = [-7, 3] # was [-rlim/2, 0]. [-6,0]/[-3,0] until vi 12 | [0,3] for vi 17
+    # yl = [-3, 7] # was [0, rlim/2]. [-3,3]/[0,3] until vi 12 | [4,7] for vi 17
     
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
     
@@ -383,7 +397,7 @@ if plot_flag[0]:
     # plt.suptitle(f"{filetime} UTC, azimuth = {azimuth}\N{DEGREE SIGN}", fontsize=14)
     # plt.suptitle(f"{filetime} UTC", fontsize=14)
     if figsave:
-        plt.savefig(ip+f"vol{vi}_{filetime}_PPI.png", dpi=300)
+        plt.savefig(ip+f"vol{vi}_{filetime}_PPI_vortex{vortex_num}.png", dpi=300)
     
 
 
@@ -416,7 +430,7 @@ if plot_flag[1]:
     
     # plt.suptitle(f"{filetime} UTC, azimuth = {azimuth}\N{DEGREE SIGN}")
     if figsave:
-        plt.savefig(ip+f"vol{vi}_{filetime}_az{azimuth}_RHI.png", dpi=300, bbox_inches='tight')
+        plt.savefig(ip+f"vol{vi}_{filetime}_az{azimuth}_RHI_vortex{vortex_num}.png", dpi=300, bbox_inches='tight')
 
 #% rest of plots
 
@@ -427,35 +441,76 @@ if plot_flag[2]:
     ia1 = np.where(np.isclose(az_rot[0], vol[vi]['az'][eli,:], atol=0.1))[0][0]
     ia2 = np.where(np.isclose(az_rot[-1], vol[vi]['az'][eli,:], atol=0.1))[0][0]
     
-    raz = wrf.xy(vol[vi]['dbz'], start_point=(ir,ia1), end_point=(ir,ia2))
-    dbz_cs = wrf.interp2dxy(vol[vi]['dbz'], raz)
-    raz = wrf.xy(vol[vi]['vel'], start_point=(ir,ia1), end_point=(ir,ia2))
-    vel_cs = wrf.interp2dxy(vol[vi]['vel'], raz)
-    raz = wrf.xy(vol[vi]['zdr'], start_point=(ir,ia1), end_point=(ir,ia2))
-    zdr_cs = wrf.interp2dxy(vol[vi]['zdr'], raz)
+    if ia2 > ia1:
+        raz = wrf.xy(vol[vi]['dbz'], start_point=(ir,ia1), end_point=(ir,ia2))
+        dbz_cs = wrf.interp2dxy(vol[vi]['dbz'], raz)
+        dbz_cross = dbz_cs.data
+        
+        raz = wrf.xy(vol[vi]['vel'], start_point=(ir,ia1), end_point=(ir,ia2))
+        vel_cs = wrf.interp2dxy(vol[vi]['vel'], raz)
+        vel_cross = vel_cs.data
+        
+        raz = wrf.xy(vol[vi]['zdr'], start_point=(ir,ia1), end_point=(ir,ia2))
+        zdr_cs = wrf.interp2dxy(vol[vi]['zdr'], raz)
+        zdr_cross = zdr_cs.data
+        
+        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+        az_rot2 = az_rot
+        if az_rot.shape[0] < dbz_cross.shape[1]:
+            az_rot2 = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
     
-    dbz_cross = dbz_cs.data
-    vel_cross = vel_cs.data
-    zdr_cross = zdr_cs.data
-    zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+    else:
+        raz1 = wrf.xy(vol[vi]['dbz'], start_point=(ir,ia1), end_point=(ir,359))
+        dbz_cs1 = wrf.interp2dxy(vol[vi]['dbz'], raz1)
+        raz2 = wrf.xy(vol[vi]['dbz'], start_point=(ir,0), end_point=(ir,ia2))
+        dbz_cs2 = wrf.interp2dxy(vol[vi]['dbz'], raz2)
+        dbz_cross = np.append(dbz_cs1.data, dbz_cs2.data, axis=1)
+        
+        raz1 = wrf.xy(vol[vi]['vel'], start_point=(ir,ia1), end_point=(ir,359))
+        vel_cs1 = wrf.interp2dxy(vol[vi]['vel'], raz1)
+        raz2 = wrf.xy(vol[vi]['vel'], start_point=(ir,0), end_point=(ir,ia2))
+        vel_cs2 = wrf.interp2dxy(vol[vi]['vel'], raz2)
+        vel_cross = np.append(vel_cs1.data, vel_cs2.data, axis=1)
+        
+        raz1 = wrf.xy(vol[vi]['zdr'], start_point=(ir,ia1), end_point=(ir,359))
+        zdr_cs1 = wrf.interp2dxy(vol[vi]['zdr'], raz1)
+        raz2 = wrf.xy(vol[vi]['zdr'], start_point=(ir,0), end_point=(ir,ia2))
+        zdr_cs2 = wrf.interp2dxy(vol[vi]['zdr'], raz2)
+        zdr_cross = np.append(zdr_cs1.data, zdr_cs2.data, axis=1)
+        
+        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+        az_rot2 = np.array([az_rot[i]+360 if az_rot[i]<az_rot[0] else az_rot[i] for i in range(len(az_rot))])
+        if az_rot2.shape[0] < dbz_cross.shape[1]:
+            az_rot2 = np.linspace(az_rot2[0]-0.5, az_rot2[-1]+0.5, len(az_rot2)+1)
     
-    if vi == 7:
-        zl = [0,0.7]
-    elif vi == 8:
-        zl = [0,0.75]
-    elif vi == 9:
-        zl = [0,0.6]
-    elif vi == 10:
-        zl = [0,0.6]
-    elif vi == 12:
-        zl = [0,0.6]
     
-    if az_rot.shape[0] < dbz_cross.shape[1]:
-        az_rot = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
+    zl = [0, np.max(zz_rot)]
+    # if vi == 7:
+    #     zl = [0, 0.7]
+    # elif vi == 8:
+    #     zl = [0, 0.75]
+    # elif vi == 9:
+    #     zl = [0, 0.6]
+    # elif vi == 10:
+    #     zl = [0, 0.6]
+    # elif vi == 12:
+    #     zl = [0, 0.6]
+    # elif vi == 13:
+    #     zl = [0, 1.25]
+    # elif vi == 14:
+    #     zl = [0, 1.4]
+    # elif vi == 15:
+    #     zl = [0, 1.5]
+    # elif vi == 16:
+    #     zl = [0, 1.6]
+    # elif vi == 17:
+    #     zl = [0, 2]
+    
+    
     
     fig,(ax1,ax2) = plt.subplots(2,1, figsize=(9,7), sharex=True, layout='constrained')
     
-    plot_cfill(az_rot, zz_rot, dbz_cross, 'dbz', ax1, datalims=[0,70], xlims=[az_rot[0],az_rot[-1]], ylims=zl)
+    plot_cfill(az_rot2, zz_rot, dbz_cross, 'dbz', ax1, datalims=[0,70], xlims=[az_rot2[0],az_rot2[-1]], ylims=zl)
     ax1.set_title(f"{filetime} UTC Reflectivity cross-section", fontsize=14, fontweight='bold')
     ax1.set_ylabel('Height ARL (km)', fontsize=12)
     ax1_ppi = inset_axes(ax1, '21%', '52%', loc=2) # 21, 52 OR 23, 56
@@ -467,10 +522,11 @@ if plot_flag[2]:
     ax1_ppi.set_xticks([])
     ax1_ppi.set_yticks([])
     
-    plot_cfill(az_rot, zz_rot, vel_cross, 'vel', ax2, datalims=[-va,va], xlims=[az_rot[0],az_rot[-1]], ylims=zl)
+    plot_cfill(az_rot2, zz_rot, vel_cross, 'vel', ax2, datalims=[-va,va], xlims=[az_rot2[0],az_rot2[-1]], ylims=zl)
     ax2.set_title(f"{filetime} UTC Radial velocity cross-section", fontsize=14, fontweight='bold')
     ax2.set_xlabel('Azimuth (deg)', fontsize=12)
     ax2.set_ylabel('Height ARL (km)', fontsize=12)
+    ax2.set_xticklabels([f"{az_rot[i]}" for i in range(len(az_rot))])
     ax2_ppi = inset_axes(ax2, '21%', '52%', loc=2)
     c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2_ppi, datalims=[-va,va], xlims=xl, ylims=yl, cbar=False)
     ax2_ppi.scatter(x_rot, y_rot, s=4, c='k', marker='.')
@@ -480,7 +536,7 @@ if plot_flag[2]:
     ax2_ppi.set_yticks([])
     
     if figsave:
-        plt.savefig(ip+f"vol{vi}_{filetime}_cross-section.png", dpi=300, bbox_inches='tight')
+        plt.savefig(ip+f"vol{vi}_{filetime}_cross-section_vortex{vortex_num}.png", dpi=300, bbox_inches='tight')
     
 
 
@@ -513,7 +569,7 @@ if plot_flag[3]:
     # ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
     
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_PPI_vort.png", dpi=300)
+        plt.savefig(ip+f"vol{vi}_{filetime}_PPI_vort_vortex{vortex_num}.png", dpi=300)
     
     
     
@@ -557,7 +613,7 @@ if plot_flag[4]:
     # ax1_ppi.set_yticks([])
     
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_RHI_az{azimuth}_vort.png", dpi=300, bbox_inches='tight')
+        plt.savefig(ip+f"vol{vi}_{filetime}_RHI_az{azimuth}_vort_vortex{vortex_num}.png", dpi=300, bbox_inches='tight')
     
     
 if plot_flag[5]:
@@ -568,54 +624,99 @@ if plot_flag[5]:
     ia1 = np.where(np.isclose(az_rot[0], vol[vi]['az'][eli,:], atol=0.1))[0][0]
     ia2 = np.where(np.isclose(az_rot[-1], vol[vi]['az'][eli,:], atol=0.1))[0][0]
     
-    raz = wrf.xy(vol[vi]['hvort'], start_point=(ir,ia1), end_point=(ir,ia2))
-    hvort_cs = wrf.interp2dxy(vol[vi]['hvort'], raz)
-    raz = wrf.xy(vol[vi]['zvort'], start_point=(ir,ia1), end_point=(ir,ia2))
-    zvort_cs = wrf.interp2dxy(vol[vi]['zvort'], raz)
-    raz = wrf.xy(vol[vi]['div'], start_point=(ir,ia1), end_point=(ir,ia2))
-    div_cs = wrf.interp2dxy(vol[vi]['div'], raz)
-    hvort_cross = hvort_cs.data
-    zvort_cross = zvort_cs.data
-    div_cross = div_cs.data
+    if ia2 > ia1:
+        raz = wrf.xy(vol[vi]['hvort'], start_point=(ir,ia1), end_point=(ir,ia2))
+        hvort_cs = wrf.interp2dxy(vol[vi]['hvort'], raz)
+        hvort_cross = hvort_cs.data
+        
+        raz = wrf.xy(vol[vi]['zvort'], start_point=(ir,ia1), end_point=(ir,ia2))
+        zvort_cs = wrf.interp2dxy(vol[vi]['zvort'], raz)
+        zvort_cross = zvort_cs.data
+        
+        raz = wrf.xy(vol[vi]['div'], start_point=(ir,ia1), end_point=(ir,ia2))
+        div_cs = wrf.interp2dxy(vol[vi]['div'], raz)
+        div_cross = div_cs.data
+        
+        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+        if az_rot.shape[0] < dbz_cross.shape[1]:
+            az_rot2 = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
+    else:
+        raz1 = wrf.xy(vol[vi]['hvort'], start_point=(ir,ia1), end_point=(ir,359))
+        hvort_cs1 = wrf.interp2dxy(vol[vi]['hvort'], raz1)
+        raz2 = wrf.xy(vol[vi]['hvort'], start_point=(ir,0), end_point=(ir,ia2))
+        hvort_cs2 = wrf.interp2dxy(vol[vi]['hvort'], raz2)
+        hvort_cross = np.append(hvort_cs1.data, hvort_cs2.data, axis=1)
+        
+        raz1 = wrf.xy(vol[vi]['zvort'], start_point=(ir,ia1), end_point=(ir,359))
+        zvort_cs1 = wrf.interp2dxy(vol[vi]['zvort'], raz1)
+        raz2 = wrf.xy(vol[vi]['zvort'], start_point=(ir,0), end_point=(ir,ia2))
+        zvort_cs2 = wrf.interp2dxy(vol[vi]['zvort'], raz2)
+        zvort_cross = np.append(zvort_cs1.data, zvort_cs2.data, axis=1)
+        
+        raz1 = wrf.xy(vol[vi]['div'], start_point=(ir,ia1), end_point=(ir,359))
+        div_cs1 = wrf.interp2dxy(vol[vi]['div'], raz1)
+        raz2 = wrf.xy(vol[vi]['div'], start_point=(ir,0), end_point=(ir,ia2))
+        div_cs2 = wrf.interp2dxy(vol[vi]['div'], raz2)
+        div_cross = np.append(div_cs1.data, div_cs2.data, axis=1)
+        
+        zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+        az_rot2 = np.array([az_rot[i]+360 if az_rot[i]<az_rot[0] else az_rot[i] for i in range(len(az_rot))])
+        if az_rot2.shape[0] < dbz_cross.shape[1]:
+            az_rot2 = np.linspace(az_rot2[0]-0.5, az_rot2[-1]+0.5, len(az_rot2)+1)
     
-    zz_rot = np.mean(vol[vi]['zz'][:,ia1,slice(ir1,ir2+1)], axis=1)
+    zl = [0, np.max(zz_rot)]
     
-    if vi == 7:
-        yl = [0,0.7]
-    elif vi == 9:
-        yl = [0,0.6]
+    # if vi == 7:
+    #     zl = [0, 0.7]
+    # elif vi == 8:
+    #     zl = [0, 0.75]
+    # elif vi == 9:
+    #     zl = [0, 0.6]
+    # elif vi == 10:
+    #     zl = [0, 0.6]
+    # elif vi == 12:
+    #     zl = [0, 0.6]
+    # elif vi == 13:
+    #     zl = [0, 1.25]
+    # elif vi == 14:
+    #     zl = [0, 1.4]
+    # elif vi == 15:
+    #     zl = [0, 1.5]
+    # elif vi == 16:
+    #     zl = [0, 1.6]
+    # elif vi == 17:
+    #     zl = [0, 2]
     
-    if az_rot.shape[0] < dbz_cross.shape[1]:
-        az_rot = np.linspace(az_rot[0]-0.5, az_rot[-1]+0.5, len(az_rot)+1)
     
     
     fig,(ax1,ax2) = plt.subplots(2,1, figsize=(9,7), sharex=True, layout='constrained')
     
-    plot_cfill(az_rot, zz_rot, zvort_cross, 'vort', ax1, datalims=[-vort_lim,vort_lim], xlims=[az_rot[0],az_rot[-1]], ylims=yl)
+    plot_cfill(az_rot2, zz_rot, zvort_cross, 'vort', ax1, datalims=[-vort_lim,vort_lim], xlims=[az_rot2[0],az_rot2[-1]], ylims=zl)
     ax1.set_title(f"{filetime} UTC Vertical pseudovorticity cross-section", fontsize=14, fontweight='bold')
     ax1.set_ylabel('Height ARL (km)', fontsize=12)
     ax1_ppi = inset_axes(ax1, '21%', '52%', loc=2) # 21, 52 OR 23, 56
     c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(vol[vi]['zvort'][2:,:,:],axis=0), 'vort', ax1_ppi, datalims=[0,vort_lim], xlims=xl, ylims=yl, cbar=False)
-    ax1_ppi.scatter(x_rot, y_rot, s=4, c='k', marker='.')
+    ax1_ppi.scatter(x_rot, y_rot, s=4, c='w', marker='.')
     # ax1_ppi.plot([vol[vi]['xx'][eli,ia1,ir1], vol[vi]['xx'][eli,ia2,ir2]], [vol[vi]['yy'][eli,ia1,ir1], vol[vi]['yy'][eli,ia2,ir2]], '-k', linewidth=1.25)
-    ax1_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--k', linewidth=1)
-    ax1_ppi.plot([0,x_rot[-1]], [0,y_rot[-1]], '--k', linewidth=1)
+    ax1_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--w', linewidth=1)
+    ax1_ppi.plot([0,x_rot[-1]], [0,y_rot[-1]], '--w', linewidth=1)
     ax1_ppi.set_xticks([])
     ax1_ppi.set_yticks([])
     
-    plot_cfill(az_rot, zz_rot, hvort_cross, 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=[az_rot[0],az_rot[-1]], ylims=yl)
+    plot_cfill(az_rot2, zz_rot, hvort_cross, 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=[az_rot2[0],az_rot2[-1]], ylims=zl)
     ax2.set_title(f"{filetime} UTC Horizontal pseudovorticity cross-section", fontsize=14, fontweight='bold')
     ax2.set_xlabel('Azimuth (deg)', fontsize=12)
     ax2.set_ylabel('Height ARL (km)', fontsize=12)
+    ax2.set_xticklabels([f"{az_rot[i]}" for i in range(len(az_rot))])
     ax2_ppi = inset_axes(ax2, '21%', '52%', loc=2)
     c = plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2_ppi, datalims=[0,vort_lim], xlims=xl, ylims=yl, cbar=False)
-    ax2_ppi.scatter(x_rot, y_rot, s=4, c='k', marker='.')
-    ax2_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--k', linewidth=1)
-    ax2_ppi.plot([0,x_rot[-1]], [0,y_rot[-1]], '--k', linewidth=1)
+    ax2_ppi.scatter(x_rot, y_rot, s=4, c='w', marker='.')
+    ax2_ppi.plot([0,x_rot[0]], [0,y_rot[0]], '--w', linewidth=1)
+    ax2_ppi.plot([0,x_rot[-1]], [0,y_rot[-1]], '--w', linewidth=1)
     ax2_ppi.set_xticks([])
     ax2_ppi.set_yticks([])
     
-    # plot_cfill(az_rot, zz_rot, div_cross, 'div', ax1, datalims=[-0.1,0.1], xlims=[az_rot[0],az_rot[-1]], ylims=yl)
+    # plot_cfill(az_rot, zz_rot, div_cross, 'div', ax1, datalims=[-0.1,0.1], xlims=[az_rot[0],az_rot[-1]], ylims=zl)
     # # plot_contourf(az_rot, zz_rot, div_cross, 'vort', ax1, levels=np.linspace(-0.16,0.16,33), datalims=[-0.16,0.16], xlims=[az_rot[0],az_rot[-1]], ylims=yl)
     # ax1.set_title(f"{filetime} UTC Pseudodivergence cross-section", fontsize=14, fontweight='bold')
     # ax1.set_ylabel('Height ARL (km)', fontsize=12)
@@ -629,7 +730,7 @@ if plot_flag[5]:
     # ax1_ppi.set_yticks([])
     
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/perils2023/iop2/figs/vol{vi}_{filetime}_rotor-cross-section_vort.png", dpi=300, bbox_inches='tight')
+        plt.savefig(ip+f"vol{vi}_{filetime}_rotor-cross-section_vort_vortex{vortex_num}.png", dpi=300, bbox_inches='tight')
     
     
 #%% mobile mesonet time series
