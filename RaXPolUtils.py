@@ -25,6 +25,7 @@ import wrf
 import pickle
 # import cartopy.crs as ccrs
 from os.path import exists
+# import scipy
 
 import warnings
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -102,16 +103,63 @@ def xy2latlon(x, y, lat_o, lon_o):
     x_o = r_earth * np.cos(lat_o*np.pi/180) * np.sin(lon_o*np.pi/180)
     y_o = r_earth * np.sin(lat_o*np.pi/180)
     
-    x_abs = x + x_o
-    y_abs = y + y_o
+    lat = np.arcsin(y / r_earth)
+    lon = np.arcsin(x / (r_earth * np.cos(lat)))
     
-    lat = np.arcsin(y_abs / r_earth)
-    lon = np.arcsin(x_abs / (r_earth * np.cos(lat)))
-    
-    lat_deg = lat * 180/np.pi
-    lon_deg = lon * 180/np.pi
+    lat_deg = (lat * 180/np.pi) + lat_o
+    lon_deg = (lon * 180/np.pi) + lon_o
     
     return lat_deg,lon_deg
+
+
+# Compute distances of mobile mesonet data to meso (Tyler Pardun)
+def compute_distances(meso_times, meso_lats, meso_lons, point_times, point_lats, point_lons, max_time_diff=60):
+    """
+    Compute distances from each point to the mesocyclone location at the closest time step.
+
+    Parameters:
+    - meso_times (array-like): Timestamps of mesocyclone locations.
+    - meso_lats (array-like): Latitudes of mesocyclone locations.
+    - meso_lons (array-like): Longitudes of mesocyclone locations.
+    - point_times (array-like): Timestamps of points.
+    - point_lats (array-like): Latitudes of points.
+    - point_lons (array-like): Longitudes of points.
+    - max_time_diff (int): Maximum allowed time difference in seconds.
+
+    Returns:
+    - distances (array): Distances (km) between mesocyclone and points.
+    - matched_times (array): Matched mesocyclone times for each point.
+    """
+
+    distances = []
+    matched_times = []
+
+    # Convert times to pandas datetime for easy matching
+    meso_times = pd.to_datetime(meso_times)
+    point_times = pd.to_datetime(point_times)
+
+    for p_time, p_lat, p_lon in zip(point_times, point_lats, point_lons):
+        # Find the mesocyclone time closest to the point time
+        time_diffs = np.abs((meso_times - p_time).total_seconds())
+        closest_idx = np.argmin(time_diffs)
+        
+        # Check if the time difference is within the allowed window
+        if time_diffs[closest_idx] <= max_time_diff:
+            matched_times.append(meso_times[closest_idx])
+            
+            # Compute distance
+            meso_loc = (meso_lats[closest_idx], meso_lons[closest_idx])
+            point_loc = (p_lat, p_lon)
+            # distance_km = get_dx_dy(meso_lons[closest_idx],meso_lats[closest_idx],p_lon,p_lat)
+            dx_km,dy_km = latlon2xy(p_lat,p_lon,meso_lats[closest_idx],meso_lons[closest_idx])
+            distance_km = np.array([dx_km, dy_km])
+            distances.append(distance_km)
+        else:
+            # If no close time match, store NaN
+            matched_times.append(np.nan)
+            distances.append([np.nan,np.nan])
+
+    return np.array(distances)
 
 
 # Read RaXPol .nc files and load data into dict

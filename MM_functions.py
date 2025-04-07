@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+import scipy
+import pandas as pd
+import numpy as np
+
+#%%
+
 def compute_wdir_bias_rasmussen(dat,R_earth=6371000,analysis_window_s=30):
     #Read in the file and compute acceleration and bearing
     #d = xr.open_dataset(file_name)
@@ -256,7 +263,8 @@ def compute_distances(meso_times, meso_lats, meso_lons, point_times, point_lats,
             # Compute distance
             meso_loc = (meso_lats[closest_idx], meso_lons[closest_idx])
             point_loc = (p_lat, p_lon)
-            distance_km = get_dx_dy(meso_lons[closest_idx],meso_lats[closest_idx],p_lon,p_lat)
+            # distance_km = get_dx_dy(meso_lons[closest_idx],meso_lats[closest_idx],p_lon,p_lat)
+            distance_km = latlon2xy(p_lat,p_lon,meso_lats[closest_idx],meso_lons[closest_idx])
             distances.append(distance_km)
         else:
             # If no close time match, store NaN

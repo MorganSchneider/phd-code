@@ -273,7 +273,6 @@ dbfile.close()
 
 #%% IOP2 plot reconstructed RHIs and azimuth-height cross sections
 
-
 # Do I need to advection correct for the reconstructed RHIs?? Check storm motion
 # If couplet translation is due to advection, storm motion is about 15 m/s to the ~NE
 
