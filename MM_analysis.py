@@ -26,9 +26,9 @@ P1 = dict(time=ds.variables['time'][:].data+21600,
           wdir_corr=ds.variables['wdir_corr'][:].data,
           u_corr=ds.variables['u_corr'][:].data,
           v_corr=ds.variables['v_corr'][:].data,
-          temp_corr=ds.variables['temp_unbiased'][:].data,
-          rh_corr=ds.variables['rh_unbiased'][:].data,
-          pres_corr=ds.variables['pres_unbiased'][:].data)
+          temp_unbiased=ds.variables['temp_unbiased'][:].data,
+          rh_unbiased=ds.variables['rh_unbiased'][:].data,
+          pres_unbiased=ds.variables['pres_unbiased'][:].data)
 ds.close()
 
 # Probe 2 - Tyler's bias-corrected files
@@ -46,9 +46,9 @@ P2 = dict(time=ds.variables['time'][:].data+21600,
           wdir_corr=ds.variables['wdir_corr'][:].data,
           u_corr=ds.variables['u_corr'][:].data,
           v_corr=ds.variables['v_corr'][:].data,
-          temp_corr=ds.variables['temp_unbiased'][:].data,
-          rh_corr=ds.variables['rh_unbiased'][:].data,
-          pres_corr=ds.variables['pres_unbiased'][:].data)
+          temp_unbiased=ds.variables['temp_unbiased'][:].data,
+          rh_unbiased=ds.variables['rh_unbiased'][:].data,
+          pres_unbiased=ds.variables['pres_unbiased'][:].data)
 ds.close()
 
 
@@ -89,14 +89,14 @@ P2_dy = P2_distances[:,1]
 
 P1_x = P1_dx[(~np.isnan(P1_dx))]
 P1_y = P1_dy[(~np.isnan(P1_dy))]
-P1_temp = P1['temp_corr'][(~np.isnan(P1_dx))]
+P1_temp = P1['temp_unbiased'][(~np.isnan(P1_dx))]
 P1_u = P1['u_corr'][(~np.isnan(P1_dx))]
 P1_v = P1['v_corr'][(~np.isnan(P1_dx))]
 P1_wspd = P1['wspd_corr'][(~np.isnan(P1_dx))]
 P1_wdir = P1['wdir_corr'][(~np.isnan(P1_dx))]
 P2_x = P2_dx[(~np.isnan(P2_dx))]
 P2_y = P2_dy[(~np.isnan(P2_dy))]
-P2_temp = P2['temp_corr'][(~np.isnan(P2_dx))]
+P2_temp = P2['temp_unbiased'][(~np.isnan(P2_dx))]
 P2_u = P2['u_corr'][(~np.isnan(P2_dx))]
 P2_v = P2['v_corr'][(~np.isnan(P2_dx))]
 P2_wspd = P2['wspd_corr'][(~np.isnan(P2_dx))]
@@ -185,6 +185,31 @@ if True:
 
 
 
+#%%
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1['time'][14253:14728], P1['lat'][14253:14728], 'k')
+l2, = ax.plot(P2['time'][11784:12261], P2['lat'][11784:12261], 'b')
+ax.scatter(P1['time'][14308], P1['lat'][14308], s=20, c='k')
+ax.scatter(P2['time'][11840], P2['lat'][11840], s=20, c='b')
+ax.text(P2['time'][11840], P2['lat'][11840]+0.001, '081854 UTC')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Latitude')
+ax.set_xlabel('Timestamp')
+ax.set_title('Mesonet latitude')
+
+plt.show()
 
 
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1['time'][14253:14728], P1['temp_corr'][14253:14728], 'k')
+l2, = ax.plot(P2['time'][11784:12261], P2['temp_corr'][11784:12261], 'b')
+ax.scatter(P1['time'][14308], P1['temp_corr'][14308], s=20, c='k')
+ax.scatter(P2['time'][11840], P2['temp_corr'][11840], s=20, c='b')
+ax.text(P2['time'][11840], P2['temp_corr'][11840]+0.04, '081854 UTC')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Temp_unbiased')
+ax.set_xlabel('Timestamp')
+ax.set_title('Mesonet unbiased temperature')
 
+plt.show()

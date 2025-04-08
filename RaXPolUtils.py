@@ -300,7 +300,7 @@ def read_MM_dat(fn):
 
 # Function to create 2D colorfill plots
 def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
-               cmap=None, cbar=True, **kwargs):
+               cmap=None, cbar=True, cbfs=None, **kwargs):
     if cmap is None:
         cm, cb_label = cmaps[field]['cm'], cmaps[field]['label']
     else:
@@ -321,6 +321,12 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
     if cbar is True:
         cb = plt.colorbar(c, ax=ax)
         cb.set_label(cb_label)
+        if np.max(np.abs(datalims)) < 0.1:
+            cb.formatter.set_powerlimits((0,0))
+        if cbfs is None:
+            cb.set_label(cb_label)
+        else:
+            cb.set_label(cb_label, fontsize=cbfs)
     
     if xlims is not None:
         ax.set_xlim(xlims[0], xlims[1])
