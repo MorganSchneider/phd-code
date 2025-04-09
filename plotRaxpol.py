@@ -462,7 +462,7 @@ if plot_flag[1]:
     
     # plt.suptitle(f"{filetime} UTC, azimuth = {azimuth}\N{DEGREE SIGN}")
     if figsave:
-        plt.savefig(ip+f"vol{vi}_{filetime}_az{azimuth}_RHI_vortex{vortex_num}.png", dpi=300, bbox_inches='tight')
+        plt.savefig(ip+f"vol{vi}_{filetime}_RHI_az{azimuth}_vortex{vortex_num}.png", dpi=300, bbox_inches='tight')
 
 #% rest of plots
 

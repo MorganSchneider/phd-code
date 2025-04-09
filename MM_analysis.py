@@ -11,6 +11,12 @@ from RaxpolUtils import *
 
 #% Load MM data and vortex locations
 
+# Temperature bias: +/- 1.12 C ---> difference betweem P1 and P2 unbiased temperatures is 0.87 C
+# Pressure bias: +/- 0.2 hPa ---> difference between P1 and P2 unbiased pres is 0.56 hPa, but doesn't look systematic
+# RH bias: +/- 0.05 ---> difference between P1 and P2 unbiased RH is 0.031
+# u bias: +/- 0.16 m/s
+# v bias: +/- 0.02 m/s
+
 # Probe 1 - Tyler's bias-corrected files
 ds = nc.Dataset('/Users/morgan.schneider/Documents/perils2023/iop2/mesonet/Probe_1_IOP2_QC_all.nc')
 P1 = dict(time=ds.variables['time'][:].data+21600,
@@ -46,9 +52,9 @@ P2 = dict(time=ds.variables['time'][:].data+21600,
           wdir_corr=ds.variables['wdir_corr'][:].data,
           u_corr=ds.variables['u_corr'][:].data,
           v_corr=ds.variables['v_corr'][:].data,
-          temp_unbiased=ds.variables['temp_unbiased'][:].data,
-          rh_unbiased=ds.variables['rh_unbiased'][:].data,
-          pres_unbiased=ds.variables['pres_unbiased'][:].data)
+          temp_unbiased=ds.variables['temp_unbiased'][:].data-0.88,
+          rh_unbiased=ds.variables['rh_unbiased'][:].data+0.03,
+          pres_unbiased=ds.variables['pres_unbiased'][:].data-0.56)
 ds.close()
 
 
@@ -188,28 +194,168 @@ if True:
 #%%
 
 fig,ax = plt.subplots(1, 1, figsize=(8,6))
-l1, = ax.plot(P1['time'][14253:14728], P1['lat'][14253:14728], 'k')
-l2, = ax.plot(P2['time'][11784:12261], P2['lat'][11784:12261], 'b')
-ax.scatter(P1['time'][14308], P1['lat'][14308], s=20, c='k')
-ax.scatter(P2['time'][11840], P2['lat'][11840], s=20, c='b')
-ax.text(P2['time'][11840], P2['lat'][11840]+0.001, '081854 UTC')
+l1, = ax.plot(P1_times[14253:14728], P1['lat'][14253:14728], 'k')
+l2, = ax.plot(P2_times[11784:12261], P2['lat'][11784:12261], 'b')
+# ax.scatter(P1_times[14255], P1['lat'][14255], s=20, c='k') # 14308 for 081854
+# ax.scatter(P2_times[11786], P2['lat'][11786], s=20, c='b') # 11840 for 081854
+# ax.text(P2_times[11786], P2['lat'][11786]+0.001, '081800 UTC') # 11840 for 081854
 plt.legend(handles=[l1,l2], labels=['P1','P2'])
 ax.set_ylabel('Latitude')
-ax.set_xlabel('Timestamp')
+ax.set_xlabel('Time')
 ax.set_title('Mesonet latitude')
-
-plt.show()
 
 
 fig,ax = plt.subplots(1, 1, figsize=(8,6))
-l1, = ax.plot(P1['time'][14253:14728], P1['temp_corr'][14253:14728], 'k')
-l2, = ax.plot(P2['time'][11784:12261], P2['temp_corr'][11784:12261], 'b')
-ax.scatter(P1['time'][14308], P1['temp_corr'][14308], s=20, c='k')
-ax.scatter(P2['time'][11840], P2['temp_corr'][11840], s=20, c='b')
-ax.text(P2['time'][11840], P2['temp_corr'][11840]+0.04, '081854 UTC')
+l1, = ax.plot(P1_times[14253:14728], P1['temp_unbiased'][14253:14728], 'k')
+l2, = ax.plot(P2_times[11784:12261], P2['temp_unbiased'][11784:12261], 'b')
+# ax.scatter(P1_times[14255], P1['temp_unbiased'][14255], s=20, c='k') # 14308 for 081854
+# ax.scatter(P2_times[11786], P2['temp_unbiased'][11786], s=20, c='b') # 11840 for 081854
+# ax.text(P2_times[11786], P2['temp_unbiased'][11786]+0.04, '081800 UTC') # 11840 for 081854
 plt.legend(handles=[l1,l2], labels=['P1','P2'])
 ax.set_ylabel('Temp_unbiased')
-ax.set_xlabel('Timestamp')
+ax.set_xlabel('Time')
 ax.set_title('Mesonet unbiased temperature')
 
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[14253:14728], P1['rh_unbiased'][14253:14728], 'k')
+l2, = ax.plot(P2_times[11784:12261], P2['rh_unbiased'][11784:12261], 'b')
+# ax.scatter(P1_times[14255], P1['rh_unbiased'][14255], s=20, c='k') # 14308 for 081854
+# ax.scatter(P2_times[11786], P2['rh_unbiased'][11786], s=20, c='b') # 11840 for 081854
+# ax.text(P2_times[11786], P2['rh_unbiased'][11786], '081800 UTC') # 11840 for 081854
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('RH_unbiased')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet unbiased relative humidity')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[14253:14728], P1['pres_unbiased'][14253:14728], 'k')
+l2, = ax.plot(P2_times[11784:12261], P2['pres_unbiased'][11784:12261], 'b')
+# ax.scatter(P1_times[14255], P1['pres_unbiased'][14255], s=20, c='k') # 14308 for 081854
+# ax.scatter(P2_times[11786], P2['pres_unbiased'][11786], s=20, c='b') # 11840 for 081854
+# ax.text(P2_times[11786], P2['pres_unbiased'][11786], '081800 UTC') # 11840 for 081854
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Pres_unbiased')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet unbiased pressure')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[14253:14728], P1['u_corr'][14253:14728], 'k')
+l2, = ax.plot(P2_times[11784:12261], P2['u_corr'][11784:12261], 'b')
+# ax.scatter(P1_times[14255], P1['u_corr'][14255], s=20, c='k') # 14308 for 081854
+# ax.scatter(P2_times[11786], P2['u_corr'][11786], s=20, c='b') # 11840 for 081854
+# ax.text(P2_times[11786], P2['u_corr'][11786], '081800 UTC') # 11840 for 081854
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('U_corrected')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet corrected u wind')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[14253:14728], P1['v_corr'][14253:14728], 'k')
+l2, = ax.plot(P2_times[11784:12261], P2['v_corr'][11784:12261], 'b')
+# ax.scatter(P1_times[14255], P1['v_corr'][14255], s=20, c='k') # 14308 for 081854
+# ax.scatter(P2_times[11786], P2['v_corr'][11786], s=20, c='b') # 11840 for 081854
+# ax.text(P2_times[11786], P2['v_corr'][11786], '081800 UTC') # 11840 for 081854
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('V_corrected')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet corrected v wind')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[14253:14728], P1['wspd_corr'][14253:14728], 'k')
+l2, = ax.plot(P2_times[11784:12261], P2['wspd_corr'][11784:12261], 'b')
+# ax.scatter(P1_times[14255], P1['wspd_corr'][14255], s=20, c='k') # 14308 for 081854
+# ax.scatter(P2_times[11786], P2['wspd_corr'][11786], s=20, c='b') # 11840 for 081854
+# ax.text(P2_times[11786], P2['wspd_corr'][11786], '081800 UTC') # 11840 for 081854
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Wspd_corrected')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet corrected wind speed')
+
 plt.show()
+
+
+
+#%%
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[13667:14256], P1['lat'][13667:14256], 'k')
+l2, = ax.plot(P2_times[11187:11787], P2['lat'][11187:11787], 'b')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Latitude')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet latitude')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[13667:14256], P1['temp_unbiased'][13667:14256], 'k')
+l2, = ax.plot(P2_times[11187:11787], P2['temp_unbiased'][11187:11787], 'b')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Temp_unbiased')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet unbiased temperature')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[13667:14256], P1['rh_unbiased'][13667:14256], 'k')
+l2, = ax.plot(P2_times[11187:11787], P2['rh_unbiased'][11187:11787], 'b')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('RH_unbiased')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet unbiased relative humidity')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[13667:14256], P1['pres_unbiased'][13667:14256], 'k')
+l2, = ax.plot(P2_times[11187:11787], P2['pres_unbiased'][11187:11787], 'b')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Pres_unbiased')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet unbiased pressure')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[13667:14256], movmean(P1['u_corr'][13667:14256],10), 'k')
+l2, = ax.plot(P2_times[11187:11787], movmean(P2['u_corr'][11187:11787],10), 'b')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('U_corrected')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet corrected u wind')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[13667:14256], movmean(P1['v_corr'][13667:14256],10), 'k')
+l2, = ax.plot(P2_times[11187:11787], movmean(P2['v_corr'][11187:11787],10), 'b')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('V_corrected')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet corrected v wind')
+
+
+fig,ax = plt.subplots(1, 1, figsize=(8,6))
+l1, = ax.plot(P1_times[13667:14256], movmean(P1['wspd_corr'][13667:14256],10), 'k')
+l2, = ax.plot(P2_times[11187:11787], movmean(P2['wspd_corr'][11187:11787],10), 'b')
+plt.legend(handles=[l1,l2], labels=['P1','P2'])
+ax.set_ylabel('Wspd_corrected')
+ax.set_xlabel('Time')
+ax.set_title('Mesonet corrected wind speed')
+
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+

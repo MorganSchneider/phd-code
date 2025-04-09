@@ -66,8 +66,8 @@ def movmean(data, npts):
 
 # Convert lat/lon coordinates to x/y distances relative to an origin point
 def latlon2xy(lat, lon, lat_o, lon_o):
-    # lat, lon:     1-D vectors of lat/lon in decimal deg N/deg E
-    # lat_o, lon_o: lat/lon of origin in decimal deg N/deg E
+    # lat, lon:     1-D vectors of lat/lon in decimal degrees N/deg E
+    # lat_o, lon_o: lat/lon of origin in decimal degrees N/deg E
     
     r_earth = 6378.1 # km
     
@@ -112,7 +112,7 @@ def xy2latlon(x, y, lat_o, lon_o):
     return lat_deg,lon_deg
 
 
-# Compute distances of mobile mesonet data to meso (Tyler Pardun)
+# Compute distances of mobile mesonet data to meso (Tyler Pardun's code)
 def compute_distances(meso_times, meso_lats, meso_lons, point_times, point_lats, point_lons, max_time_diff=60):
     """
     Compute distances from each point to the mesocyclone location at the closest time step.

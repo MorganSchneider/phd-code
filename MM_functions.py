@@ -4,6 +4,7 @@
 import scipy
 import pandas as pd
 import numpy as np
+from RaxpolUtils import *
 
 #%%
 
@@ -24,7 +25,7 @@ def compute_wdir_bias_rasmussen(dat,R_earth=6371000,analysis_window_s=30):
     dt = 30 #seconds
     
     speed, bearing = compute_speed_and_bearing(lat, lon, dt=dt)
-
+    
     if speed.size == 0:
         return np.nan
 
