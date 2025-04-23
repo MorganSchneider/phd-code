@@ -263,13 +263,14 @@ xx2,yy2 = latlon2xy(P2['lat'], P2['lon'], rax_lat, rax_lon)
 P1.update({'xx':xx1, 'yy':yy1})
 P2.update({'xx':xx2, 'yy':yy2})
 
+if False:
+    print("...Saving to pickle...")
+    dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/circuit_data.pkl', 'wb')
+    data = {'Rax':vol, 'P1':P1, 'P2':P2}
+    pickle.dump(data, dbfile)
+    dbfile.close()
 
-
-dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/circuit_data.pkl', 'wb')
-data = {'Rax':vol, 'P1':P1, 'P2':P2}
-pickle.dump(data, dbfile)
-dbfile.close()
-
+del az_tmp,dbz_tmp,vel_tmp,sw_tmp,zdr_tmp,rhohv_tmp,xx_tmp,yy_tmp,zz_tmp,azvort_tmp,elvort_tmp,div_tmp,el_tmp,fname_tmp,time_tmp,files,xx1,yy1,xx2,yy2,P1,P2,data,d
 
 #%% IOP2 plot reconstructed RHIs and azimuth-height cross sections
 
@@ -303,71 +304,80 @@ div_lim = 0.1
 
 
 
-vi = 8
-eli = 1
-filetime = vol[vi]['scan_time'][eli]
-vortex_num = 3
+vi = 0
+eli = 0
+filetime = vol[vi]['scan_time'][1]
+# vortex_num = 3
 # vortex 1: vi = 7-9
 # vortex 2: vi = 8-13
 # vortex 3: vi = 8-17
 # vortex 4: vi = 9-12
 # rotor: vi = 8
 
-az_rot = locs[filetime][f"vortex{vortex_num}"]['az']
-r_rot = locs[filetime][f"vortex{vortex_num}"]['r']
-z_rot = locs[filetime][f"vortex{vortex_num}"]['z']
+# az_rot = locs[filetime][f"vortex{vortex_num}"]['az']
+# r_rot = locs[filetime][f"vortex{vortex_num}"]['r']
+# z_rot = locs[filetime][f"vortex{vortex_num}"]['z']
 # x_rot = locs[filetime][f"vortex{vortex_num}"]['x']
 # y_rot = locs[filetime][f"vortex{vortex_num}"]['y']
 
-x_rot = np.array([])
-y_rot = np.array([])
+# x_rot = np.array([])
+# y_rot = np.array([])
 
-for key in list(locs[filetime].keys()):
-    if 'vortex' in key:
-        x_rot = np.append(x_rot, locs[filetime][key]['x'])
-        y_rot = np.append(y_rot, locs[filetime][key]['y'])
+# for key in list(locs[filetime].keys()):
+#     if 'vortex' in key:
+#         x_rot = np.append(x_rot, locs[filetime][key]['x'])
+#         y_rot = np.append(y_rot, locs[filetime][key]['y'])
 
-vortex_num = '-all'
+# vortex_num = '-all'
 
-# azimuth = round(np.mean(az_rot))
-azimuth = az_rot[round(len(az_rot)/2)]
+# # azimuth = round(np.mean(az_rot))
+# azimuth = az_rot[round(len(az_rot)/2)]
 
-irot = np.where(np.isclose(az_rot, azimuth))[0][0]
+# irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
-# if azimuth not in az_rot:
-#     print(f"Invalid azimuth, must be between {az_rot[0]}-{az_rot[-1]} degrees")
-#     azimuth = az_rot[0]
+# # if azimuth not in az_rot:
+# #     print(f"Invalid azimuth, must be between {az_rot[0]}-{az_rot[-1]} degrees")
+# #     azimuth = az_rot[0]
 
-azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
-rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
+# azi = np.where(vol[ii]['az'][eli,:].round(0) == azimuth)[0][0]
+# rr = (vol[vi]['xx'][:,azi,:]**2 + vol[vi]['yy'][:,azi,:]**2)**0.5
 
 if vi == 7: # 082000
     xl = [-2.5, -1.0]
     yl = [-0.5, 2.5]
+    
 elif vi == 8: # 082030
     xl = [-2.25, -0.75]
     yl = [0.0, 3.0]
+    
 elif vi == 9: # 082100
     xl = [-2.0, -0.5]
     yl = [0.5, 3.5]
+    
 elif vi == 10: # 082130
     xl = [-1.75, -0.25]
     yl = [1.0, 4.0]
+    
 elif vi == 12: # 082230
     xl = [-1.0, 0.5]
     yl = [1.25, 4.25]
+    
 elif vi == 13: # 082300
     xl = [-0.75, 0.75]
     yl = [1.5, 4.5]
+    
 elif vi == 14: # 082330
     xl = [-0.25, 1.25]
     yl = [2.5, 5.5]
+    
 elif vi == 15: # 082400
     xl = [0.0, 1.5]
     yl = [3.0, 6.0]
+    
 elif vi == 16: # 082430
     xl = [0.25, 1.75]
     yl = [3.5, 6.5]
+    
 elif vi == 17: # 082500
     xl = [0.25, 1.75]
     yl = [4.0, 7.0]
@@ -382,8 +392,13 @@ else:
 
 
 
+xl = [-3, 2]
+yl = [0, 5]
+
+
+
 # dbz/vel PPIs, dbz/vel RHIs, dbz/vel cross sections, vort PPIs, vort RHIs, vort cross sections
-plot_flag = [1,0,0,1,0,0]
+plot_flag = [1,0,0,0,0,0]
 
 figsave = False
 
@@ -393,11 +408,11 @@ if plot_flag[0]:
     # xl = [-7, 3] # was [-rlim/2, 0]. [-6,0]/[-3,0] until vi 12 | [0,3] for vi 17
     # yl = [-3, 7] # was [0, rlim/2]. [-3,3]/[0,3] until vi 12 | [4,7] for vi 17
     
-    # fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
-    fig,(ax1,ax2) = plt.subplots(1,2,figsize=(7,5), sharex=True, sharey=True, subplot_kw=dict(box_aspect=2), layout='constrained')
+    fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    # fig,(ax1,ax2) = plt.subplots(1,2,figsize=(7,5), sharex=True, sharey=True, subplot_kw=dict(box_aspect=2), layout='constrained')
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][eli,:,:], 'dbz', ax1, datalims=[0,70], xlims=xl, ylims=yl, cbfs=12)
-    ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
     ax1.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} reflectivity", fontsize=14)
     ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
@@ -412,7 +427,7 @@ if plot_flag[0]:
     # ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2, datalims=[-va,va], xlims=xl, ylims=yl, cbfs=12)
-    ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
     ax2.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=14)
     ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
     # ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
@@ -557,27 +572,34 @@ if plot_flag[2]:
 
 
 # Pseudovorticity plots
+
 if plot_flag[3]:
     # Column max PPIs
-    # fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
-    fig,(ax1,ax2) = plt.subplots(1,2,figsize=(7,5), sharex=True, sharey=True, subplot_kw=dict(box_aspect=2), layout='constrained')
+    fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    # fig,(ax1,ax2) = plt.subplots(1,2,figsize=(8,5), sharex=True, sharey=True, subplot_kw=dict(box_aspect=2), layout='constrained')
     
-    plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(vol[vi]['zvort'][2:,:,:],axis=0), 'vort', ax1, datalims=[0,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(vol[vi]['zvort'][2:,:,:],axis=0), 'vort', ax1, datalims=[0,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['zvort'][eli,:,:], 'vort', ax1, datalims=[-vort_lim,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.mean(vol[vi]['zvort'][0:3,:,:], axis=0), 'vort', ax1, datalims=[-vort_lim,vort_lim], xlims=xl, ylims=yl, cbfs=12)
     ax1.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
-    ax1.set_title(f"{filetime} UTC Max vertical pseudovorticity", fontsize=14)
+    ax1.set_title(f"{filetime} UTC Vertical pseudovorticity", fontsize=14)
     ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
     # ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
-    plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2, datalims=[0,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.max(np.abs(vol[vi]['hvort'][2:,:,:]),axis=0), 'vort', ax2, datalims=[0,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['hvort'][eli,:,:], 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.mean(vol[vi]['hvort'][0:3,:,:], axis=0), 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=xl, ylims=yl, cbfs=12)
     ax2.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
-    ax2.set_title(f"{filetime} UTC Max horizontal pseudovorticity", fontsize=14)
+    ax2.set_title(f"{filetime} UTC Horizontal pseudovorticity", fontsize=14)
     ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
     # ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
     # ax2.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], np.min(vol[vi]['div'], axis=0), 'div', ax1, 
     #            datalims=[-0.16,0], xlims=xl, ylims=yl, cmap='pyart_ChaseSpectral_r')
+    # # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['div'][eli,:,:], 'div', ax1, 
+    # #            datalims=[-0.16,0.16], xlims=xl, ylims=yl, cmap='pyart_ChaseSpectral_r')
     # ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
     # ax1.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} Pseudodivergence", fontsize=14)
     # ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
@@ -727,7 +749,39 @@ if plot_flag[5]:
     
     if figsave:
         plt.savefig(ip+f"vol{vi}_{filetime}_cross-section_vort_vortex{vortex_num}.png", dpi=300, bbox_inches='tight')
+
+
+
+if True:
+    # fig,(ax1,ax2) = plt.subplots(1,2,figsize=(10,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    # # fig,(ax1,ax2) = plt.subplots(1,2,figsize=(8,5), sharex=True, sharey=True, subplot_kw=dict(box_aspect=2), layout='constrained')
     
+    # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax1, datalims=[-va,va], xlims=xl, ylims=yl, cbfs=12)
+    # ax1.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
+    # ax1.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} velocity", fontsize=14)
+    # ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
+    # ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
+    # # ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
+    
+    # plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['zvort'][eli,:,:], 'vort', ax2, datalims=[-vort_lim,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    # ax2.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
+    # ax2.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} vertical vorticity", fontsize=14)
+    # ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
+    
+    # if figsave:
+    #     plt.savefig(ip+f"vol{vi}_{filetime}_PPI_vortex{vortex_num}_vel+vort.png", dpi=300)
+    
+    
+    
+    fig,ax = plt.subplots(1, 1, figsize=(8,6), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['zvort'][eli,:,:], 'vort', ax, datalims=[-vort_lim,vort_lim], xlims=xl, ylims=yl, cbfs=12)
+    # ax.scatter(x_rot, y_rot, s=20, facecolor='w', edgecolor='k', marker='o', linewidth=0.5)
+    ax.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} vertical vorticity", fontsize=14)
+    ax.set_xlabel('E-W distance from radar (km)', fontsize=12)
+    ax.set_ylabel('N-S distance from radar (km)', fontsize=12)
+    
+    if figsave:
+        plt.savefig(ip+f"vol{vi}_{filetime}_PPI_zvort.png", dpi=300)
     
 #%% mobile mesonet time series
 

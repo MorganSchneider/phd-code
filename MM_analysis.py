@@ -58,6 +58,11 @@ P2 = dict(time=ds.variables['time'][:].data+21600,
 ds.close()
 
 
+
+
+
+
+
 # P1['time'] = P1['time'] + 21600
 P1_times = np.array( [ datetime.fromtimestamp(P1['time'][i]) for i in range(len(P1['time'])) ] )
 P2_times = np.array( [ datetime.fromtimestamp(P2['time'][i]) for i in range(len(P2['time'])) ] )
