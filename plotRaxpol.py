@@ -1189,12 +1189,38 @@ for vn in range(len(vols)):
 
 #%% Reconstructed RHIs and PPIs from gridded data
 
-vol_time = '082330'
+vol_time = '082100'
 
 figsave = False
 
 fp = '/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/' # raxpol cfradial file path
-ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/' # image save path
+ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/cross-section-panels/' # image save path
+
+xl = [np.min(xx), np.max(xx)]
+yl = [np.min(yy), np.max(yy)]
+
+
+if vol_time == '082030':
+    xl = [-3.0, 0.0]
+    yl = [0.5, 3.5]
+elif vol_time == '082100':
+    xl = [-2.5, 0.5]
+    yl = [0.5, 3.5]
+elif vol_time == '082130':
+    xl = [-2.5, 0.5]
+    yl = [1.0, 4.0]
+elif vol_time == '082230':
+    xl = [-2.0, 1.0]
+    yl = [2.0, 5.0]
+elif vol_time == '082300':
+    xl = [-1.5, 1.5]
+    yl = [2.5, 5.5]
+elif vol_time == '082330':
+    xl = [-1.0, 2.0]
+    yl = [2.5, 5.5]
+else:
+    xl = [np.min(xx), np.max(xx)]
+    yl = [np.min(yy), np.max(yy)]
 
 
 dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/vel_grid_{vol_time}.pkl", 'rb')
@@ -1276,9 +1302,19 @@ zvort_adv_cs = wrf.interp2dxy(zvort_advected, xy) # advection-corrected velocity
 zvort_adv_rhi = zvort_adv_cs.data
 
 rr = np.linspace(0, r_ray, vel_rhi.shape[1])
-
 R = np.sqrt(xx**2 + yy**2)
 
+
+# Composite vertical pseudovorticity cross sections
+zvort_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
+zvort_adv_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
+x_cross = np.zeros(shape=(len(az_rot),), dtype=float)
+for i in range(len(az_rot)):
+    ix = np.where(np.abs(xx - x_rot[i]) == np.min(np.abs(xx - x_rot[i])))[0][0]
+    iy = np.where(np.abs(yy - y_rot[i]) == np.min(np.abs(yy - y_rot[i])))[0][0]
+    zvort_cross[:,i] = zvort[:,iy,ix]
+    zvort_adv_cross[:,i] = zvort_advected[:,iy,ix]
+    x_cross[i] = np.sqrt((x_rot[i]-x_rot[0])**2 + (y_rot[i]-y_rot[0])**2)
 
 
 # Advection-corrected everything
@@ -1286,13 +1322,18 @@ if True:
     # Max vertical vorticity PPI
     fig,ax = plt.subplots(1, 1, figsize=(8,6), layout='constrained')
     plot_cfill(xx, yy, np.max(zvort_advected, axis=0), 'vort', ax, datalims=[0,0.12],
-               xlims=[np.min(xx),np.max(xx)], ylims=[np.min(yy),np.max(yy)], cbfs=12, cmap='LangRainbow12')
+               xlims=xl, ylims=yl, cbfs=12, cmap='LangRainbow12')
     ax.scatter(x_rot, y_rot, s=30, marker='o', facecolor='w', edgecolor='k')
+    ax.set_xlabel('E-W distance from radar (km)', fontsize=14)
+    ax.set_ylabel('N-S distance from radar (km)', fontsize=14)
+    ax.plot([0,x_rot[0]], [0,y_rot[0]], '-k', linewidth=3)
+    ax.plot([0,x_rot[-1]], [0,y_rot[-1]], '-k', linewidth=3)
+    ax.plot([0,np.median(x_rot)], [0,np.median(y_rot)], '--k', linewidth=3)
     ax.set_xlabel('x distance from radar (km)', fontsize=12)
     ax.set_ylabel('y distance from radar (km)', fontsize=12)
     ax.set_title(f"{vol_time}z maximum vertical pseudovorticity (advection-corrected)", fontsize=12)
     if figsave:
-        plt.savefig(ip+f"cross-section-panels/{vol_time}_vortPPI_advected.png", dpi=300)
+        plt.savefig(ip+f"{vol_time}_vortPPI_advected.png", dpi=300)
     
     
     # Velocity RHI
@@ -1303,19 +1344,12 @@ if True:
     ax.set_ylabel('Height ARL (km)', fontsize=12)
     ax.set_title(f"{vol_time}z gridded velocity RHI (advection-corrected)", fontsize=12)
     if figsave:
-        plt.savefig(ip+f"cross-section-panels/{vol_time}_velRHI_advected.png", dpi=300)
+        plt.savefig(ip+f"{vol_time}_velRHI_advected.png", dpi=300)
     
     
     # Vertical vorticity cross section
     xlims = [0, 1.0]
     zlims = [0, 1.25]
-    zvort_adv_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
-    x_cross = np.zeros(shape=(len(az_rot),), dtype=float)
-    for i in range(len(az_rot)):
-        ix = np.where(np.abs(xx - x_rot[i]) == np.min(np.abs(xx - x_rot[i])))[0][0]
-        iy = np.where(np.abs(yy - y_rot[i]) == np.min(np.abs(yy - y_rot[i])))[0][0]
-        zvort_adv_cross[:,i] = zvort_advected[:,iy,ix]
-        x_cross[i] = np.sqrt((x_rot[i]-x_rot[0])**2 + (y_rot[i]-y_rot[0])**2)
     
     fig,ax = plt.subplots(1, 1, figsize=(7,6), layout='constrained')
     c = plot_cfill(x_cross, zz, zvort_adv_cross, 'vort', ax, datalims=[0,0.12], xlims=xlims, ylims=zlims,
@@ -1330,24 +1364,29 @@ if True:
     # cb.set_ticks(np.arange(0, 0.22, 0.02))
     cb.ax.tick_params(labelsize=12)
     if figsave:
-        plt.savefig(ip+f"cross-section-panels/{vol_time}_vortCS_advected.png", dpi=300)
+        plt.savefig(ip+f"{vol_time}_vortCS_advected.png", dpi=300)
 
 
 
 figsave = False
 
 # Uncorrected everything
-if True:
+if False:
     # Max vertical vorticity PPI
     fig,ax = plt.subplots(1, 1, figsize=(8,6), layout='constrained')
     plot_cfill(xx, yy, np.max(zvort, axis=0), 'vort', ax, datalims=[0,0.12],
-               xlims=[np.min(xx),np.max(xx)], ylims=[np.min(yy),np.max(yy)], cbfs=12, cmap='LangRainbow12')
+               xlims=xl, ylims=yl, cbfs=12, cmap='LangRainbow12')
     ax.scatter(x_rot, y_rot, s=30, marker='o', facecolor='w', edgecolor='k')
+    ax.set_xlabel('E-W distance from radar (km)', fontsize=14)
+    ax.set_ylabel('N-S distance from radar (km)', fontsize=14)
+    ax.plot([0,x_rot[0]], [0,y_rot[0]], '-k', linewidth=3)
+    ax.plot([0,x_rot[-1]], [0,y_rot[-1]], '-k', linewidth=3)
+    ax.plot([0,np.median(x_rot)], [0,np.median(y_rot)], '--k', linewidth=3)
     ax.set_xlabel('x distance from radar (km)', fontsize=12)
     ax.set_ylabel('y distance from radar (km)', fontsize=12)
     ax.set_title(f"{vol_time}z maximum vertical pseudovorticity (no correction)", fontsize=12)
     if figsave:
-        plt.savefig(ip+f"cross-section-panels/{vol_time}_vortPPI_uncorrected.png", dpi=300)
+        plt.savefig(ip+f"{vol_time}_vortPPI_uncorrected.png", dpi=300)
     
     
     # Velocity RHI
@@ -1358,19 +1397,12 @@ if True:
     ax.set_ylabel('Height ARL (km)', fontsize=12)
     ax.set_title(f"{vol_time}z gridded velocity RHI (no correction)", fontsize=12)
     if figsave:
-        plt.savefig(ip+f"cross-section-panels/{vol_time}_velRHI_uncorrected.png", dpi=300)
+        plt.savefig(ip+f"{vol_time}_velRHI_uncorrected.png", dpi=300)
     
     
     # Vertical vorticity cross section
     xlims = [0, 1]
     zlims = [0, 1.25]
-    zvort_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
-    x_cross = np.zeros(shape=(len(az_rot),), dtype=float)
-    for i in range(len(az_rot)):
-        ix = np.where(np.abs(xx - x_rot[i]) == np.min(np.abs(xx - x_rot[i])))[0][0]
-        iy = np.where(np.abs(yy - y_rot[i]) == np.min(np.abs(yy - y_rot[i])))[0][0]
-        zvort_cross[:,i] = zvort[:,iy,ix]
-        x_cross[i] = np.sqrt((x_rot[i]-x_rot[0])**2 + (y_rot[i]-y_rot[0])**2)
     
     fig,ax = plt.subplots(1, 1, figsize=(7,6), layout='constrained')
     c = plot_cfill(x_cross, zz, zvort_cross, 'vort', ax, datalims=[0,0.12], xlims=xlims, ylims=zlims,
@@ -1385,7 +1417,7 @@ if True:
     # cb.set_ticks(np.arange(0, 0.22, 0.02))
     cb.ax.tick_params(labelsize=12)
     if figsave:
-        plt.savefig(ip+f"cross-section-panels/{vol_time}_vortCS_uncorrected.png", dpi=300)
+        plt.savefig(ip+f"{vol_time}_vortCS_uncorrected.png", dpi=300)
 
 
 
@@ -1458,16 +1490,6 @@ if False:
 
 # Composite vertical pseudovorticity cross section (uncorrected and advection corrected)
 if False:
-    zvort_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
-    zvort_adv_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
-    x_cross = np.zeros(shape=(len(az_rot),), dtype=float)
-    for i in range(len(az_rot)):
-        ix = np.where(np.abs(xx - x_rot[i]) == np.min(np.abs(xx - x_rot[i])))[0][0]
-        iy = np.where(np.abs(yy - y_rot[i]) == np.min(np.abs(yy - y_rot[i])))[0][0]
-        zvort_cross[:,i] = zvort[:,iy,ix]
-        zvort_adv_cross[:,i] = zvort_advected[:,iy,ix]
-        x_cross[i] = np.sqrt((x_rot[i]-x_rot[0])**2 + (y_rot[i]-y_rot[0])**2)
-    
     xlims = [0, 1]
     zlims = [0, 1.25]
     
