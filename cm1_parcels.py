@@ -127,12 +127,12 @@ sil1 = silhouette_score(X1, gm1.predict(X1))
 
 
 fig,(ax1,ax2) = plt.subplots(1,2,figsize=(12,5))
-ax1.scatter(x_mv[:ti,:]/1000, y_mv[:ti,:]/1000, s=1, c=np.tile(labels1, (len(x_mv[:ti,0]),1)), marker='.', cmap='pyart_HomeyerRainbow')
+ax1.scatter(x_mv[:ti,:]/1000, y_mv[:ti,:]/1000, s=1, c=np.tile(labels1, (len(x_mv[:ti,0]),1)), marker='.', cmap='HomeyerRainbow')
 ax1.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
 ax1.set_xlim(xl)
 ax1.set_ylim(yl)
 ax1.set_title(f"Clusters, 30 dBZ (SIL = {sil1:.2f})")
-p = ax2.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=1, c=labels1, marker='.', cmap='pyart_HomeyerRainbow')
+p = ax2.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=1, c=labels1, marker='.', cmap='HomeyerRainbow')
 ax2.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
 ax2.set_xlim(xl)
 ax2.set_ylim(yl)
@@ -351,7 +351,7 @@ if True:
     qix = 1
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
-    p = ax.scatter(x_mv[:ti,::qix]/1000, y_mv[:ti,::qix]/1000, s=1, c=b_mv[:ti,::qix], marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.2, vmax=0.1)
+    p = ax.scatter(x_mv[:ti,::qix]/1000, y_mv[:ti,::qix]/1000, s=1, c=b_mv[:ti,::qix], marker='.', cmap='HomeyerRainbow', vmin=-0.2, vmax=0.1)
     ax.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
     # ax.contour(xh, yh, gaussian_filter(winterp,2), levels=[-5,5], colors='b', linewidths=1)
     ax.set_xlim(xl)
@@ -367,7 +367,7 @@ if True:
         plt.savefig(ip+f"imgs_trajectories/{img_str}_traj-buoy_{stime/60:.0f}min.png", dpi=300)
         
     fig,ax = plt.subplots(1,1,figsize=(8,6))
-    p = ax.scatter(x_mv[:ti,::qix]/1000, y_mv[:ti,::qix]/1000, s=1, c=z_mv[:ti,::qix]/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=2)
+    p = ax.scatter(x_mv[:ti,::qix]/1000, y_mv[:ti,::qix]/1000, s=1, c=z_mv[:ti,::qix]/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=2)
     ax.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
     # ax.contour(xh, yh, gaussian_filter(winterp,2), levels=[-5,5], colors='b', linewidths=1)
     ax.set_xlim(xl)
@@ -383,7 +383,7 @@ if True:
         plt.savefig(ip+f"imgs_trajectories/{img_str}_traj-z_{stime/60:.0f}min.png", dpi=300)
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
-    p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=b_mv[0,:], marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.2, vmax=0.1)
+    p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=b_mv[0,:], marker='.', cmap='HomeyerRainbow', vmin=-0.2, vmax=0.1)
     ax.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
     ax.set_xlim(xl)
     ax.set_ylim(yl)
@@ -395,7 +395,7 @@ if True:
         plt.savefig(ip+f"imgs_trajectories/{img_str}_traj-buoystart_{stime/60:.0f}min.png", dpi=300)
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
-    p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=z_mv[0,:]/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=2)
+    p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=z_mv[0,:]/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=2)
     ax.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
     ax.set_xlim(xl)
     ax.set_ylim(yl)
@@ -407,7 +407,7 @@ if True:
         plt.savefig(ip+f"imgs_trajectories/{img_str}_traj-zstart_{stime/60:.0f}min.png", dpi=300)
     
     # fig,ax = plt.subplots(1,1,figsize=(8,6))
-    # p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=w_mv[0,:], marker='.', cmap='pyart_HomeyerRainbow', vmin=-10, vmax=10)
+    # p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=w_mv[0,:], marker='.', cmap='HomeyerRainbow', vmin=-10, vmax=10)
     # ax.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
     # ax.set_xlim(xl)
     # ax.set_ylim(yl)
@@ -424,12 +424,12 @@ if True:
 # Plot trajectories colored by source
 if True:
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(12,5))
-    ax1.scatter(x_mv[:ti,:]/1000, y_mv[:ti,:]/1000, s=1, c=np.tile(cc, (len(x_mv[:ti,0]),1)), marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=4)
+    ax1.scatter(x_mv[:ti,:]/1000, y_mv[:ti,:]/1000, s=1, c=np.tile(cc, (len(x_mv[:ti,0]),1)), marker='.', cmap='HomeyerRainbow', vmin=0, vmax=4)
     ax1.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
     ax1.set_xlim(xl)
     ax1.set_ylim(yl)
     ax1.set_title(f"Trajectory clusters, 30 dBZ")
-    p = ax2.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=1, c=cc, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=4)
+    p = ax2.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=1, c=cc, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=4)
     ax2.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
     # ax2.contour(xh, yh, winterp, levels=[5], colors='r')
     ax2.set_xlim(xl)
@@ -471,7 +471,7 @@ if False:
     qix = 1
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
-    p = ax.scatter(x_src[:,::qix]/1000, y_src[:,::qix]/1000, s=1, c=z_src[:,::qix]/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3.5)
+    p = ax.scatter(x_src[:,::qix]/1000, y_src[:,::qix]/1000, s=1, c=z_src[:,::qix]/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3.5)
     ax.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
     ax.set_xlabel('E-W distance (km)')
     ax.set_ylabel('N-S distance (km)')
@@ -507,7 +507,7 @@ if False:
         plt.savefig(ip+f"imgs_trajectories/{img_str}_src1_traj-zvort_{stime/60:.0f}min.png", dpi=300)
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
-    p = ax.scatter(x_src[:,::qix]/1000, y_src[:,::qix]/1000, s=1, c=b_src[:,::qix], marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.4, vmax=0.1)
+    p = ax.scatter(x_src[:,::qix]/1000, y_src[:,::qix]/1000, s=1, c=b_src[:,::qix], marker='.', cmap='HomeyerRainbow', vmin=-0.4, vmax=0.1)
     ax.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
     ax.set_xlabel('E-W distance (km)')
     ax.set_ylabel('N-S distance (km)')
@@ -551,7 +551,7 @@ if False:
         qix = 1
         
         fig,ax = plt.subplots(1,1,figsize=(8,6))
-        p = ax.scatter(x_mv[0:tj+1,::qix]/1000, y_mv[0:tj+1,::qix]/1000, s=1, c=z_mv[0:tj+1,::qix]/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3.5)
+        p = ax.scatter(x_mv[0:tj+1,::qix]/1000, y_mv[0:tj+1,::qix]/1000, s=1, c=z_mv[0:tj+1,::qix]/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3.5)
         ax.set_xlabel('E-W distance (km)')
         ax.set_ylabel('N-S distance (km)')
         ax.set_xlim(xl)
@@ -584,7 +584,7 @@ if False:
             plt.savefig(ip+f"imgs_trajectories/{img_str}_traj-zvort_{stime2/60:.0f}min.png", dpi=300)
         
         fig,ax = plt.subplots(1,1,figsize=(8,6))
-        p = ax.scatter(x_mv[0:tj+1,::qix]/1000, y_mv[0:tj+1,::qix]/1000, s=1, c=b_mv[0:tj+1,::qix], marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.4, vmax=0.1)
+        p = ax.scatter(x_mv[0:tj+1,::qix]/1000, y_mv[0:tj+1,::qix]/1000, s=1, c=b_mv[0:tj+1,::qix], marker='.', cmap='HomeyerRainbow', vmin=-0.4, vmax=0.1)
         ax.set_xlabel('E-W distance (km)')
         ax.set_ylabel('N-S distance (km)')
         ax.set_xlim(xl)
@@ -916,8 +916,8 @@ for i in range(3):
     
     # 15*i+14 for 195/210/225, 10*i+19 for 200/210/220
     
-    # p1 = axs[0,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=z_mv1/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3)
-    p1 = axs[0,i].scatter(xp/1000, yp/1000, s=0.5, c=zp/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3)
+    # p1 = axs[0,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=z_mv1/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3)
+    p1 = axs[0,i].scatter(xp/1000, yp/1000, s=0.5, c=zp/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3)
     axs[0,i].contour(xh[ix], yh[iy], dbz_m, levels=[30], colors='k', linewidths=1)
     r1 = patches.Rectangle((xb1[10*i+19],yb1[10*i+19]), 10, 10, fc='none', ec='k', lw=2)
     axs[0,i].add_patch(r1)
@@ -925,8 +925,8 @@ for i in range(3):
     axs[0,i].set_ylim(yl)
     axs[0,i].set_title(f"{t:.0f} min", fontsize=16)
     
-    # p2 = axs[1,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=b_mv1, marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.3, vmax=0.1)
-    p2 = axs[1,i].scatter(xp/1000, yp/1000, s=0.5, c=bp, marker='.', cmap='pyart_HomeyerRainbow', vmin=-0.3, vmax=0.1)
+    # p2 = axs[1,i].scatter(x_mv1/1000, y_mv1/1000, s=1, c=b_mv1, marker='.', cmap='HomeyerRainbow', vmin=-0.3, vmax=0.1)
+    p2 = axs[1,i].scatter(xp/1000, yp/1000, s=0.5, c=bp, marker='.', cmap='HomeyerRainbow', vmin=-0.3, vmax=0.1)
     axs[1,i].contour(xh[ix], yh[iy], dbz_m, levels=[30], colors='k', linewidths=1)
     r2 = patches.Rectangle((xb1[10*i+19],yb1[10*i+19]), 10, 10, fc='none', ec='k', lw=2)
     axs[1,i].add_patch(r2)
@@ -1633,8 +1633,8 @@ if True:
     fig = plt.figure(figsize=(9,6))
     ax1 = fig.add_subplot(1,1,1, projection='3d')
     ax1.contour(xx[iyy,ixx], yy[iyy,ixx], dbz[iyy,ixx], levels=[30], zdir='z', offset=0, colors='k', linewidths=1)
-    # ax1.scatter(x_ml[:ti+1,:]/1000, y_ml[:ti+1,:]/1000, z_ml[:ti+1,:]/1000, s=10, marker='.', c=hvort_ml[:ti+1,:], cmap='pyart_HomeyerRainbow', vmin=0, vmax=0.08)
-    ax1.scatter(x_median[:ti+1]/1000, y_median[:ti+1]/1000, z_median[:ti+1]/1000, s=10, marker='.', c=np.median(vort_ml[:ti+1,:],axis=1), cmap='pyart_HomeyerRainbow', vmin=0, vmax=0.1)
+    # ax1.scatter(x_ml[:ti+1,:]/1000, y_ml[:ti+1,:]/1000, z_ml[:ti+1,:]/1000, s=10, marker='.', c=hvort_ml[:ti+1,:], cmap='HomeyerRainbow', vmin=0, vmax=0.08)
+    ax1.scatter(x_median[:ti+1]/1000, y_median[:ti+1]/1000, z_median[:ti+1]/1000, s=10, marker='.', c=np.median(vort_ml[:ti+1,:],axis=1), cmap='HomeyerRainbow', vmin=0, vmax=0.1)
     ax1.quiver(x_median[::qit]/1000, y_median[::qit]/1000, z_median[::qit]/1000, xvort_median[::qit], yvort_median[::qit], 0*zvort_median[::qit], color='b', length=100*np.mean(hvort_ml[:ti+1,:]/vort_ml[:ti+1,:]), arrow_length_ratio=0.1, normalize=False)
     ax1.quiver(x_median[::qit]/1000, y_median[::qit]/1000, z_median[::qit]/1000, 0*xvort_median[::qit], 0*yvort_median[::qit], zvort_median[::qit], color='r', length=100*np.mean(np.abs(zvort_ml[:ti+1,:])/vort_ml[:ti+1,:]), arrow_length_ratio=0.1, normalize=False)
     ax1.set_xlim(xlims)
@@ -1654,8 +1654,8 @@ if True:
     fig = plt.figure(figsize=(9,6))
     ax1 = fig.add_subplot(1,1,1, projection='3d')
     ax1.contour(xx[iyy,ixx], yy[iyy,ixx], dbz[iyy,ixx], levels=[30], zdir='z', offset=0, colors='k', linewidths=1)
-    # ax1.scatter(x_ml[:ti+1,:]/1000, y_ml[:ti+1,:]/1000, z_ml[:ti+1,:]/1000, s=10, marker='.', c=hvort_ml[:ti+1,:], cmap='pyart_HomeyerRainbow', vmin=0, vmax=0.08)
-    ax1.scatter(x_median/1000, y_median/1000, z_median/1000, s=10, marker='.', c=np.median(vort_ml[:ti+1,:],axis=1), cmap='pyart_HomeyerRainbow', vmin=0, vmax=0.1)
+    # ax1.scatter(x_ml[:ti+1,:]/1000, y_ml[:ti+1,:]/1000, z_ml[:ti+1,:]/1000, s=10, marker='.', c=hvort_ml[:ti+1,:], cmap='HomeyerRainbow', vmin=0, vmax=0.08)
+    ax1.scatter(x_median/1000, y_median/1000, z_median/1000, s=10, marker='.', c=np.median(vort_ml[:ti+1,:],axis=1), cmap='HomeyerRainbow', vmin=0, vmax=0.1)
     ax1.quiver(x_median[::qit]/1000, y_median[::qit]/1000, z_median[::qit]/1000, xvort_median[::qit], yvort_median[::qit], zvort_median[::qit], color='k', linewidth=2, length=1, arrow_length_ratio=0.2, normalize=True)
     ax1.set_xlim(xlims)
     ax1.set_ylim(ylims)
@@ -1742,7 +1742,7 @@ fig = plt.figure(figsize=(9,6))
 ax = fig.add_subplot(projection='3d')
 ax.contour(xx[iyy,ixx], yy[iyy,ixx], dbz[iyy,ixx], levels=[30], zdir='z', offset=0, colors='gray', linewidths=1)
 # p = ax.scatter3D(x_median/1000, y_median/1000, z_median/1000, s=5, marker='.',
-#                  c=np.median(vort_ml[ti0:ti+1,:],axis=1), cmap='pyart_HomeyerRainbow', vmin=0, vmax=0.1)
+#                  c=np.median(vort_ml[ti0:ti+1,:],axis=1), cmap='HomeyerRainbow', vmin=0, vmax=0.1)
 p = ax.scatter3D(x_median/1000, y_median/1000, z_median/1000, s=5, marker='.', color='dimgray')
 # a = ax.arrow3D(x_median[::qit].reshape(-1)/1000, y_median[::qit].reshape(-1)/1000, z_median[::qit].reshape(-1)/1000,
 #            xvort_median[::qit].reshape(-1)*13, yvort_median[::qit].reshape(-1)*13, zvort_median[::qit].reshape(-1),
@@ -1778,7 +1778,7 @@ if figsave:
 # fig = plt.figure(figsize=(9,6))
 # ax1 = fig.add_subplot(1,1,1, projection='3d')
 # ax1.contour(xx[iyy,ixx], yy[iyy,ixx], dbz[iyy,ixx], levels=[30], zdir='z', offset=0, colors='k', linewidths=1)
-# ax1.scatter(x_mv1[:,c1_mv1]/1000, y_mv1[:,c1_mv1]/1000, z_mv1[:,c1_mv1]/1000, s=1, c=z_mv1[:,c1_mv1]/1000, marker='.', cmap='pyart_HomeyerRainbow', vmin=0, vmax=3)
+# ax1.scatter(x_mv1[:,c1_mv1]/1000, y_mv1[:,c1_mv1]/1000, z_mv1[:,c1_mv1]/1000, s=1, c=z_mv1[:,c1_mv1]/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3)
 # ax1.set_xlim(xlims)
 # ax1.set_ylim(ylims)
 # ax1.set_zlim(zlims)
@@ -2450,9 +2450,9 @@ if figsave:
 #%% 3D plot animations colored by whatever variables - mid level MERGER source
 
 # data = ypgf_ml; datalims = [-0.02,0.02]; cm = 'seismic'; title_str = 'y-direction PPGA'; file_str = 'YPPGA'
-# data = ppga_ml; datalims = [0,0.1]; cm = 'pyart_HomeyerRainbow'; title_str = 'Total PPGA'; file_str = 'PPGA'
-# data = hppga_ml; datalims = [0,0.1]; cm = 'pyart_HomeyerRainbow'; title_str = 'Horizontal PPGA'; file_str = 'HPPGA'
-# data = z_ml; datalims = [0,3.5]; cm = 'pyart_HomeyerRainbow'; title_str = 'Height AGL'; file_str = 'z'
+# data = ppga_ml; datalims = [0,0.1]; cm = 'HomeyerRainbow'; title_str = 'Total PPGA'; file_str = 'PPGA'
+# data = hppga_ml; datalims = [0,0.1]; cm = 'HomeyerRainbow'; title_str = 'Horizontal PPGA'; file_str = 'HPPGA'
+# data = z_ml; datalims = [0,3.5]; cm = 'HomeyerRainbow'; title_str = 'Height AGL'; file_str = 'z'
 # data = traj_mv1[f"210min"]['w'][:,(cc_mv1 == 1)]; datalims = [-10,10]; cm = 'coolwarm'; title_str = 'Vertical velocity'; file_str = 'w'
 # data = traj_mv1[f"210min"]['b'][:,(cc_mv1 == 1)]; datalims = [-0.2,0.05]; cm = cmocean.cm.curl; title_str = 'Buoyancy'; file_str = 'buoy'
 data = traj_mv1[f"210min"]['zvort'][:,(cc_mv1 == 1)]; datalims = [-0.03,0.03]; cm = 'coolwarm'; title_str = 'Vertical vorticity'; file_str = 'zvort'

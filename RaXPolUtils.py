@@ -19,9 +19,9 @@ import matplotlib.dates as mdates
 from glob import glob
 from matplotlib import cm
 from matplotlib.colors import LinearSegmentedColormap
-from datetime import datetime
+from datetime import datetime,timedelta
 import cmocean
-import wrf
+import wrf # current version needs python 3.10 or 3.11 and need to install scipy first if i'm using that too
 import pickle
 # import cartopy.crs as ccrs
 from os.path import exists
@@ -35,23 +35,22 @@ warnings.filterwarnings('ignore', category=UserWarning)
 ### Define colormaps ###
 ########################
 
-# nwsdmap = LinearSegmentedColormap.from_list('nwsdmap',
-#         np.vstack((plt.cm.gray(np.linspace(0,1,12)), pyart.graph.cm.RefDiff(np.linspace(0,1,12)))))
+# I made a custom ZDR map because pyart didn't have the one from radarscope
 nwsdmap = LinearSegmentedColormap.from_list('nwsdmap',
-        np.vstack((plt.cm.gray(np.linspace(0,1,12)), pyart.graph.cm_colorblind.HomeyerRainbow(np.linspace(0,1,12)))))
+        np.vstack((plt.cm.gray(np.linspace(0,1,12)), pyart.graph.cmweather.cm_colorblind.HomeyerRainbow(np.linspace(0,1,12)))))
 
 # Define colormaps for plotting radar variables
 cmaps = {
-    'dbz': {'cm': 'pyart_NWSRef', 'label': "$Z_H$ (dBZ)"},
-    'vel': {'cm': 'pyart_Carbone42', 'label': "$v$ (m s$^{-1}$)"},
-    'sw':  {'cm': 'pyart_NWS_SPW', 'label': "SW (m s$^{-1}$)"},
+    'dbz': {'cm': 'NWSRef', 'label': "$Z_H$ (dBZ)"},
+    'vel': {'cm': 'balance', 'label': "$v$ (m s$^{-1}$)"},
+    'sw':  {'cm': 'NWS_SPW', 'label': "SW (m s$^{-1}$)"},
     'zdr': {'cm': nwsdmap, 'label': "$Z_{DR}$ (dB)"},
-    'rhohv': {'cm': 'pyart_LangRainbow12', 'label': "\u03C1$_{HV}$"},
-    'temp': {'cm': 'pyart_HomeyerRainbow', 'label': "$T$ (C)"},
+    'rhohv': {'cm': 'LangRainbow12', 'label': "\u03C1$_{HV}$"},
+    'temp': {'cm': 'HomeyerRainbow', 'label': "$T$ (C)"},
     'dewpt': {'cm': cmocean.cm.algae, 'label': "$T_D$ (C)"},
-    'theta': {'cm': 'pyart_HomeyerRainbow', 'label': "\u03B8 (K)"},
-    'vort': {'cm': 'pyart_ChaseSpectral', 'label': "Pseudovorticity (s$^{-1}$)"},
-    'div': {'cm': 'pyart_balance', 'label': "Pseudodivergence (s$^{-1}$)"}
+    'theta': {'cm': 'HomeyerRainbow', 'label': "\u03B8 (K)"},
+    'vort': {'cm': 'ChaseSpectral', 'label': "Pseudovorticity (s$^{-1}$)"},
+    'div': {'cm': 'balance', 'label': "Pseudodivergence (s$^{-1}$)"}
 }
 
 #%%
@@ -71,9 +70,10 @@ def latlon2xy(lat, lon, lat_o, lon_o):
     
     r_earth = 6378.1 # km
     
-    thy = lat_o*np.pi/180
+    thy = lat_o*np.pi/180 # convert to radians
     thz = -lon_o*np.pi/180
     
+    # transform matrices
     Ry = [[np.cos(thy), 0, np.sin(thy)],
           [0, 1, 0],
           [-np.sin(thy), 0, np.cos(thy)]]
@@ -82,18 +82,20 @@ def latlon2xy(lat, lon, lat_o, lon_o):
           [np.sin(thz), np.cos(thz), 0],
           [0, 0, 1]]
     
+    # i'm actually not sure exactly how this works, i just copied this function from some of Boonleng's code
     R = np.matmul(Ry,Rz)
     xyz = r_earth * np.array([np.cos(lat*np.pi/180) * np.cos(lon*np.pi/180),
                 np.cos(lat*np.pi/180) * np.sin(lon*np.pi/180),
                 np.sin(lat*np.pi/180)])
     
+    # get x and y positions
     posx = np.matmul(R[1],xyz)
     posy = np.matmul(R[2],xyz)
     
     return posx,posy
 
 
-# Convert x/y distances relative to an origin point to lat/lon
+# Convert x/y distances relative to an origin point back to lat/lon
 def xy2latlon(x, y, lat_o, lon_o):
     # x, y: 1-D vectors of xy positions relative to an origin point in km
     # lat_o, lon_o: lat/lon of origin in decimal deg N/deg E
@@ -112,7 +114,7 @@ def xy2latlon(x, y, lat_o, lon_o):
     return lat_deg,lon_deg
 
 
-# Compute distances of mobile mesonet data to meso (Tyler Pardun's code)
+# Compute distances of mobile mesonet data to meso (adapted from Tyler Pardun's code)
 def compute_distances(meso_times, meso_lats, meso_lons, point_times, point_lats, point_lons, max_time_diff=60):
     """
     Compute distances from each point to the mesocyclone location at the closest time step.
@@ -162,11 +164,17 @@ def compute_distances(meso_times, meso_lats, meso_lons, point_times, point_lats,
     return np.array(distances)
 
 
-# Read RaXPol .nc files and load data into dict
-def read_raxpol(fn):
-    # fn: full path and filename
+
+# Grid radar data to a Cartesian grid using fast Barnes interpolation
+def grid_PPI(file):
+    from fastbarnes.interpolation import barnes
     
-    ds = nc.Dataset(fn)
+    
+
+# Read RaXPol CFradial files and load data into dict because it's easier than digging for the data in pyart objects
+def read_raxpol(file):
+    # file: full file path
+    ds = nc.Dataset(file)
     
     vol_num = ds.variables['volume_number'][:].data # volume index
     swp_start = ds.variables['time_coverage_start'][:].data #UTC
@@ -229,7 +237,9 @@ def read_raxpol(fn):
 
 
 # Read mobile mesonet .dat files and load data into dict
-def read_MM_dat(fn):
+def read_MM_dat(file):
+    # file = full file path
+    
     # 3 - Derived_WS (m/s)
     # 4 - Derived_WD (deg)
     # 5 - SlowT (C)
@@ -247,7 +257,7 @@ def read_MM_dat(fn):
     # 24 - Flux_Dir (deg)
     
     cols = [3,4,5,7,8,10,11,12,13,15,16,17,18,19]
-    df = pd.read_fwf(fn, sep='\t', usecols=cols, engine='python')
+    df = pd.read_fwf(file, sep='\t', usecols=cols, engine='python')
     
     #datestr = [str(dat.date[i]) if len(str(dat.date[i]))==6 else '0'+str(dat.date[i]) for i in range(len(df))]
     #timestr = [str(dat.time[i]) if len(str(dat.time[i]))==6 else '0'+str(dat.time[i]) for i in range(len(df))]
@@ -265,23 +275,23 @@ def read_MM_dat(fn):
     
     dat = {'date':df['GPSDate'].values, 'time':df['GPSTime'].values, 'veh_dir':veh_dir,
            'veh_spd':veh_spd, 'lat':df['GPS_Lat'].values, 'lon':df['GPS_Lon'].values,
-           'alt':df['GPS_Alt'].values, 'SlowT':df['SlowT'].values, 'Utube':df['UT_FastT'].values,
+           'alt':df['GPS_Alt'].values, 'Tslow':df['SlowT'].values, 'Tfast':df['UT_FastT'].values,
            'Dewpt':df['Tdc'].values, 'Pres':df['Pressure'].values, 'wspd':df['Derived_WS'].values,
            'wdir':df['Derived_WD'].values, 'uwind':uwind, 'vwind':vwind}
     
-    if "Probe_1" in fn: # P1 Utube temp is biased high
-        dat.update({'Utube':dat['Utube']-1.23})
+    if "Probe_1" in file: # P1 temp is biased high
+        dat.update({'Tfast':dat['Tfast']-1.23})
         
     # Time averaging
     av_period = [3, 10, 60]
     for n in av_period:
-        dat.update({f"SlowT_{n}s":movmean(dat['SlowT'],n), f"Utube_{n}s":movmean(dat['Utube'],n),
+        dat.update({f"Tslow_{n}s":movmean(dat['Tslow'],n), f"Tfast_{n}s":movmean(dat['Tfast'],n),
                     f"Dewpt_{n}s":movmean(dat['Dewpt'],n), f"Pres_{n}s":movmean(dat['Pres'],n),
                     f"wspd_{n}s":movmean(dat['wspd'],n), f"uwind_{n}s":movmean(dat['uwind'],n),
                     f"vwind_{n}s":movmean(dat['vwind'],n)})
     
     if True:
-        T_K = dat['Utube'] + 273.15
+        T_K = dat['Tfast'] + 273.15
         Td_K = dat['Dewpt'] + 273.15
         e = 6.11*np.exp(2.5e6/461.5 * (1/273.15 - 1/Td_K))
         qv = 0.622 * e/(dat['Pres'] - e)
@@ -294,13 +304,12 @@ def read_MM_dat(fn):
         for n in av_period:
             dat.update({f"Theta_{n}s":movmean(theta,n), f"ThetaV_{n}s":movmean(theta_v,n),
                         f"ThetaE_{n}s":movmean(theta_e,n)})
-    
     return dat
 
 
-# Function to create 2D colorfill plots
+# Wrapper function for pcolormesh because i like my code to be readable
 def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
-               cmap=None, cbar=True, cbfs=None, **kwargs):
+               cmap=None, cbar=True, cbfs=None, cbts=None, **kwargs):
     if cmap is None:
         cm, cb_label = cmaps[field]['cm'], cmaps[field]['label']
     else:
@@ -327,6 +336,8 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
             cb.set_label(cb_label)
         else:
             cb.set_label(cb_label, fontsize=cbfs)
+        if cbts is not None:
+            cb.ax.tick_params(labelsize=cbts)
     
     if xlims is not None:
         ax.set_xlim(xlims[0], xlims[1])
@@ -336,7 +347,7 @@ def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
     return c
 
 
-# Wrapper function for contourf
+# Wrapper function for contourf because i like my code to be readable
 def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None, ylims=None,
                   cmap=None, cbar=True, cbfs=None, **kwargs):
     if cmap is None:
@@ -380,7 +391,7 @@ def plot_contourf(x, y, data, field, ax, levels=None, datalims=None, xlims=None,
     return c
 
 
-# Automate saving data to new or existing pickle file
+# Automate saving data to new or existing pickle file because i'm insane
 def save_to_pickle(data, pkl_fname, new_pkl=False):
     # data: dict of variables to save
     # pkl_fname: filename to save data to (includes path)

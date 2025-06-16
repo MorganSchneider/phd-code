@@ -1707,25 +1707,25 @@ if figsave:
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-cf = plot_contourf(xh, yh, tilt_x[iz,:,:], 'xvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+cf = plot_contourf(xh, yh, tilt_x[iz,:,:], 'xvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,0].set_title(f"Tilting")
 
-plot_contourf(xh, yh, stretch_x[iz,:,:], 'xvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, stretch_x[iz,:,:], 'xvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,1].set_title(f"Stretching")
 
-plot_contourf(xh, yh, bcl_x[iz,:,:], 'xvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, bcl_x[iz,:,:], 'xvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[1,0].set_title(f"Baroclinic")
 
-plot_contourf(xh, yh, fric_x[iz,:,:], 'xvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, fric_x[iz,:,:], 'xvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
@@ -1739,25 +1739,25 @@ if figsave:
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-cf = plot_contourf(xh, yh, tilt_y[iz,:,:], 'yvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+cf = plot_contourf(xh, yh, tilt_y[iz,:,:], 'yvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,0].set_title(f"Tilting")
 
-plot_contourf(xh, yh, stretch_y[iz,:,:], 'yvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, stretch_y[iz,:,:], 'yvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,1].set_title(f"Stretching")
 
-plot_contourf(xh, yh, bcl_y[iz,:,:], 'yvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, bcl_y[iz,:,:], 'yvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[1,0].set_title(f"Baroclinic")
 
-plot_contourf(xh, yh, fric_y[iz,:,:], 'yvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, fric_y[iz,:,:], 'yvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
@@ -1776,25 +1776,25 @@ hvort_levs = [0.05, 0.1]
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-cf = plot_contourf(xh, yh, tilt_h[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+cf = plot_contourf(xh, yh, tilt_h[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,0].set_title(f"Tilting")
 
-plot_contourf(xh, yh, stretch_h[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, stretch_h[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,1].set_title(f"Stretching")
 
-plot_contourf(xh, yh, bcl_h[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, bcl_h[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[1,0].set_title(f"Baroclinic")
 
-plot_contourf(xh, yh, fric_h[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, fric_h[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
@@ -1813,26 +1813,26 @@ if figsave:
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh, yh, tilt_sw[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, tilt_sw[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 # ax[0,0].clabel(c, fontsize=8, inline=True)
 ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,0].set_title(f"Tilting")
 
-plot_contourf(xh, yh, stretch_sw[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, stretch_sw[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,1].set_title(f"Stretching")
 
-plot_contourf(xh, yh, bcl_sw[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, bcl_sw[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[1,0].set_title(f"Baroclinic")
 
-plot_contourf(xh, yh, fric_sw[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, fric_sw[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
@@ -1848,26 +1848,26 @@ if figsave:
 
 fig,ax = plt.subplots(2,2, figsize=(11,8), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xh, yh, tilt_cw[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, tilt_cw[iz,:,:], 'hvort', ax[0,0], levels=tlevs, datalims=tlims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # c = ax[0,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 # ax[0,0].clabel(c, fontsize=8, inline=True)
 ax[0,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,0].set_title(f"Tilting")
 
-plot_contourf(xh, yh, stretch_cw[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, stretch_cw[iz,:,:], 'hvort', ax[0,1], levels=slevs, datalims=slims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[0,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[0,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[0,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[0,1].set_title(f"Stretching")
 
-plot_contourf(xh, yh, bcl_cw[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, bcl_cw[iz,:,:], 'hvort', ax[1,0], levels=blevs, datalims=blims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,0].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,0].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,0].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
 ax[1,0].set_title(f"Baroclinic")
 
-plot_contourf(xh, yh, fric_cw[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='pyart_balance')
+plot_contourf(xh, yh, fric_cw[iz,:,:], 'hvort', ax[1,1], levels=flevs, datalims=flims, xlims=xlims, ylims=ylims, cmap='balance')
 # ax[1,1].contour(xh, yh, w, levels=[5,10,15], colors=['gray','k','k'], linewidths=[1.5,1.5,3], linestyles='-')
 # ax[1,1].contour(xh, yh, hvort, levels=hvort_levs, colors='k', linewidths=1)
 ax[1,1].scatter(x_ml[it,:], y_ml[it,:], s=sz, color='k', marker='.')
@@ -2915,7 +2915,7 @@ levs1 = np.append(np.append([-0.01], levs1), [0.01])
 levs2 = np.append(np.append([-0.01], levs2), [0.01])
 levs3 = np.append(np.append([-0.01], levs3), [0.01])
 
-cm = 'pyart_balance'
+cm = 'balance'
 
 ### Vertical ###
 fig,ax = plt.subplots(3, 2, figsize=(7,9), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
@@ -3443,7 +3443,7 @@ yl2 = [yh2[iy2][0], yh2[iy2][-1]]
 lims = [-1e-4, 1e-4]; levs = np.linspace(lims[0], lims[1], 41)
 levs = np.append(np.append([-0.01], levs), [0.01])
 
-cm = 'pyart_balance'
+cm = 'balance'
 
 
 plot_time = 210

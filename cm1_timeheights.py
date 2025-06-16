@@ -258,7 +258,7 @@ if False:
         plt.savefig(ip+f"imgs_timeheights/timeheight_{fn}_OW.png", dpi=300)
     
     fig,ax = plt.subplots(1,1,figsize=(12,5))
-    plot_cfill(times, zz, wspd_max, 'wspd', ax, datalims=[25,50], cmap='pyart_HomeyerRainbow')
+    plot_cfill(times, zz, wspd_max, 'wspd', ax, datalims=[25,50], cmap='HomeyerRainbow')
     # ax.contour(times, zz, wspd_max, levels=[25], colors='k', linewidths=1, linestyles='-')
     ax.axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax.set_xlabel('Time (min)')
@@ -387,7 +387,7 @@ if False:
 # # Pressure perturbation components
 # if False:
 #     fig,ax = plt.subplots(1,1,figsize=(12,5))
-#     plot_cfill(times, zz, p_dn_min/100, 'prspert', ax, datalims=[-6,0], cmap='pyart_HomeyerRainbow')
+#     plot_cfill(times, zz, p_dn_min/100, 'prspert', ax, datalims=[-6,0], cmap='HomeyerRainbow')
 #     ax.contour(times, zz, w_max, levels=[15,20], colors='white', linewidths=1.5)
 #     # ax.contour(times, zz, zvort_max, levels=[0.09,0.1], colors='k', linewidths=1.5, linestyles='-')
 #     ax.contour(times, zz, OW_min, levels=[-0.01,-0.001], colors='k', linewidths=1.5, linestyles='-')
@@ -476,13 +476,13 @@ dbfile.close()
 ztop = 4
 
 # cm = cmocean.tools.lighten(plt.get_cmap('Blues_r'), 0.8)
-# cm = cmocean.tools.lighten(pyart.graph.cm_colorblind.HomeyerRainbow_r, 0.6)
-# cm = 'pyart_Bu10_r'
+# cm = cmocean.tools.lighten(pyart.graph.cmweather.cm_colorblind.HomeyerRainbow_r, 0.6)
+# cm = 'Bu10_r'
 # cm = cmocean.cm.thermal_r
 cm = 'Blues_r'
 # cm = 'Spectral'
-# cm = 'pyart_LangRainbow12_r'
-# cm = 'pyart_HomeyerRainbow_r'
+# cm = 'LangRainbow12_r'
+# cm = 'HomeyerRainbow_r'
 
 
 figsave = False
@@ -882,7 +882,7 @@ dbfile.close()
 
 
 # cm = cmocean.tools.lighten(plt.get_cmap('Blues_r'), 0.8)
-# cm = cmocean.tools.lighten(pyart.graph.cm_colorblind.HomeyerRainbow_r, 0.6)
+# cm = cmocean.tools.lighten(pyart.graph.cmweather.cm_colorblind.HomeyerRainbow_r, 0.6)
 cm = 'Blues_r'
 
 fig,((ax1),(ax2)) = plt.subplots(2, 1, figsize=(8,5), sharex=True, sharey=True, layout='constrained')

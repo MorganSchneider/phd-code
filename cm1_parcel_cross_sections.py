@@ -447,14 +447,14 @@ if False:
 
 # CROSS SECTION, 1 PANEL - shade thrpert; contour p'; parcels colored by w
 if False: # this one is True
-    # parcel_cm = 'pyart_ChaseSpectral'
+    # parcel_cm = 'ChaseSpectral'
     import matplotlib as mpl
     # parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
     #                     np.vstack((plt.cm.Spectral_r(np.linspace(0,0.5,128)),
-    #                     pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,128)))))
+    #                     pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,128)))))
     parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
-                        np.vstack((pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.5,154)),
-                        pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,102)))))
+                        np.vstack((pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.5,154)),
+                        pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,102)))))
     wl = [-15,10]
     
     fig,ax = plt.subplots(1,1,figsize=(10,4), layout='constrained')
@@ -553,10 +553,10 @@ if False:
     import matplotlib as mpl
     # parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
     #                     np.vstack((plt.cm.Spectral_r(np.linspace(0,0.5,128)),
-    #                     pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,128)))))
+    #                     pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,128)))))
     parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
-                        np.vstack((pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.5,154)),
-                        pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,102)))))
+                        np.vstack((pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.5,154)),
+                        pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,102)))))
     wl = [-15,10]
     
     fig,ax = plt.subplots(1,1,figsize=(9,6), subplot_kw=dict(box_aspect=1), layout='constrained')
@@ -651,7 +651,7 @@ def add_vectors(ax, x, y, dx, dy, z, lengthscale=10, *args, **kwargs):
     return arrow
 
 from matplotlib.colors import LinearSegmentedColormap
-cmap = LinearSegmentedColormap.from_list('cmap', pyart.graph.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.9,205)))
+cmap = LinearSegmentedColormap.from_list('cmap', pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.9,205)))
 
 
 
@@ -662,7 +662,7 @@ ax.contour(xh[ix], yh[iy], dbz, levels=[30], colors='gray', linewidths=1, zorder
 p = ax.scatter(x_median, y_median, s=40, c=z_median, cmap=cmap, vmin=0, vmax=3)
 cb = plt.colorbar(p, ax=ax, extend='max')
 cb.set_label("Parcel height (km)", fontsize=13)
-# p = ax.scatter(x_median, y_median, s=30, c=zvort_median, cmap='pyart_ChaseSpectral', vmin=-0.04, vmax=0.04)
+# p = ax.scatter(x_median, y_median, s=30, c=zvort_median, cmap='ChaseSpectral', vmin=-0.04, vmax=0.04)
 # cb = plt.colorbar(p, ax=ax, label="Parcel \u03B6 (s$^{-1}$)", extend='both')
 a_wind = add_vectors(ax, x_median[::qit], y_median[::qit], u_sr, v_sr, z_median[::qit],
             lengthscale=0.2, arrowstyle='simple', mutation_scale=5, ec='k', fc='k', lw=0.5)

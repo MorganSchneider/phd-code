@@ -17,6 +17,7 @@ from RaxpolUtils import *
 # u bias: +/- 0.16 m/s
 # v bias: +/- 0.02 m/s
 
+
 # Probe 1 - Tyler's bias-corrected files
 ds = nc.Dataset('/Users/morgan.schneider/Documents/perils2023/iop2/mesonet/Probe_1_IOP2_QC_all.nc')
 P1 = dict(time=ds.variables['time'][:].data+21600,
@@ -74,20 +75,27 @@ rax_lat = rax.latitude['data'][0]
 rax_lon = rax.longitude['data'][0]
 
 
-meso_x = np.array([-2.2, -1.8, -1.5, -1.2, -0.4, -0.05, 0.35, 0.65, 1.0, 1.3])
-meso_y = np.array([1.5, 2.0, 2.3, 2.7, 3.0, 3.5, 3.9, 4.3, 4.7, 5.2])
-meso_x = np.linspace(-2.2, 1.3, 11)
-meso_y = np.linspace(1.5, 5.2, 11)
+# based on reflectivity leading edge
+meso_x = np.array([-3.2, -2.7, -2.2, -1.8, -1.4, -1.0, -0.5, -0.1, 0.3, 0.7, 1.1, 1.4, 1.9])
+meso_y = np.array([ 0.2,  0.6,  1.0,  1.4,  1.8,  2.2,  2.6,  3.0, 3.3, 3.6, 3.9, 4.2, 4.6])
+
+# based on velocity couplet/vortex locs
+# meso_x = np.array([-2.6, -2.35, -2.1, -1.8, -1.5, -1.3, -1.0, -0.4, -0.15, 0.25, 0.6,  0.9, 1.2])
+# meso_y = np.array([ 0.5,  0.9,   1.3,  1.7,  2.0,  2.25, 2.6,  2.9,  3.4,  3.9,  4.25, 4.8, 5.4])
+
 meso_lats,meso_lons = xy2latlon(meso_x, meso_y, rax_lat, rax_lon)
 
 # convert all the vortex loc x/y to lat/lons, then figure out how to find and track a center point
 # --> center on the visible couplet (vortex 3)? use the scans where it's visible to get couplet motion
 # and then back out the position for the earlier times
 
-meso_times = [datetime(2023,3,3,8,20,0), datetime(2023,3,3,8,20,30), datetime(2023,3,3,8,21,0),
-              datetime(2023,3,3,8,21,30), datetime(2023,3,3,8,22,0), datetime(2023,3,3,8,22,30), datetime(2023,3,3,8,23,0),
-              datetime(2023,3,3,8,23,30), datetime(2023,3,3,8,24,0), datetime(2023,3,3,8,24,30),
-              datetime(2023,3,3,8,25,0)]
+meso_times = [datetime(2023,3,3,8,18,58), datetime(2023,3,3,8,19,28),
+              datetime(2023,3,3,8,19,58), datetime(2023,3,3,8,20,28),
+              datetime(2023,3,3,8,20,58), datetime(2023,3,3,8,21,28),
+              datetime(2023,3,3,8,21,58), datetime(2023,3,3,8,22,28),
+              datetime(2023,3,3,8,22,58), datetime(2023,3,3,8,23,28),
+              datetime(2023,3,3,8,23,58), datetime(2023,3,3,8,24,28),
+              datetime(2023,3,3,8,24,58)]
 
 
 P1_distances = compute_distances(meso_times, meso_lats, meso_lons, P1_times, P1['lat'], P1['lon'])
@@ -100,18 +108,43 @@ P2_dy = P2_distances[:,1]
 
 P1_x = P1_dx[(~np.isnan(P1_dx))]
 P1_y = P1_dy[(~np.isnan(P1_dy))]
-P1_temp = P1['temp_unbiased'][(~np.isnan(P1_dx))]
+P1_temp = P1['temp_raw'][(~np.isnan(P1_dx))]-1.25
+P1_pres = P1['pres_unbiased'][(~np.isnan(P1_dx))]
+P1_rh = P1['rh_unbiased'][(~np.isnan(P1_dx))]
 P1_u = P1['u_corr'][(~np.isnan(P1_dx))]
 P1_v = P1['v_corr'][(~np.isnan(P1_dx))]
 P1_wspd = P1['wspd_corr'][(~np.isnan(P1_dx))]
 P1_wdir = P1['wdir_corr'][(~np.isnan(P1_dx))]
 P2_x = P2_dx[(~np.isnan(P2_dx))]
 P2_y = P2_dy[(~np.isnan(P2_dy))]
-P2_temp = P2['temp_unbiased'][(~np.isnan(P2_dx))]
+P2_temp = P2['temp_raw'][(~np.isnan(P2_dx))]
+P2_pres = P2['pres_unbiased'][(~np.isnan(P2_dx))]
+P2_rh = P2['rh_unbiased'][(~np.isnan(P2_dx))]
 P2_u = P2['u_corr'][(~np.isnan(P2_dx))]
 P2_v = P2['v_corr'][(~np.isnan(P2_dx))]
 P2_wspd = P2['wspd_corr'][(~np.isnan(P2_dx))]
 P2_wdir = P2['wdir_corr'][(~np.isnan(P2_dx))]
+
+
+P1_theta = (P1_temp+273.15) * (1000/P1_pres)**0.286
+P2_theta = (P2_temp+273.15) * (1000/P2_pres)**0.286
+
+P1_es = 6.11*np.exp(2.5e6/461.5 * (1/273.15 - 1/(P1_temp+273.15)))
+P2_es = 6.11*np.exp(2.5e6/461.5 * (1/273.15 - 1/(P2_temp+273.15)))
+
+P1_e = P1_es * P1_rh
+P2_e = P2_es * P2_rh
+
+P1_qv = 0.622 * P1_e/(P1_pres - P1_e)
+P2_qv = 0.622 * P2_e/(P2_pres - P2_e)
+
+P1_thetav = P1_theta * (1 + 0.61*P1_qv)
+P2_thetav = P2_theta * (1 + 0.61*P2_qv)
+
+P1_thpert = P1_theta - 294.3
+P2_thpert= P2_theta - 294.3
+P1_thvpert = P1_thetav - 296.7
+P2_thvpert = P2_thetav - 296.7
 
 
 # saved raxpol data from circuit
@@ -134,10 +167,17 @@ filetime = vol[vi]['scan_time'][eli]
 # vortex 2: vi = 8-13
 # vortex 3: vi = 8-17
 # vortex 4: vi = 9-12
-# rotor: vi = 8
 
-x_rot = np.append(locs[filetime]['vortex2']['x'], locs[filetime]['vortex3']['x'])
-y_rot = np.append(locs[filetime]['vortex2']['y'], locs[filetime]['vortex3']['y'])
+# x_rot = np.append(locs[filetime]['vortex2']['x'], locs[filetime]['vortex3']['x'])
+# y_rot = np.append(locs[filetime]['vortex2']['y'], locs[filetime]['vortex3']['y'])
+
+x_rot = np.array([])
+y_rot = np.array([])
+
+for key in list(locs[filetime].keys()):
+    if 'vortex' in key:
+        x_rot = np.append(x_rot, locs[filetime][key]['x'])
+        y_rot = np.append(y_rot, locs[filetime][key]['y'])
 
 
 #%%
@@ -147,24 +187,63 @@ ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/'
 figsave = False
 
 
-if True:
-    xl = [-4, 4]
-    yl = [0, 8]
+
+vi = 16
+eli = 1
+filetime = vol[vi]['scan_time'][eli]
+
+x_rot = np.array([])
+y_rot = np.array([])
+for key in list(locs[filetime].keys()):
+    if 'vortex' in key:
+        x_rot = np.append(x_rot, locs[filetime][key]['x'])
+        y_rot = np.append(y_rot, locs[filetime][key]['y'])
+
+x_rot = locs[filetime]['vortex3']['x']
+y_rot = locs[filetime]['vortex3']['y']
+
+sep = 30
+
+if vi == 9:
+    idx = slice(1,7)
+elif vi == 13:
+    idx = slice(6,12)
+elif vi == 16:
+    idx = slice(11,17)
+
+
+x1 = P1_x[::sep][idx]
+y1 = P1_y[::sep][idx]+3.3
+u1 = P1_u[::sep][idx]
+v1 = P1_v[::sep][idx]
+T1 = P1_temp[::sep][idx]
+
+x2 = P2_x[::sep][idx]
+y2 = P2_y[::sep][idx]+3.3
+u2 = P2_u[::sep][idx]
+v2 = P2_v[::sep][idx]
+T2 = P2_temp[::sep][idx]
+
+
+if False:
+    xl = [-5, 5]
+    yl = [0, 10]
     
-    datalims = [19,21]
+    datalims = [18,21]
+    
     
     fig,(ax1,ax2) = plt.subplots(1,2,figsize=(11.5,4), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['dbz'][eli,:,:], 'dbz', ax1, datalims=[0,70], xlims=xl, ylims=yl)
-    ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax1.scatter(x_rot, y_rot, s=30, c='k', marker='.')
     ax1.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} reflectivity", fontsize=14)
     ax1.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax1.set_ylabel('N-S distance from radar (km)', fontsize=12)
-    b1 = ax1.barbs(P1_x[::30], P1_y[::30]+3.5, P1_u[::30], P1_v[::30], barbcolor='k', length=7)
-    b2 = ax1.barbs(P2_x[::30], P2_y[::30]+3.5, P2_u[::30], P2_v[::30], barbcolor='k', length=7)
-    s1 = ax1.scatter(P1_x[::30], P1_y[::30]+3.5, s=50, c=P1_temp[::30], cmap=cmaps['temp']['cm'],
+    b1 = ax1.barbs(x1, y1, u1, v1, barbcolor='k', length=7)
+    b2 = ax1.barbs(x2, y2, u2, v2, barbcolor='k', length=7)
+    s1 = ax1.scatter(x1, y1, s=50, c=T1, cmap=cmaps['temp']['cm'],
                     vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k')
-    s2 = ax1.scatter(P2_x[::30], P2_y[::30]+3.5, s=50, c=P2_temp[::30], cmap=cmaps['temp']['cm'],
+    s2 = ax1.scatter(x2, y2, s=50, c=T2, cmap=cmaps['temp']['cm'],
                     vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k')
     ax1.scatter(0, 0, s=50, c='k')
     ax1.text(-1, 0.4, 'RaXPol', fontsize=12, fontweight='bold')
@@ -173,15 +252,15 @@ if True:
     # ax1.plot(vol[vi]['xx'][eli,azi,:], vol[vi]['yy'][eli,azi,:], '--k', linewidth=1.25)
     
     plot_cfill(vol[vi]['xx'][eli,:,:], vol[vi]['yy'][eli,:,:], vol[vi]['vel'][eli,:,:], 'vel', ax2, datalims=[-30,30], xlims=xl, ylims=yl)
-    ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax2.scatter(x_rot, y_rot, s=30, c='k', marker='.')
     ax2.set_title(f"{filetime} UTC {vol[vi]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=14)
     ax2.set_xlabel('E-W distance from radar (km)', fontsize=12)
     ax2.set_ylabel('N-S distance from radar (km)', fontsize=12)
-    b1 = ax2.barbs(P1_x[::30], P1_y[::30]+3.5, P1_u[::30], P1_v[::30], barbcolor='k', length=7)
-    b2 = ax2.barbs(P2_x[::30], P2_y[::30]+3.5, P2_u[::30], P2_v[::30], barbcolor='k', length=7)
-    s1 = ax2.scatter(P1_x[::30], P1_y[::30]+3.5, s=50, c=P1_temp[::30], cmap=cmaps['temp']['cm'],
+    b1 = ax2.barbs(x1, y1, u1, v1, barbcolor='k', length=7)
+    b2 = ax2.barbs(x2, y2, u2, v2, barbcolor='k', length=7)
+    s1 = ax2.scatter(x1, y1, s=50, c=T1, cmap=cmaps['temp']['cm'],
                     vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k')
-    s2 = ax2.scatter(P2_x[::30], P2_y[::30]+3.5, s=50, c=P2_temp[::30], cmap=cmaps['temp']['cm'],
+    s2 = ax2.scatter(x2, y2, s=50, c=T2, cmap=cmaps['temp']['cm'],
                     vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k')
     ax2.scatter(0, 0, s=50, c='k')
     ax2.text(-1, 0.4, 'RaXPol', fontsize=12, fontweight='bold')
@@ -194,6 +273,115 @@ if True:
     if figsave:
         plt.savefig(ip+f"vol{vi}_{filetime}_PPI_MMCircuit.png", dpi=300)
 
+
+
+if True:
+    xl = [-5, 5]
+    yl = [0, 10]
+    
+    P1_c = P1_temp; P2_c = P2_temp; datalims = [19,20.4]; cmap = cmaps['temp']['cm']
+    P1_c = P1_thvpert; P2_c = P2_thvpert; datalims = [-1, 1]; cmap = 'PuOr_r' #was 'bwr'
+    
+    sep = 30
+    i1 = slice(1,7)
+    i2 = slice(6,12)
+    i3 = slice(11,17)
+    # (1,7), (6,12), (11,17) for sep=30
+    # (1,9), (9,17), (17,25) for sep=20
+    
+    
+    fig,ax = plt.subplots(2, 2, figsize=(8.25,8), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
+    
+    c = plot_cfill(vol[9]['xx'][eli,:,:], vol[9]['yy'][eli,:,:], np.ma.masked_array(vol[9]['vel'][eli,:,:], vol[9]['dbz'][eli,:,:]<1), 'vel', ax[0,0], datalims=[-30,30], xlims=xl, ylims=yl, cmap='balance', cbar=False)
+    # ax[0,0].scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax[0,0].set_title(f"{vol[9]['scan_time'][eli]} UTC {vol[9]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=12)
+    ax[0,0].set_ylabel('N-S distance from radar (km)', fontsize=14)
+    # b1 = ax[0,0].barbs(P1_x[::sep][i1], P1_y[::sep][i1]+3.3, P1_u[::sep][i1], P1_v[::sep][i1], barbcolor='k', length=7)
+    # b2 = ax[0,0].barbs(P2_x[::sep][i1], P2_y[::sep][i1]+3.3, P2_u[::sep][i1], P2_v[::sep][i1], barbcolor='k', length=7)
+    # ax[0,0].quiver(P1_x[::sep][i1], P1_y[::sep][i1]+3.3, P1_u[::sep][i1], P1_v[::sep][i1], color='k', scale=75, width=0.008, pivot='tail')
+    # ax[0,0].quiver(P2_x[::sep][i1], P2_y[::sep][i1]+3.3, P2_u[::sep][i1], P2_v[::sep][i1], color='k', scale=75, width=0.008, pivot='tail')
+    s1 = ax[0,0].scatter(P1_x[::sep][i1], P1_y[::sep][i1]+3.3, s=60, c=P1_c[::sep][i1], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k', linewidth=0.75)
+    s2 = ax[0,0].scatter(P2_x[::sep][i1], P2_y[::sep][i1]+3.3, s=60, c=P2_c[::sep][i1], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k', linewidth=0.75)
+    # ax[0,0].quiver(P1_x[::sep][i1], P1_y[::sep][i1]+3.3, P1_u[::sep][i1], P1_v[::sep][i1], color='k', scale=75, width=0.008, pivot='tail')
+    # ax[0,0].quiver(P2_x[::sep][i1], P2_y[::sep][i1]+3.3, P2_u[::sep][i1], P2_v[::sep][i1], color='k', scale=75, width=0.008, pivot='tail')
+    ax[0,0].scatter(0, 0.15, s=50, c='k')
+    ax[0,0].text(-4.8, 9.0, 'a)', fontsize=20, fontweight='bold', color='k')
+    ax[0,0].text(-1.5, 9.2, '0819-0821 UTC', fontsize=16, fontweight='bold')
+    ax[0,0].text(-0.4, 0.4, 'RaXPol', fontsize=16, fontweight='bold')
+    ax[0,0].legend([s1,s2], ['Probe 1', 'Probe 2'], loc='lower left', fontsize=12)
+    
+    plot_cfill(vol[13]['xx'][eli,:,:], vol[13]['yy'][eli,:,:], np.ma.masked_array(vol[13]['vel'][eli,:,:], vol[13]['dbz'][eli,:,:]<1), 'vel', ax[0,1], datalims=[-30,30], xlims=xl, ylims=yl, cmap='balance', cbar=False)
+    # ax[0,0].scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax[0,1].set_title(f"{vol[13]['scan_time'][eli]} UTC {vol[9]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=12)
+    # b1 = ax[0,1].barbs(P1_x[::sep][i2], P1_y[::sep][i2]+3.3, P1_u[::sep][i2], P1_v[::sep][i2], barbcolor='k', length=7)
+    # b2 = ax[0,1].barbs(P2_x[::sep][i2], P2_y[::sep][i2]+3.3, P2_u[::sep][i2], P2_v[::sep][i2], barbcolor='k', length=7)
+    # ax[0,1].quiver(P1_x[::sep][i2], P1_y[::sep][i2]+3.3, P1_u[::sep][i2], P1_v[::sep][i2], color='k', scale=75, width=0.008, pivot='tail')
+    # ax[0,1].quiver(P2_x[::sep][i2], P2_y[::sep][i2]+3.3, P2_u[::sep][i2], P2_v[::sep][i2], color='k', scale=75, width=0.008, pivot='tail')
+    ax[0,1].scatter(P1_x[::sep][i2], P1_y[::sep][i2]+3.3, s=60, c=P1_c[::sep][i2], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k', linewidth=0.75)
+    ax[0,1].scatter(P2_x[::sep][i2], P2_y[::sep][i2]+3.3, s=60, c=P2_c[::sep][i2], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k', linewidth=0.75)
+    # ax[0,1].quiver(P1_x[::sep][i2], P1_y[::sep][i2]+3.3, P1_u[::sep][i2], P1_v[::sep][i2], color='k', scale=75, width=0.008, pivot='tail')
+    # ax[0,1].quiver(P2_x[::sep][i2], P2_y[::sep][i2]+3.3, P2_u[::sep][i2], P2_v[::sep][i2], color='k', scale=75, width=0.008, pivot='tail')
+    ax[0,1].scatter(0, 0.15, s=50, c='k')
+    ax[0,1].text(-4.8, 9.0, 'b)', fontsize=20, fontweight='bold', color='k')
+    ax[0,1].text(-1.5, 9.2, '0821-0823 UTC', fontsize=16, fontweight='bold')
+    ax[0,1].text(-0.4, 0.4, 'RaXPol', fontsize=16, fontweight='bold')
+    
+    plot_cfill(vol[16]['xx'][eli,:,:], vol[16]['yy'][eli,:,:], np.ma.masked_array(vol[16]['vel'][eli,:,:], vol[16]['dbz'][eli,:,:]<1), 'vel', ax[1,0], datalims=[-30,30], xlims=xl, ylims=yl, cmap='balance', cbar=False)
+    # ax[0,0].scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax[1,0].set_title(f"{vol[16]['scan_time'][eli]} UTC {vol[9]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=12)
+    ax[1,0].set_xlabel('E-W distance from radar (km)', fontsize=14)
+    ax[1,0].set_ylabel('N-S distance from radar (km)', fontsize=14)
+    # b1 = ax[1,0].barbs(P1_x[::sep][i3], P1_y[::sep][i3]+3.3, P1_u[::sep][i3], P1_v[::sep][i3], barbcolor='k', length=7)
+    # b2 = ax[1,0].barbs(P2_x[::sep][i3], P2_y[::sep][i3]+3.3, P2_u[::sep][i3], P2_v[::sep][i3], barbcolor='k', length=7)
+    # ax[1,0].quiver(P1_x[::sep][i3], P1_y[::sep][i3]+3.3, P1_u[::sep][i3], P1_v[::sep][i3], color='k', scale=75, width=0.008, pivot='tail')
+    # ax[1,0].quiver(P2_x[::sep][i3], P2_y[::sep][i3]+3.3, P2_u[::sep][i3], P2_v[::sep][i3], color='k', scale=75, width=0.008, pivot='tail')
+    ax[1,0].scatter(P1_x[::sep][i3], P1_y[::sep][i3]+3.3, s=60, c=P1_c[::sep][i3], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k', linewidth=0.75)
+    ax[1,0].scatter(P2_x[::sep][i3], P2_y[::sep][i3]+3.3, s=60, c=P2_c[::sep][i3], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k', linewidth=0.75)
+    # ax[1,0].quiver(P1_x[::sep][i3], P1_y[::sep][i3]+3.3, P1_u[::sep][i3], P1_v[::sep][i3], color='k', scale=75, width=0.008, pivot='tail')
+    # ax[1,0].quiver(P2_x[::sep][i3], P2_y[::sep][i3]+3.3, P2_u[::sep][i3], P2_v[::sep][i3], color='k', scale=75, width=0.008, pivot='tail')
+    ax[1,0].scatter(0, 0.15, s=50, c='k')
+    ax[1,0].text(-4.8, 9.0, 'c)', fontsize=20, fontweight='bold', color='k')
+    ax[1,0].text(-1.5, 9.2, '0823-0825 UTC', fontsize=16, fontweight='bold')
+    ax[1,0].text(-0.4, 0.4, 'RaXPol', fontsize=16, fontweight='bold')
+    
+    plot_cfill(vol[13]['xx'][eli,:,:], vol[13]['yy'][eli,:,:], np.ma.masked_array(vol[13]['vel'][eli,:,:], vol[13]['dbz'][eli,:,:]<1), 'vel', ax[1,1], datalims=[-30,30], xlims=xl, ylims=yl, cmap='balance', cbar=False)
+    # ax[0,0].scatter(x_rot, y_rot, s=30, c='k', marker='.')
+    # ax[1,1].set_title(f"{vol[13]['scan_time'][eli]} UTC {vol[9]['elev'][eli].round(1)}\N{DEGREE SIGN} radial velocity", fontsize=12)
+    ax[1,1].set_xlabel('E-W distance from radar (km)', fontsize=14)
+    # b1 = ax[1,1].barbs(P1_x[::sep], P1_y[::sep]+3.3, P1_u[::sep], P1_v[::sep], barbcolor='k', length=7)
+    # b2 = ax[1,1].barbs(P2_x[::sep], P2_y[::sep]+3.3, P2_u[::sep], P2_v[::sep], barbcolor='k', length=7)
+    ax[1,1].scatter(P1_x[::sep], P1_y[::sep]+3.3, s=60, c=P1_c[::sep], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='s', edgecolors='k', linewidth=0.75)
+    ax[1,1].scatter(P2_x[::sep], P2_y[::sep]+3.3, s=60, c=P2_c[::sep], cmap=cmap,
+                    vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k', linewidth=0.75)
+    # ax[1,1].scatter(P1_x, P1_y+3.3, s=40, c=P1_c, cmap=cmap, vmin=datalims[0], vmax=datalims[1], marker='.')
+    # ax[1,1].scatter(P2_x, P2_y+3.3, s=40, c=P2_c, cmap=cmap, vmin=datalims[0], vmax=datalims[1], marker='.')
+    ax[1,1].quiver(P1_x[::sep], P1_y[::sep]+3.3, P1_u[::sep], P1_v[::sep], color='k', scale=75, width=0.008, pivot='tail')
+    ax[1,1].quiver(P2_x[::sep], P2_y[::sep]+3.3, P2_u[::sep], P2_v[::sep], color='k', scale=75, width=0.008, pivot='tail')
+    ax[1,1].scatter(0, 0.15, s=50, c='k')
+    ax[1,1].text(-4.8, 9.0, 'd)', fontsize=20, fontweight='bold', color='k')
+    # ax[1,1].text(-1.5, 9.2, '0819-0825 UTC', fontsize=16, fontweight='bold')
+    ax[1,1].text(-0.2, 9.2, 'Full circuit', fontsize=18, fontweight='bold')
+    ax[1,1].text(-0.4, 0.4, 'RaXPol', fontsize=16, fontweight='bold')
+    
+    cb1 = plt.colorbar(c, ax=[ax[1,0],ax[1,1]], extend='both', orientation='horizontal', aspect=30)
+    cb1.set_label("RaXPol velocity (m s$^{-1}$)", fontsize=14)
+    cb1.ax.tick_params(labelsize=12)
+    cb2 = plt.colorbar(s1, ax=[ax[0,1],ax[1,1]], extend='both', aspect=30)
+    # cb2.set_label("Temperature ($^{\circ}$C)", fontsize=16)
+    cb2.set_label("Mesonet \u03B8'$_v$ (K)", fontsize=16)
+    cb2.set_ticks(np.arange(-1, 1.2, 0.2))
+    cb2.ax.tick_params(labelsize=12)
+    
+    if figsave:
+        plt.savefig(ip+'circuit_thvpert.png', dpi=300)
+    
 
 
 #%%

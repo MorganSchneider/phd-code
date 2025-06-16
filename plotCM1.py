@@ -360,7 +360,7 @@ if figsave:
 
 #%% Make single time overview plots (dBZ, w, thrpert, zvort)
 ######################
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/qlcs-125m/'
 
 wlims = [-15,15]
 thr_lims = [-15,15]
@@ -1454,7 +1454,7 @@ if False:
     # ax_hod = inset_axes(skew.ax, '42%', '42%', loc=1)
     # H = Hodograph(ax_hod, component_range=50.)
     # H.add_grid(increment=10)
-    # hod = H.plot_colormapped(u0, v0, z, cmap='pyart_HomeyerRainbow', linewidth=1.5)
+    # hod = H.plot_colormapped(u0, v0, z, cmap='HomeyerRainbow', linewidth=1.5)
     # H.ax.set_xlim([-20,50])
     # H.ax.set_ylim([-20,50])
     
@@ -1462,7 +1462,7 @@ if False:
     ax_cb = skew.ax.inset_axes([1.0, 0.56, 0.025, 0.42])
     H = Hodograph(ax_hod, component_range=50.)
     H.add_grid(increment=10)
-    hod = H.plot_colormapped(u0, v0, z, cmap='pyart_HomeyerRainbow', linewidth=3)
+    hod = H.plot_colormapped(u0, v0, z, cmap='HomeyerRainbow', linewidth=3)
     H.ax.set_xlim([-20,50])
     H.ax.set_ylim([-20,50])
     H.ax.set_xticks(np.linspace(-20,50,8))
@@ -1619,6 +1619,87 @@ if False:
         d2 = np.max(ds.variables['pgfz_b'][:].data[0:-2,:,:])
         print(f"{ff[-5:-3]}: {d:.3f}, {d2:.3f}")
         ds.close()
+
+
+# Save thrpert and thr0 to cm1out files so I don't have to move the pp files to NSSL storage
+# ** haven't run merger yet but I have run supercell and qlcs ** this might take me above 10TB idk
+if False:
+    sim = 'merger'
+    
+    for fnum in np.arange(14,73):
+        print(f"File {sim}-125m/cm1out_{fnum:06d}.nc ...")
+        
+        ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/{sim}-125m/pp/dyn_{fnum:06d}.nc")
+        thr_pert = ds.variables['thrpert'][:].data
+        thr_0 = ds.variables['thr0'][:].data
+        ds.close()
+        
+        ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/{sim}-125m/cm1out_{fnum:06d}.nc", 'r+')
+        
+        print( "... Writing thrpert ...")
+        thrpert = ds.createVariable('thrpert', 'f4', ('nk', 'nj', 'ni'))
+        thrpert.units = 'K'
+        thrpert.long_name = 'perturbation density potential temperature'
+        thrpert[:,:,:] = thr_pert[:,:,:]
+        
+        
+        print("... Writing thr0 ...")
+        thr0 = ds.createVariable('thr0', 'f4', ('nk'))
+        thr0.units = 'K'
+        thr0.long_name = 'base state density potential temperature'
+        thr0[:] = thr_0[:]
+        
+        ds.close()
+        
+        print("... Done!\n ---")
+        
+        del thr_pert,thr_0,thrpert,thr0
+
+
+
+
+
+if False:
+    fn = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/cm1out_000013.nc'
+    
+    ds = nc.Dataset(fn)
+    thr = ds.variables['th'][:].data[0,:,:,:] * (1 + 0.61*ds.variables['qv'][:].data[0,:,:,:] - 
+                (ds.variables['qc'][:].data[0,:,:,:] + ds.variables['qr'][:].data[0,:,:,:] + 
+                 ds.variables['qi'][:].data[0,:,:,:] + ds.variables['qs'][:].data[0,:,:,:] + 
+                 ds.variables['qg'][:].data[0,:,:,:] + ds.variables['qhl'][:].data[0,:,:,:]))
+    thr_0 = ds.variables['th0'][:].data[0,:,:,:] * (1 + 0.61*ds.variables['qv0'][:].data[0,:,:,:])
+    thr_pert = thr - thr_0
+    thr_0 = thr_0[:,-1,-1]
+    del thr
+    ds.close()
+    
+    
+    ds = nc.Dataset(fn, 'r+')
+    
+    print( "... Writing thrpert ...")
+    thrpert = ds.createVariable('thrpert', 'f4', ('nk', 'nj', 'ni'))
+    thrpert.units = 'K'
+    thrpert.long_name = 'perturbation density potential temperature'
+    thrpert[:,:,:] = thr_pert[:,:,:]
+    
+    print("... Writing thr0 ...")
+    thr0 = ds.createVariable('thr0', 'f4', ('nk'))
+    thr0.units = 'K'
+    thr0.long_name = 'base state density potential temperature'
+    thr0[:] = thr_0[:]
+    
+    ds.close()
+    
+    print("... Done!\n ---")
+    
+    del thr_pert,thr_0,thrpert,thr0
+
+
+
+
+
+
+
 
 
 
