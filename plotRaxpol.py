@@ -18,7 +18,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 figsave = False
 
 fp = '/Users/morgan.schneider/Documents/perils2023/iop2/'
-filetime = '081910'
+filetime = '082206'
 fn = glob(fp+f"raxpol/CFradial_cal/*_{filetime}_*.nc")[0]
 
 # rax = read_raxpol(fn)
@@ -49,13 +49,13 @@ c = pyart.graph.RadarDisplay(raxpol)
 
 fig = plt.figure(figsize=(9,6))
 ax = fig.add_subplot(111)
-# c.plot('DBZ', 0, vmin=0, vmax=70, cmap='NWSRef')
-c.plot('VEL', 0, vmin=-30, vmax=30, cmap='balance')
+c.plot('DBZ', 0, vmin=0, vmax=70, cmap='NWSRef')
+# c.plot('VEL', 0, vmin=-30, vmax=30, cmap='balance')
 # c.plot('RHOHV', 0, vmin=0.8, vmax=1, cmap='LangRainbow12')
 # c.plot('ZDR', 0, vmin=-5, vmax=5, cmap=nwsdmap)
 # c.plot_range_rings([2.5, 5, 7.5, 10])
 ax.set_xlim([-5,5])
-ax.set_ylim([-2,8])
+ax.set_ylim([-5,5])
 plt.text(0, 0.2, 'RaXPol', fontsize=12, fontweight='bold')
 # b1 = ax.barbs(P1['xx'][i1], P1['yy'][i1], P1['uwind'][i1], P1['vwind'][i1], barbcolor='k', length=9)
 # b2 = ax.barbs(P2['xx'][i2], P2['yy'][i2], P2['uwind'][i2], P2['vwind'][i2], barbcolor='k', length=9)
@@ -64,13 +64,13 @@ plt.text(0, 0.2, 'RaXPol', fontsize=12, fontweight='bold')
 # s2 = ax.scatter(P2['xx'][i2], P2['yy'][i2], s=175, c=P2['Tfast'][i2], cmap=cmaps['temp']['cm'],
 #                 vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k')
 ax.scatter(0, 0, s=30, c='k')
-ax.scatter(-2.6, 0.6, s=20, c='k', marker='x')
+# ax.scatter(-2.6, 0.6, s=20, c='k', marker='x')
 # plt.colorbar(s1,label='Sfc temperature (C)')
 # plt.legend([s1,s2], ['Probe 1', 'Probe 2'], loc='upper right')
 plt.show()
 
 if figsave:
-    plt.savefig(fp+f"figs/dbz+T_{filetime}.png", dpi=400)
+    plt.savefig(fp+f"figs/vel+T_{filetime}.png", dpi=400)
 
 
 #%% COW data IOP2
@@ -1187,14 +1187,14 @@ for vn in range(len(vols)):
 
 
 
-#%% Reconstructed RHIs and PPIs from gridded data
+#%% Reconstructed RHIs and PPIs from advection-corrected gridded data (includes actual dissertation/paper figures)
 
-vol_time = '082100'
+vol_time = '082030'
 
 figsave = False
 
-fp = '/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/' # raxpol cfradial file path
-ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/cross-section-panels/' # image save path
+fp = '/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/'
+ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/cross-section-panels/'
 
 xl = [np.min(xx), np.max(xx)]
 yl = [np.min(yy), np.max(yy)]
@@ -1203,25 +1203,58 @@ yl = [np.min(yy), np.max(yy)]
 if vol_time == '082030':
     xl = [-3.0, 0.0]
     yl = [0.5, 3.5]
+    xlims = [0, 1.0]
+    zlims = [0, 1.25]
+    r_rot = 2.65
+    az_rot = np.arange(314, 332)
+    azimuth = 321
 elif vol_time == '082100':
     xl = [-2.5, 0.5]
     yl = [0.5, 3.5]
+    xlims = [0, 1]
+    zlims = [0, 1.25]
+    r_rot = 2.7
+    az_rot = np.arange(323, 342)
 elif vol_time == '082130':
     xl = [-2.5, 0.5]
     yl = [1.0, 4.0]
+    xlims = [0, 1]
+    zlims = [0, 1.25]
+    r_rot = 2.72
+    az_rot = np.arange(329, 343)
 elif vol_time == '082230':
     xl = [-2.0, 1.0]
     yl = [2.0, 5.0]
+    xlims = [0, 1]
+    zlims = [0, 1.25]
+    r_rot = 3.45
+    az_rot = np.arange(351, 363)
+    # r_rot = np.linspace(2.95, 3.85, 7)
+    # az_rot = np.arange(353, 360)
 elif vol_time == '082300':
     xl = [-1.5, 1.5]
     yl = [2.5, 5.5]
+    xlims = [0, 1]
+    zlims = [0, 1.25]
+    r_rot = 3.8
+    az_rot = np.array([356, 357, 358, 359, 0, 1, 2, 3, 4, 5, 6, 7])
+    # r_rot = np.linspace(3.4, 4.2, 9)
+    # az_rot = np.array([357, 358, 359, 0, 1, 2, 3, 4, 5])
 elif vol_time == '082330':
     xl = [-1.0, 2.0]
     yl = [2.5, 5.5]
+    xlims = [0, 1]
+    zlims = [0, 1.25]
+    r_rot = 4.2
+    az_rot = np.arange(2, 11)
+    # r_rot = np.linspace(3.85, 4.5, 5)
+    # az_rot = np.arange(3, 8)
 else:
     xl = [np.min(xx), np.max(xx)]
     yl = [np.min(yy), np.max(yy)]
 
+x_rot = r_rot * np.sin(az_rot*np.pi/180)
+y_rot = r_rot * np.cos(az_rot*np.pi/180)
 
 dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/vel_grid_{vol_time}.pkl", 'rb')
 data = pickle.load(dbfile)
@@ -1242,20 +1275,19 @@ zvort_advected = data['zvort_grid']
 dbfile.close()
 
 
-if 'locs' not in locals():
-    dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/raxpol_vortex_locs.pkl', 'rb')
-    locs = pickle.load(dbfile)
-    dbfile.close()
+# if 'locs' not in locals():
+#     dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/raxpol_vortex_locs.pkl', 'rb')
+#     locs = pickle.load(dbfile)
+#     dbfile.close()
 
-vortex_num = 3
-az_rot = locs[vol_time][f"vortex{vortex_num}"]['az']
-r_rot = locs[vol_time][f"vortex{vortex_num}"]['r']
+# vortex_num = 3
+# az_rot = locs[vol_time][f"vortex{vortex_num}"]['az']
+# r_rot = locs[vol_time][f"vortex{vortex_num}"]['r']
 # z_rot = locs[vol_time][f"vortex{vortex_num}"]['z']
-x_rot = locs[vol_time][f"vortex{vortex_num}"]['x']
-y_rot = locs[vol_time][f"vortex{vortex_num}"]['y']
+# x_rot = locs[vol_time][f"vortex{vortex_num}"]['x']
+# y_rot = locs[vol_time][f"vortex{vortex_num}"]['y']
 
-# x_rot = np.array([])
-# y_rot = np.array([])
+
 
 # for key in list(locs[vol_time].keys()):
 #     if 'vortex' in key:
@@ -1265,7 +1297,8 @@ y_rot = locs[vol_time][f"vortex{vortex_num}"]['y']
 # vortex_num = '-all'
 
 # # azimuth = round(np.mean(az_rot))
-azimuth = az_rot[round(len(az_rot)/2)]
+# azimuth = az_rot[round(len(az_rot)/2)]
+# azimuth = 322
 irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
 
@@ -1306,69 +1339,77 @@ R = np.sqrt(xx**2 + yy**2)
 
 
 # Composite vertical pseudovorticity cross sections
-zvort_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
-zvort_adv_cross = np.zeros(shape=(len(zz),len(az_rot)), dtype=float)
-x_cross = np.zeros(shape=(len(az_rot),), dtype=float)
-for i in range(len(az_rot)):
+zvort_cross = np.zeros(shape=(len(zz),len(x_rot)), dtype=float)
+zvort_adv_cross = np.zeros(shape=(len(zz),len(x_rot)), dtype=float)
+x_cross = np.zeros(shape=(len(x_rot),), dtype=float)
+for i in range(len(x_rot)):
     ix = np.where(np.abs(xx - x_rot[i]) == np.min(np.abs(xx - x_rot[i])))[0][0]
     iy = np.where(np.abs(yy - y_rot[i]) == np.min(np.abs(yy - y_rot[i])))[0][0]
     zvort_cross[:,i] = zvort[:,iy,ix]
     zvort_adv_cross[:,i] = zvort_advected[:,iy,ix]
     x_cross[i] = np.sqrt((x_rot[i]-x_rot[0])**2 + (y_rot[i]-y_rot[0])**2)
 
+i_rhi = np.where(az_rot == azimuth)[0][0]
+x_rhi = x_cross[i_rhi]
+
 
 # Advection-corrected everything
 if True:
     # Max vertical vorticity PPI
-    fig,ax = plt.subplots(1, 1, figsize=(8,6), layout='constrained')
-    plot_cfill(xx, yy, np.max(zvort_advected, axis=0), 'vort', ax, datalims=[0,0.12],
+    fig,ax = plt.subplots(1, 1, figsize=(8,6), subplot_kw=dict(box_aspect=1), layout='constrained')
+    plot_cfill(xx, yy, np.max(zvort_advected, axis=0), 'vort', ax, datalims=[0,0.15],
                xlims=xl, ylims=yl, cbfs=12, cmap='LangRainbow12')
     ax.scatter(x_rot, y_rot, s=30, marker='o', facecolor='w', edgecolor='k')
     ax.set_xlabel('E-W distance from radar (km)', fontsize=14)
     ax.set_ylabel('N-S distance from radar (km)', fontsize=14)
     ax.plot([0,x_rot[0]], [0,y_rot[0]], '-k', linewidth=3)
     ax.plot([0,x_rot[-1]], [0,y_rot[-1]], '-k', linewidth=3)
-    ax.plot([0,np.median(x_rot)], [0,np.median(y_rot)], '--k', linewidth=3)
+    ax.plot([0,x_rot[irot]], [0,y_rot[irot]], '--k', linewidth=3)
     ax.set_xlabel('x distance from radar (km)', fontsize=12)
     ax.set_ylabel('y distance from radar (km)', fontsize=12)
-    ax.set_title(f"{vol_time}z maximum vertical pseudovorticity (advection-corrected)", fontsize=12)
+    # ax.set_title(f"{vol_time}z maximum vertical pseudovorticity (advection-corrected)", fontsize=12)
     if figsave:
         plt.savefig(ip+f"{vol_time}_vortPPI_advected.png", dpi=300)
     
     
     # Velocity RHI
-    fig,ax = plt.subplots(1, 1, figsize=(10,4), layout='constrained')
+    fig,ax = plt.subplots(1, 1, figsize=(9,3), subplot_kw=dict(box_aspect=1/3), layout='constrained')
     plot_cfill(rr, zz, vel_adv_rhi, 'vel', ax, datalims=[-20,20], xlims=[0,r_ray], ylims=[0,2], cbfs=12)
     ax.invert_xaxis()
     ax.set_xlabel('Range from radar (km)', fontsize=12)
     ax.set_ylabel('Height ARL (km)', fontsize=12)
-    ax.set_title(f"{vol_time}z gridded velocity RHI (advection-corrected)", fontsize=12)
+    # ax.set_title(f"{vol_time}z gridded velocity RHI (advection-corrected)", fontsize=12)
     if figsave:
         plt.savefig(ip+f"{vol_time}_velRHI_advected.png", dpi=300)
     
     
     # Vertical vorticity cross section
-    xlims = [0, 1.0]
-    zlims = [0, 1.25]
-    
-    fig,ax = plt.subplots(1, 1, figsize=(7,6), layout='constrained')
-    c = plot_cfill(x_cross, zz, zvort_adv_cross, 'vort', ax, datalims=[0,0.12], xlims=xlims, ylims=zlims,
+    fig,ax = plt.subplots(1, 1, figsize=(6.5,6), subplot_kw=dict(box_aspect=1.25), layout='constrained')
+    c = plot_cfill(x_cross, zz, zvort_adv_cross, 'vort', ax, datalims=[0,0.15], xlims=xlims, ylims=zlims,
                    cmap='LangRainbow12', cbfs=12, cbts=12, cbar=False)
-    ax.set_title(f"{vol_time}z vertical pseudovorticity (advection-corrected)", fontsize=12)
+    # ax.plot([x_rhi, x_rhi], [0, 1.25], '-k', linewidth=1)
+    # ax.set_title(f"{vol_time}z vertical pseudovorticity (advection-corrected)", fontsize=12)
     ax.set_ylabel('Height ARL (km)', fontsize=14)
     ax.set_xlabel('Arc length (km)', fontsize=14)
-    # ax.set_xticks(xtick_pos)
-    # ax.set_xticklabels(xtick_lab)
     cb = plt.colorbar(c, ax=ax, extend='max', aspect=30)
     cb.set_label("Vertical pseudovorticity (s$^{-1}$)", fontsize=14)
-    # cb.set_ticks(np.arange(0, 0.22, 0.02))
     cb.ax.tick_params(labelsize=12)
     if figsave:
         plt.savefig(ip+f"{vol_time}_vortCS_advected.png", dpi=300)
 
 
 
+
+# fig,ax = plt.subplots(1, 1, figsize=(9,3), subplot_kw=dict(box_aspect=1/3), layout='constrained')
+# plot_cfill(rr, zz, np.ma.masked_array(zvort_adv_rhi, zvort_adv_rhi==0), 'vort', ax, datalims=[0, 0.15], xlims=[0,r_ray], ylims=[0,2], cbfs=12, cmap='LangRainbow12')
+# ax.invert_xaxis()
+# ax.set_xlabel('Range from radar (km)', fontsize=12)
+# ax.set_ylabel('Height ARL (km)', fontsize=12)
+# ax.plot([r_rot, r_rot], [0, 1.25], '-k', linewidth=1.25)
+# plt.show()
+
 figsave = False
+
 
 # Uncorrected everything
 if False:
@@ -1490,9 +1531,6 @@ if False:
 
 # Composite vertical pseudovorticity cross section (uncorrected and advection corrected)
 if False:
-    xlims = [0, 1]
-    zlims = [0, 1.25]
-    
     # Uncorrected
     # fig,ax = plt.subplots(1, 1, figsize=(6,6), subplot_kw=dict(box_aspect=z_max/l), layout='constrained')
     fig,ax = plt.subplots(1, 1, figsize=(7,6), layout='constrained')

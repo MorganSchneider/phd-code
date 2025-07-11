@@ -76,8 +76,11 @@ rax_lon = rax.longitude['data'][0]
 
 
 # based on reflectivity leading edge
-meso_x = np.array([-3.2, -2.7, -2.2, -1.8, -1.4, -1.0, -0.5, -0.1, 0.3, 0.7, 1.1, 1.4, 1.9])
-meso_y = np.array([ 0.2,  0.6,  1.0,  1.4,  1.8,  2.2,  2.6,  3.0, 3.3, 3.6, 3.9, 4.2, 4.6])
+# meso_x = np.array([-3.2, -2.7, -2.2, -1.8, -1.4, -1.0, -0.5, -0.1, 0.3, 0.7, 1.1, 1.4, 1.9])
+# meso_y = np.array([ 0.2,  0.6,  1.0,  1.4,  1.8,  2.2,  2.6,  3.0, 3.3, 3.6, 3.9, 4.2, 4.6])
+
+meso_x = np.array([-2.6, -1.95, -1.6, -1.3, -1.05, -0.15, 0.3, 0.6, 0.9, 1.3]) #couplet positions at volume center times
+meso_y = np.array([0.6, 1.2, 1.6, 2.0, 2.5, 3.6, 4.1, 4.7, 5.2, 5.8])
 
 # based on velocity couplet/vortex locs
 # meso_x = np.array([-2.6, -2.35, -2.1, -1.8, -1.5, -1.3, -1.0, -0.4, -0.15, 0.25, 0.6,  0.9, 1.2])
@@ -89,13 +92,11 @@ meso_lats,meso_lons = xy2latlon(meso_x, meso_y, rax_lat, rax_lon)
 # --> center on the visible couplet (vortex 3)? use the scans where it's visible to get couplet motion
 # and then back out the position for the earlier times
 
-meso_times = [datetime(2023,3,3,8,18,58), datetime(2023,3,3,8,19,28),
-              datetime(2023,3,3,8,19,58), datetime(2023,3,3,8,20,28),
-              datetime(2023,3,3,8,20,58), datetime(2023,3,3,8,21,28),
-              datetime(2023,3,3,8,21,58), datetime(2023,3,3,8,22,28),
-              datetime(2023,3,3,8,22,58), datetime(2023,3,3,8,23,28),
-              datetime(2023,3,3,8,23,58), datetime(2023,3,3,8,24,28),
-              datetime(2023,3,3,8,24,58)]
+meso_times = [datetime(2023,3,3,8,19,10), datetime(2023,3,3,8,20,10),
+              datetime(2023,3,3,8,20,40), datetime(2023,3,3,8,21,10),
+              datetime(2023,3,3,8,21,36), datetime(2023,3,3,8,22,40),
+              datetime(2023,3,3,8,23,10), datetime(2023,3,3,8,23,40),
+              datetime(2023,3,3,8,24,10), datetime(2023,3,3,8,24,40)]
 
 
 P1_distances = compute_distances(meso_times, meso_lats, meso_lons, P1_times, P1['lat'], P1['lon'])
@@ -289,6 +290,50 @@ if True:
     # (1,7), (6,12), (11,17) for sep=30
     # (1,9), (9,17), (17,25) for sep=20
     
+    u_P1 = P1_u[::sep]
+    v_P1 = P1_v[::sep]
+    for i in range(len(P1_u[::sep])):
+        ind = i * sep
+        if np.isnan(P1_u[::sep][i]):
+            isnan = True
+            ct = 0
+            while (isnan) & (ct<11):
+                if np.isnan(P1_u[ind-ct]) & np.isnan(P1_u[ind+ct]):
+                    isnan = True
+                    ct += 1
+                elif ~np.isnan(P1_u[ind-ct]):
+                    u_P1[i] = P1_u[ind-ct]
+                    v_P1[i] = P1_v[ind-ct]
+                    isnan = False
+                    ct += 1
+                elif ~np.isnan(P1_u[ind+ct]):
+                    u_P1[i] = P1_u[ind+ct]
+                    v_P1[i] = P1_v[ind+ct]
+                    isnan = False
+                    ct += 1
+                    
+    u_P2 = P2_u[::sep]
+    v_P2 = P2_v[::sep]
+    for i in range(len(P2_u[::sep])):
+        ind = i * sep
+        if np.isnan(P2_u[::sep][i]):
+            isnan = True
+            ct = 0
+            while (isnan) & (ct<11):
+                if np.isnan(P2_u[ind-ct]) & np.isnan(P2_u[ind+ct]):
+                    isnan = True
+                    ct += 1
+                elif ~np.isnan(P2_u[ind-ct]):
+                    u_P2[i] = P2_u[ind-ct]
+                    v_P2[i] = P2_v[ind-ct]
+                    isnan = False
+                    ct += 1
+                elif ~np.isnan(P2_u[ind+ct]):
+                    u_P2[i] = P2_u[ind+ct]
+                    v_P2[i] = P2_v[ind+ct]
+                    isnan = False
+                    ct += 1
+    
     
     fig,ax = plt.subplots(2, 2, figsize=(8.25,8), sharex=True, sharey=True, subplot_kw=dict(box_aspect=1), layout='constrained')
     
@@ -362,8 +407,12 @@ if True:
                     vmin=datalims[0], vmax=datalims[1], marker='^', edgecolors='k', linewidth=0.75)
     # ax[1,1].scatter(P1_x, P1_y+3.3, s=40, c=P1_c, cmap=cmap, vmin=datalims[0], vmax=datalims[1], marker='.')
     # ax[1,1].scatter(P2_x, P2_y+3.3, s=40, c=P2_c, cmap=cmap, vmin=datalims[0], vmax=datalims[1], marker='.')
-    ax[1,1].quiver(P1_x[::sep], P1_y[::sep]+3.3, P1_u[::sep], P1_v[::sep], color='k', scale=75, width=0.008, pivot='tail')
-    ax[1,1].quiver(P2_x[::sep], P2_y[::sep]+3.3, P2_u[::sep], P2_v[::sep], color='k', scale=75, width=0.008, pivot='tail')
+    # ax[1,1].quiver(P1_x[::sep], P1_y[::sep]+3.3, P1_u[::sep], P1_v[::sep], color='k', scale=100, width=0.008, pivot='tail')
+    # ax[1,1].quiver(P2_x[::sep], P2_y[::sep]+3.3, P2_u[::sep], P2_v[::sep], color='k', scale=100, width=0.008, pivot='tail')
+    ax[1,1].quiver(P1_x[::sep], P1_y[::sep]+3.3, u_P1, v_P1, color='k', scale=100, width=0.008, pivot='tail')
+    ax[1,1].quiver(P2_x[::sep], P2_y[::sep]+3.3, u_P2, v_P2, color='k', scale=100, width=0.008, pivot='tail')
+    ax[1,1].quiver(-4.5, 0.5, 10, 0, color='k', scale=100, width=0.008, pivot='tail')
+    ax[1,1].text(-4.5, 0.8, '10 m/s', fontsize=12, fontweight='bold')
     ax[1,1].scatter(0, 0.15, s=50, c='k')
     ax[1,1].text(-4.8, 9.0, 'd)', fontsize=20, fontweight='bold', color='k')
     # ax[1,1].text(-1.5, 9.2, '0819-0825 UTC', fontsize=16, fontweight='bold')
@@ -381,7 +430,21 @@ if True:
     
     if figsave:
         plt.savefig(ip+'circuit_thvpert.png', dpi=300)
-    
+
+
+# Very rough estimate of divergence at the NTV
+u1 = P1_u[::sep][4] # i1[3]
+v1 = P1_v[::sep][4]
+x1 = P1_x[::sep][4] * 1000
+y1 = P1_y[::sep][4] * 1000
+u2 = P2_u[::sep][13] # i3[2]
+v2 = P2_v[::sep][13]
+x2 = P2_x[::sep][13] * 1000
+y2 = P2_y[::sep][13] * 1000
+
+dx = x1-x2; dy = y1-y2; du = u1-u2; dv = v1-v2
+
+div = du/dx + dv/dy
 
 
 #%%
