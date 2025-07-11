@@ -226,6 +226,7 @@ v2 = P2_v[::sep][idx]
 T2 = P2_temp[::sep][idx]
 
 
+# single figure
 if False:
     xl = [-5, 5]
     yl = [0, 10]
@@ -276,6 +277,8 @@ if False:
 
 
 
+
+# 4 panels - 1st leg, 2nd legs, 3rd leg, full circuit
 if True:
     xl = [-5, 5]
     yl = [0, 10]
@@ -432,7 +435,7 @@ if True:
         plt.savefig(ip+'circuit_thvpert.png', dpi=300)
 
 
-# Very rough estimate of divergence at the NTV
+# Extremely rough estimate of divergence at the NTV
 u1 = P1_u[::sep][4] # i1[3]
 v1 = P1_v[::sep][4]
 x1 = P1_x[::sep][4] * 1000

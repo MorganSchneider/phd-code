@@ -1189,15 +1189,26 @@ for vn in range(len(vols)):
 
 #%% Reconstructed RHIs and PPIs from advection-corrected gridded data (includes actual dissertation/paper figures)
 
-vol_time = '082030'
+vol_time = '082130'
 
 figsave = False
 
 fp = '/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/'
 ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/cross-section-panels/'
 
-xl = [np.min(xx), np.max(xx)]
-yl = [np.min(yy), np.max(yy)]
+# xl = [np.min(xx), np.max(xx)]
+# yl = [np.min(yy), np.max(yy)]
+
+dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/vel_grid_{vol_time}.pkl", 'rb')
+data = pickle.load(dbfile)
+vel = data['vel_grid']
+zvort = data['zvort_grid']
+xx = data['x_grid']
+yy = data['y_grid']
+zz = data['z_grid']
+sweep_times = data['sweep_times']
+center_time = data['center_time']
+dbfile.close()
 
 
 if vol_time == '082030':
@@ -1249,6 +1260,13 @@ elif vol_time == '082330':
     az_rot = np.arange(2, 11)
     # r_rot = np.linspace(3.85, 4.5, 5)
     # az_rot = np.arange(3, 8)
+elif vol_time == '082000':
+    xl = [-3.5, -0.5]
+    yl = [0.0, 3.0]
+    xlims = [0, 1]
+    ylims = [0, 1.25]
+    r_rot = 2.65
+    az_rot = np.arange(314, 332)
 else:
     xl = [np.min(xx), np.max(xx)]
     yl = [np.min(yy), np.max(yy)]
@@ -1256,29 +1274,20 @@ else:
 x_rot = r_rot * np.sin(az_rot*np.pi/180)
 y_rot = r_rot * np.cos(az_rot*np.pi/180)
 
-dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/vel_grid_{vol_time}.pkl", 'rb')
-data = pickle.load(dbfile)
-vel = data['vel_grid']
-zvort = data['zvort_grid']
-xx = data['x_grid']
-yy = data['y_grid']
-zz = data['z_grid']
-sweep_times = data['sweep_times']
-center_time = data['center_time']
-dbfile.close()
 
 
 dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/rax_grid_advected_{vol_time}.pkl", 'rb')
 data = pickle.load(dbfile)
+dbz_advected = data['dbz_grid']
 vel_advected = data['vel_grid']
 zvort_advected = data['zvort_grid']
 dbfile.close()
 
 
-# if 'locs' not in locals():
-#     dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/raxpol_vortex_locs.pkl', 'rb')
-#     locs = pickle.load(dbfile)
-#     dbfile.close()
+if 'locs' not in locals():
+    dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/raxpol_vortex_locs.pkl', 'rb')
+    locs = pickle.load(dbfile)
+    dbfile.close()
 
 # vortex_num = 3
 # az_rot = locs[vol_time][f"vortex{vortex_num}"]['az']
@@ -1297,7 +1306,7 @@ dbfile.close()
 # vortex_num = '-all'
 
 # # azimuth = round(np.mean(az_rot))
-# azimuth = az_rot[round(len(az_rot)/2)]
+azimuth = az_rot[round(len(az_rot)/2)]
 # azimuth = 322
 irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 
@@ -1312,7 +1321,7 @@ irot = np.where(np.isclose(az_rot, azimuth))[0][0]
 xx = xx/1000; yy = yy/1000; zz = zz/1000
 
 az_ray = azimuth
-r_ray = 6
+r_ray = 315
 x_ray = r_ray * np.sin(az_ray*np.pi/180)
 y_ray = r_ray * np.cos(az_ray*np.pi/180)
 
@@ -1354,7 +1363,7 @@ x_rhi = x_cross[i_rhi]
 
 
 # Advection-corrected everything
-if True:
+if False:
     # Max vertical vorticity PPI
     fig,ax = plt.subplots(1, 1, figsize=(8,6), subplot_kw=dict(box_aspect=1), layout='constrained')
     plot_cfill(xx, yy, np.max(zvort_advected, axis=0), 'vort', ax, datalims=[0,0.15],
@@ -1509,7 +1518,7 @@ if False:
 # Gridded maximum vertical pseudovorticity PPIs (uncorrected and corrected)
 if False:
     fig,ax = plt.subplots(1, 1, figsize=(8,6), layout='constrained')
-    plot_cfill(xx, yy, np.max(zvort, axis=0), 'vort', ax, datalims=[0,0.12],
+    plot_cfill(xx, yy, np.max(zvort, axis=0), 'vort', ax, datalims=[0,0.15],
                xlims=[np.min(xx),np.max(xx)], ylims=[np.min(yy),np.max(yy)], cbfs=12, cmap='LangRainbow12')
     ax.scatter(x_rot, y_rot, s=30, marker='o', facecolor='w', edgecolor='k')
     ax.set_xlabel('x distance from radar (km)', fontsize=12)
@@ -1518,8 +1527,8 @@ if False:
     
     
     fig,ax = plt.subplots(1, 1, figsize=(8,6), layout='constrained')
-    plot_cfill(xx, yy, np.max(zvort_advected, axis=0), 'vort', ax, datalims=[0,0.12],
-               xlims=[np.min(xx),np.max(xx)], ylims=[np.min(yy),np.max(yy)], cbfs=12, cmap='LangRainbow12')
+    plot_cfill(xx, yy, np.max(zvort_advected, axis=0), 'vort', ax, datalims=[0,0.15],
+               xlims=xl, ylims=yl, cbfs=12, cmap='LangRainbow12')
     ax.scatter(x_rot, y_rot, s=30, marker='o', facecolor='w', edgecolor='k')
     ax.set_xlabel('x distance from radar (km)', fontsize=12)
     ax.set_ylabel('y distance from radar (km)', fontsize=12)
@@ -1566,9 +1575,80 @@ if False:
         plt.savefig(ip+f"cross-section-panels/{vol_time}_vortCS_advected.png", dpi=300)
 
 
+#%% Worms
+
+fp = '/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/'
+ip = '/Users/morgan.schneider/Documents/perils2023/iop2/figs/'
+
+if 'vol' not in locals():
+    dbfile = open('/Users/morgan.schneider/Documents/perils2023/iop2/circuit_data.pkl', 'rb')
+    tmp = pickle.load(dbfile)
+    vol = tmp['Rax']
+    dbfile.close()
+
+vi = 10
+vol_time = vol[vi]['scan_time'][1]
+
+
+dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/vel_grid_{vol_time}.pkl", 'rb')
+data = pickle.load(dbfile)
+vel_grid = data['vel_grid']
+zvort_grid = data['zvort_grid']
+xx = data['x_grid']/1000
+yy = data['y_grid']/1000
+zz = data['z_grid']/1000
+sweep_times = data['sweep_times']
+center_time = data['center_time']
+dbfile.close()
+
+dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/rax_grid_advected_{vol_time}.pkl", 'rb')
+data = pickle.load(dbfile)
+dbz_advected = data['dbz_grid']
+vel_advected = data['vel_grid']
+zvort_advected = data['zvort_grid']
+dbfile.close()
+
+cref = np.max(dbz_advected, axis=0)
 
 
 
+figsave = False
+
+# Worms stuff
+if True:
+    cref = np.max(dbz_advected, axis=0)
+    
+    xl = [-4, 1]
+    yl = [0, 5]
+    
+    # raw raxpol 0.9 deg zvort
+    fig,ax = plt.subplots(1, 1, figsize=(8,6), subplot_kw=dict(box_aspect=1), layout='constrained')
+    c = plot_cfill(vol[vi]['xx'][0,:,:], vol[vi]['yy'][0,:,:], vol[vi]['zvort'][0,:,:], 'vort', ax, datalims=[0,0.2],
+               xlims=[-4,1], ylims=[0,5], cbfs=12, cmap=cmocean.cm.dense)
+    ax.contour(xx, yy, cref, levels=[40], colors=['k'], linewidths=[1.25])
+    ax.contour(xx, yy, np.max(zvort_advected, axis=0), levels=[0.08, 0.10, 0.12],
+               colors=['darkorange', 'r', 'maroon'], linewidths=[2])
+    ax.set_xlabel('x distance from radar (km)', fontsize=12)
+    ax.set_ylabel('y distance from radar (km)', fontsize=12)
+    ax.set_title(f"{vol_time} UTC 0.9$^{{\circ}}$ vertical pseudovorticity", fontsize=14)
+    
+    if figsave:
+        plt.savefig(ip+f"worms-{vol_time}_v2.png", dpi=300)
+        
+        
+    # gridded max zvort
+    fig,ax = plt.subplots(1, 1, figsize=(8,6), subplot_kw=dict(box_aspect=1), layout='constrained')
+    plot_cfill(xx, yy, np.max(zvort_advected, axis=0), 'vort', ax, datalims=[0,0.15],
+               xlims=[-4,1], ylims=[0,5], cbfs=12, cmap='LangRainbow12')
+    ax.contour(xx, yy, cref, levels=[40], colors=['k'], linewidth=1.25)
+    # ax.scatter(x_rot, y_rot, s=30, marker='o', facecolor='w', edgecolor='k')
+    ax.set_xlabel('x distance from radar (km)', fontsize=12)
+    ax.set_ylabel('y distance from radar (km)', fontsize=12)
+    # ax.set_title(f"Gridded max zvort PPI (advection-corrected)", fontsize=12)
+    ax.set_title(f"{vol_time} UTC maximum vertical pseudovorticity", fontsize=14)
+    
+    if figsave:
+        plt.savefig(ip+f"worms-max-{vol_time}.png", dpi=300)
 
 
 

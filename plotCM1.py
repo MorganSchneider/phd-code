@@ -1623,10 +1623,10 @@ if False:
 
 # Save thrpert and thr0 to cm1out files so I don't have to move the pp files to NSSL storage
 # ** haven't run merger yet but I have run supercell and qlcs ** this might take me above 10TB idk
-if False:
+if True:
     sim = 'merger'
     
-    for fnum in np.arange(14,73):
+    for fnum in np.arange(14,23):
         print(f"File {sim}-125m/cm1out_{fnum:06d}.nc ...")
         
         ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/{sim}-125m/pp/dyn_{fnum:06d}.nc")
@@ -1658,9 +1658,9 @@ if False:
 
 
 
-
+# Save thrpert and thr0 to cm1out files (just for the total simulation files bc no pp)
 if False:
-    fn = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/cm1out_000013.nc'
+    fn = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000013.nc'
     
     ds = nc.Dataset(fn)
     thr = ds.variables['th'][:].data[0,:,:,:] * (1 + 0.61*ds.variables['qv'][:].data[0,:,:,:] - 
