@@ -412,7 +412,7 @@ if False:
 #         plt.savefig(ip+f"imgs_timeheights/timeseries_{fn}_vppga_max.png", dpi=300)
 
 
-#%% Multi panel timeheight figures
+#%% Multi panel timeheight figures ***PAPER FIGS HERE***
 
 
 ### SUPERCELL 1 ###
@@ -426,23 +426,23 @@ OW_min_m = tmp['OW_min']
 wspd_max_m = tmp['wspd_max']
 uh25_max_m = tmp['uh25_max']
 uh02_max_m = tmp['uh02_max']
-uh13_max_m = tmp['uh13_max']
-uh01_max_m = tmp['uh01_max']
-pp_min_m = tmp['pp_min']
-vppga_1km_max_m = tmp['vppga_1km_max']
+# uh13_max_m = tmp['uh13_max']
+# uh01_max_m = tmp['uh01_max']
+# pp_min_m = tmp['pp_min']
+# vppga_1km_max_m = tmp['vppga_1km_max']
 dbfile.close()
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/qlcs-125m/timeheight_s1.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/qlcs-125m/timeheight_q.pkl", 'rb')
 tmp = pickle.load(dbfile)
 w_max_q = tmp['w_max']
 OW_min_q = tmp['OW_min']
 wspd_max_q = tmp['wspd_max']
 uh25_max_q = tmp['uh25_max']
 uh02_max_q = tmp['uh02_max']
-uh13_max_q = tmp['uh13_max']
-uh01_max_q = tmp['uh01_max']
-pp_min_q = tmp['pp_min']
-vppga_1km_max_q = tmp['vppga_1km_max']
+# uh13_max_q = tmp['uh13_max']
+# uh01_max_q = tmp['uh01_max']
+# pp_min_q = tmp['pp_min']
+# vppga_1km_max_q = tmp['vppga_1km_max']
 dbfile.close()
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/supercell-125m/timeheight_s1.pkl", 'rb')
@@ -452,10 +452,10 @@ OW_min_s = tmp['OW_min']
 wspd_max_s = tmp['wspd_max']
 uh25_max_s = tmp['uh25_max']
 uh02_max_s = tmp['uh02_max']
-uh13_max_s = tmp['uh13_max']
-uh01_max_s = tmp['uh01_max']
-pp_min_s = tmp['pp_min']
-vppga_1km_max_s = tmp['vppga_1km_max']
+# uh13_max_s = tmp['uh13_max']
+# uh01_max_s = tmp['uh01_max']
+# pp_min_s = tmp['pp_min']
+# vppga_1km_max_s = tmp['vppga_1km_max']
 dbfile.close()
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/timeheight_q.pkl", 'rb')
@@ -467,10 +467,10 @@ OW_min_mq = tmp['OW_min']
 wspd_max_mq = tmp['wspd_max']
 uh25_max_mq = tmp['uh25_max']
 uh02_max_mq = tmp['uh02_max']
-uh13_max_mq = tmp['uh13_max']
-uh01_max_mq = tmp['uh01_max']
-pp_min_mq = tmp['pp_min']
-vppga_1km_max_mq = tmp['vppga_1km_max']
+# uh13_max_mq = tmp['uh13_max']
+# uh01_max_mq = tmp['uh01_max']
+# pp_min_mq = tmp['pp_min']
+# vppga_1km_max_mq = tmp['vppga_1km_max']
 dbfile.close()
 
 ztop = 4
@@ -488,28 +488,31 @@ cm = 'Blues_r'
 figsave = False
 
 
-# OW timeheights with w contoured
-if False:
+# OW timeheights with w contoured ***PAPER FIG***
+if True:
     fig,((ax1),(ax2),(ax3)) = plt.subplots(3, 1, figsize=(8,7), sharex=True, sharey=True, layout='constrained')
     
+    # was levels=np.linspace(-0.012,0,7), datalims=[-0.012,0]
     # c = plot_cfill(times, zz, OW_min_m, 'OW', ax1, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
-    c = plot_contourf(times, zz, OW_min_m, 'OW', ax1, levels=np.linspace(-0.012,0,25), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop], extend='min')
+    c = plot_contourf(times, zz, OW_min_m, 'OW', ax1, levels=np.linspace(-0.012,0,7), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop], extend='min')
     ax1.contour(times, zz, w_max_m, levels=[10,15,20], colors=['dimgray','k','k'], linestyles=['-','-','-'], linewidths=[1.25,1.25,2.5])
     ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax1.set_xlabel('Time (min)')
     ax1.set_ylabel('Height (km)')
     # ax1.set_title('MERGER')
     
+    # was levels=np.linspace(-0.03,0,16), datalims=[-0.012,0]
     # plot_cfill(times, zz, OW_min_q, 'OW', ax2, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
-    plot_contourf(times, zz, OW_min_q, 'OW', ax2, levels=np.linspace(-0.015,0,31), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
+    plot_contourf(times, zz, OW_min_q, 'OW', ax2, levels=np.linspace(-0.03,0,16), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
     ax2.contour(times, zz, w_max_q, levels=[10,15,20], colors=['dimgray','k','k'], linestyles=['-','-','-'], linewidths=[1.25,1.25,2.5])
     ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax2.set_xlabel('Time (min)')
     ax2.set_ylabel('Height (km)')
     # ax2.set_title('QLCS')
     
+    # was levels=np.linspace(-0.02,0,11), datalims=[-0.012,0]
     # plot_cfill(times, zz, OW_min_s, 'OW', ax3, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
-    plot_contourf(times, zz, OW_min_s, 'OW', ax3, levels=np.linspace(-0.02,0,41), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
+    plot_contourf(times, zz, OW_min_s, 'OW', ax3, levels=np.linspace(-0.02,0,11), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
     ax3.contour(times, zz, w_max_s, levels=[10,15,20], colors=['dimgray','k','k'], linestyles=['-','-','-'], linewidths=[1.25,1.25,2.5])
     ax3.axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax3.set_xlabel('Time (min)')
@@ -519,11 +522,42 @@ if False:
     cb = plt.colorbar(c, ax=[ax1,ax2,ax3], extend='min')
     cb.set_label("OW (s$^{-2}$)", fontsize=14)
     cb.formatter.set_powerlimits((0,0))
-    cb.set_ticks(np.linspace(-0.012,0,13))
+    cb.set_ticks(np.linspace(-0.012,0,7))
     
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeheights_s1_OW+w.png", dpi=300)
-
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeheights_OW+w_v2.png", dpi=300)
+    
+    
+    # iz1 = np.where(zz >= 1)[0][0]
+    # iz3 = np.where(zz >= 3)[0][0]
+    
+    # fig,ax = plt.subplots(3, 1, figsize=(8,8), sharex=True, sharey=False, layout='constrained')
+    
+    # ax[0].plot(times, np.max(w_max_q, axis=0), 'k', linewidth=1.5)
+    # ax[0].plot(times, np.max(w_max_s, axis=0), 'b', linewidth=1.5)
+    # ax[0].plot(times, np.max(w_max_m, axis=0), 'r', linewidth=1.5)
+    # ax[0].set_xlim([180,240])
+    # ax[0].set_ylim([10,30])
+    # ax[0].set_title('Column max w')
+    
+    # ax[1].plot(times, w_max_q[iz1,:], 'k', linewidth=1.5)
+    # ax[1].plot(times, w_max_s[iz1,:], 'b', linewidth=1.5)
+    # ax[1].plot(times, w_max_m[iz1,:], 'r', linewidth=1.5)
+    # ax[1].set_title('Max 1 km w')
+    # ax[1].set_ylim([5,20])
+    
+    # ax[2].plot(times, w_max_q[iz3,:], 'k', linewidth=1.5)
+    # ax[2].plot(times, w_max_s[iz3,:], 'b', linewidth=1.5)
+    # ax[2].plot(times, w_max_m[iz3,:], 'r', linewidth=1.5)
+    # ax[2].set_title('Max 3 km w')
+    # ax[2].set_ylim([10,25])
+    
+    # for i in range(3):
+    #     ax[i].xaxis.set_major_locator(MultipleLocator(10))
+    #     ax[i].xaxis.set_minor_locator(MultipleLocator(5))
+    #     ax[i].yaxis.set_major_locator(MultipleLocator(5))
+    #     ax[i].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    #     ax[i].grid(visible=True, which='minor', color='lightgray', linestyle='--')
 
 
 
@@ -668,8 +702,8 @@ if False:
         plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH.png", dpi=300)
 
 
-# UH 0-2 and 2-5 time series split by supercell and qlcs
-if True:
+# UH 0-2 and 2-5 time series split by supercell and qlcs ***PAPER FIGS***
+if False:
     ti = np.where(times == 210)[0][0]
     
     fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
@@ -712,7 +746,7 @@ if True:
     ax2.yaxis.set_major_locator(MultipleLocator(500))
     ax2.yaxis.set_minor_locator(MultipleLocator(250))
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH25.png", dpi=300)
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_UH25_v1.png", dpi=300)
         
     
     fig,((ax1),(ax2)) = plt.subplots(2,1,figsize=(8,7), sharex=True, layout='constrained')
@@ -755,7 +789,7 @@ if True:
     ax2.yaxis.set_major_locator(MultipleLocator(500))
     ax2.yaxis.set_minor_locator(MultipleLocator(250))
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_mv1_UH02.png", dpi=300)
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeseries_UH02_v1.png", dpi=300)
 
 
 # UH 0-1 and 1-3 time series split by supercell and qlcs

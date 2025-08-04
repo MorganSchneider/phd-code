@@ -323,7 +323,7 @@ for fn in [13]:
         dbfile.close()
         del winterp,B,OW,zvort
 
-#%% Plot cross sections ***PAPER FIG***
+#%% Plot cross sections ***PAPER FIGS HERE***
 
 mv_time = 220
 
@@ -422,7 +422,7 @@ xlims = [-25, 0] # was [-30, 5]
 
 
 
-figsave = True
+figsave = False
 
 # CROSS SECTION, 1 PANEL - shade w; contour thrpert; gray parcels
 if False:
@@ -446,6 +446,7 @@ if False:
     
 
 # CROSS SECTION, 1 PANEL - shade thrpert; contour p'; parcels colored by w
+# ***PAPER FIG*** - runs both times separately, need to combine into two panels in powerpoint
 if False: # this one is True
     # parcel_cm = 'ChaseSpectral'
     import matplotlib as mpl
@@ -549,6 +550,7 @@ elif mv_time == 225:
 # figsave = False
 
 # PLAN VIEW, 1 PANEL - shade thrpert; parcels colored by w
+# ***PAPER FIG*** - runs both times separately, need to combine into two panels in powerpoint
 if False:
     import matplotlib as mpl
     # parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
@@ -579,7 +581,8 @@ if False:
 
 
 
-#% Plot trajectories with vorticity and SR velocity vectors ***PAPER FIG***
+#% Plot trajectories with vorticity and SR velocity vectors 
+# ***PAPER FIG*** - runs both times separately, need to combine into two panels in powerpoint
 
 from matplotlib.patches import FancyArrowPatch
 
@@ -681,8 +684,203 @@ if figsave:
 
 
 
+#%% Same figures but with storm-relative trajectories ***PAPER FIGS HERE***
 
+from scipy.interpolate import interp1d
+
+fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+
+mv_time = 220
+
+if mv_time == 210:
+    fn = 41
+elif mv_time == 220:
+    fn = 51
+elif mv_time == 225:
+    fn = 56
+
+
+
+
+# Read parcel data
+ds = nc.Dataset(fp+'cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+ti = np.where(ptime == mv_time*60)[0][0]
+ti0 = np.where(ptime == 180*60)[0][0]
+
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+pids_mv = traj[f"{mv_time}min"]['pids']
+x_mv = traj[f"{mv_time}min"]['x']
+y_mv = traj[f"{mv_time}min"]['y']
+z_mv = traj[f"{mv_time}min"]['z']
+u_mv = traj[f"{mv_time}min"]['u']
+v_mv = traj[f"{mv_time}min"]['v']
+dbfile.close()
+
+dbfile = open(ip+f"traj_clusters/traj_clusters_{mv_time}min_v2.pkl", 'rb')
+c = pickle.load(dbfile)
+cc = c['mv1']
+dbfile.close()
+
+
+# Mid-level source
+x_ml = x_mv[:,(cc==1)]
+y_ml = y_mv[:,(cc==1)]
+z_ml = z_mv[:,(cc==1)]
+u_ml = u_mv[:,(cc==1)]
+v_ml = v_mv[:,(cc==1)]
+
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+sm = pickle.load(dbfile)
+u_storm = sm['u_storm']
+v_storm = sm['v_storm']
+dbfile.close()
+
+stimes = np.linspace(10800, 14400, 61)
+
+
+fu = interp1d(stimes, u_storm)
+u_storm_interp = fu(ptime)
+fv = interp1d(stimes, v_storm)
+v_storm_interp = fv(ptime)
+
+
+x_sr = np.zeros(shape=x_ml[:ti+1,:].shape, dtype=float)
+y_sr = np.zeros(shape=y_ml[:ti+1,:].shape, dtype=float)
+
+x_sr[ti,:] = x_ml[ti,:]
+y_sr[ti,:] = y_ml[ti,:]
+inds = np.linspace(ti-1, 0, ti)
+for i in inds:
+    i = int(i)
+    dt = ptime[i+1] - ptime[i]
+    delta_x = np.sum(u_storm_interp[i:ti] * dt)
+    delta_y = np.sum(v_storm_interp[i:ti] * dt)
+    # delta_x = u_storm_interp[i] * dt
+    # delta_y = v_storm_interp[i] * dt
+    x_new = x_ml[i] + delta_x
+    y_new = y_ml[i] + delta_y
     
+    x_sr[i,:] = x_new
+    y_sr[i,:] = y_new
+
+
+x_median = np.median(x_sr[ti0:ti+1,:], axis=1)/1000
+y_median = np.median(y_sr[ti0:ti+1,:], axis=1)/1000
+z_median = np.median(z_ml[ti0:ti+1,:], axis=1)/1000
+u_median = np.median(u_ml[ti0:ti+1,:], axis=1)
+v_median = np.median(v_ml[ti0:ti+1,:], axis=1)
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mv_time}min.pkl", 'rb')
+vort_traj = pickle.load(dbfile)
+xvort_ml = vort_traj['xvort_ml']
+yvort_ml = vort_traj['yvort_ml']
+dbfile.close()
+
+xvort_median = np.median(xvort_ml[ti0:ti+1,:], axis=1)
+yvort_median = np.median(yvort_ml[ti0:ti+1,:], axis=1)
+
+qit = 4
+u_sr = u_median[::qit] - u_storm[:len(x_median[::qit])]
+v_sr = v_median[::qit] - v_storm[:len(x_median[::qit])]
+
+
+
+
+if mv_time == 210:
+    xlp = [-30,20]
+    ylp = [-85,-45]
+elif mv_time == 220:
+    xlp = [-25,25]
+    ylp = [-80,-40]
+
+
+ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
+xh = ds.variables['xh'][:].data
+yh = ds.variables['yh'][:].data
+ds.close()
+
+ix = slice(np.where(xh >= xlp[0])[0][0], np.where(xh >= xlp[1])[0][1])
+iy = slice(np.where(yh >= ylp[0])[0][0], np.where(xh >= ylp[1])[0][1])
+
+if True:
+    ds = nc.Dataset(fp+f"cm1out_{fn+2:06d}.nc")
+    dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
+    ds.close()
+
+
+
+
+if mv_time == 210:
+    xlp = [-25,15]
+elif mv_time == 220:
+    xlp = [-20,20]
+elif mv_time == 225:
+    xlp = [-16.5,8.5]
+
+
+
+
+figsave = False
+
+from matplotlib.patches import FancyArrowPatch
+
+def add_vectors(ax, x, y, dx, dy, z, lengthscale=10, *args, **kwargs):
+    # SMALLER lengthscale for SHORTER arrows -- this is REVERSED from scale kwarg in quiver
+    zinds = np.argsort(z)
+    for j in range(len(x)):
+        i = zinds[j]
+        x1 = x[i]
+        y1 = y[i]
+        dx1 = dx[i]*lengthscale
+        dy1 = dy[i]*lengthscale
+        x2 = x1 + dx1
+        y2 = y1 + dy1
+        arrow = FancyArrowPatch((x1, y1), (x2, y2), *args, **kwargs)
+        ax.add_patch(arrow)
+        
+    return arrow
+
+from matplotlib.colors import LinearSegmentedColormap
+cmap = LinearSegmentedColormap.from_list('cmap', pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.9,205)))
+
+
+
+fig,ax = plt.subplots(1,1, figsize=(7,5), subplot_kw=dict(box_aspect=1), layout='constrained')
+
+l, = ax.plot([xh[0], xh[1]], [yh[0], yh[1]], 'gray', linewidth=1)
+ax.contour(xh[ix], yh[iy], dbz, levels=[30], colors='gray', linewidths=1, zorder=0)
+p = ax.scatter(x_median, y_median, s=80, c=z_median, cmap=cmap, vmin=0, vmax=3)
+cb = plt.colorbar(p, ax=ax, extend='max')
+cb.set_label("Parcel height (km)", fontsize=13)
+# p = ax.scatter(x_median, y_median, s=30, c=zvort_median, cmap='ChaseSpectral', vmin=-0.04, vmax=0.04)
+# cb = plt.colorbar(p, ax=ax, label="Parcel \u03B6 (s$^{-1}$)", extend='both')
+# a_wind = add_vectors(ax, x_median[::qit], y_median[::qit], u_sr, v_sr, z_median[::qit],
+#             lengthscale=0.2, arrowstyle='simple', mutation_scale=5, ec='k', fc='k', lw=0.5)
+a_vort = add_vectors(ax, x_median[::qit], y_median[::qit]+0.5, xvort_median[::qit], yvort_median[::qit], z_median[::qit],
+            lengthscale=275, arrowstyle='simple', mutation_scale=9, ec='k', fc='lightgray', lw=0.75)
+ax.set_xlabel('x (km)', fontsize=12)
+ax.set_ylabel('y (km)', fontsize=12)
+ax.set_title(f"Parcels in the MV at {mv_time} min", fontsize=13)
+ax.set_xlim(xlp)
+ax.set_ylim(ylp)
+ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
+# plt.legend(handles=[l,a_vort,a_wind], labels=['30 dBZ',"\u03c9$_H$","SR wind"], loc=1, fontsize=10)
+plt.legend(handles=[l,a_vort], labels=['30 dBZ',"\u03c9$_H$"], loc=1, fontsize=10)
+
+if figsave:
+    plt.savefig(f"/Users/morgan.schneider/Documents/merger/traj_vort2d_parcelheight_{mv_time:.0f}min_SR.png", dpi=300)
+
+
+
+
+
     
 #%% Animate w, thrpert, prspert cross sections
 

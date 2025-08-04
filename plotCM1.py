@@ -16,12 +16,91 @@ from CM1utils import *
 #%% One big overview plot
 
 from matplotlib.ticker import MultipleLocator
+from matplotlib import patches
 
-# xlims = [[-70,10], [-62,18], [-54,26], [-46,34], [-38,42]]
-# ylims = [[-140,-60], [-122,-42], [-104,-24], [-86,-6], [-68,12]]
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/boxes_s1.pkl', 'rb')
+box = pickle.load(dbfile)
+x1_m = box['x1_pp']
+x2_m = box['x2_pp']
+y1_m = box['y1_pp']
+y2_m = box['y2_pp']
+dbfile.close()
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/qlcs-125m/boxes_q.pkl', 'rb')
+box = pickle.load(dbfile)
+x1_q = box['x1_pp']
+x2_q = box['x2_pp']
+y1_q = box['y1_pp']
+y2_q = box['y2_pp']
+dbfile.close()
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/supercell-125m/boxes_s1.pkl', 'rb')
+box = pickle.load(dbfile)
+x1_s = box['x1_pp']
+x2_s = box['x2_pp']
+y1_s = box['y1_pp']
+y2_s = box['y2_pp']
+dbfile.close()
+
+xmin = np.zeros(shape=(5,), dtype=float)
+ymin = np.zeros(shape=(5,), dtype=float)
+xmax = np.zeros(shape=(5,), dtype=float)
+ymax = np.zeros(shape=(5,), dtype=float)
+
+
+for i in range(5):
+    if i == 0:
+        j = 0
+    else:
+        j = 15*i - 1
+    xmin[i] = np.min([x1_m[j], x1_q[j], x1_s[j]])
+    ymin[i] = np.min([y1_m[j], y1_q[j], y1_s[j]])
+    xmax[i] = np.max([x2_m[j], x2_q[j], x2_s[j]])
+    ymax[i] = np.max([y2_m[j], y2_q[j], y2_s[j]])
+
+xdiff = xmax - xmin
+ydiff = ymax - ymin
+
+maxdiff = np.max([xdiff, ydiff])
+ax_width = maxdiff + 20
+
+xlims_m = [[x1_m[i]-10, x2_m[i]+10] for i in [0,14,29,44,59]]
+ylims_m = [[y1_m[i]-10, y2_m[i]+10] for i in [0,14,29,44,59]]
+
+xlims_q = [[x1_q[i]-10, x2_q[i]+10] for i in [0,14,29,44,59]]
+ylims_q = [[y1_q[i]-10, y2_q[i]+10] for i in [0,14,29,44,59]]
+
+xlims_s = [[x1_s[i]-10, x2_s[i]+10] for i in [0,14,29,44,59]]
+ylims_s = [[y1_s[i]-10, y2_s[i]+10] for i in [0,14,29,44,59]]
+
+xm = [x1_m[i] for i in [0,14,29,44,59]]; ym = [y1_m[i] for i in [0,14,29,44,59]]
+xq = [x1_q[i] for i in [0,14,29,44,59]]; yq = [y1_q[i] for i in [0,14,29,44,59]]
+xs = [x1_s[i] for i in [0,14,29,44,59]]; ys = [y1_s[i] for i in [0,14,29,44,59]]
+
+# go back and redo the boxes here?
+xm[0] = xm[0]+1; ym[0] = ym[0]-1
+xm[1] = xm[1]+1
+xm[2] = xm[2]+1; ym[2] = ym[2]-1
+
+xq[0] = xq[0]+0; yq[0] = yq[0]+0
+xq[1] = xq[1]+0; yq[1] = yq[1]+0
+xq[2] = xq[2]+0; yq[2] = yq[2]+0
+xq[3] = xq[3]+0; yq[3] = yq[3]+0
+xq[4] = xq[4]+0; yq[4] = yq[4]+0
+
+xs[0] = xs[0]+0; ys[0] = ys[0]+0
+xs[1] = xs[1]+0; ys[1] = ys[1]+0
+xs[2] = xs[2]+0; ys[2] = ys[2]+0
+xs[3] = xs[3]+0; ys[3] = ys[3]+0
+xs[4] = xs[4]+0; ys[4] = ys[4]+0
+
 
 xlims = [[-60,-10], [-52,-2], [-44,6], [-36,14], [-28,22]]
 ylims = [[-130,-80], [-112,-62], [-94,-44], [-76,-26], [-58,-8]]
+
+
+#%% Make plot
 
 thr_lims = [-12,0]
 dbz_lims = [0,70]
@@ -38,12 +117,10 @@ elif vert_layout:
     fig1,axs1 = plt.subplots(5, 3, figsize=(9,13.5), subplot_kw=dict(box_aspect=1), layout='constrained')
     fig2,axs2 = plt.subplots(5, 3, figsize=(9,13), subplot_kw=dict(box_aspect=1), layout='constrained')
 
+
 # MERGER data
 for i in np.arange(0,5):
-    if i == 0:
-        fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/'
-    else:
-        fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+    fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
     
     print(f"MERGER - cm1out_{fnums[i]:06d}")
     
@@ -58,44 +135,48 @@ for i in np.arange(0,5):
     
     xl = xlims[i]
     yl = ylims[i]
-    ixw = np.where(xh >= xl[0])[0][0] # west bound
-    ixe = np.where(xh >= xl[1])[0][0] # east bound
-    iys = np.where(yh >= yl[0])[0][0] # south bound
-    iyn = np.where(yh >= yl[1])[0][0] # north bound
-    ix = slice(ixw,ixe+1)
-    iy = slice(iys,iyn+1)
+    ixl = np.where(xh >= xl[0])[0][0] # left bound
+    ixr = np.where(xh >= xl[1])[0][1] # right bound
+    iyb = np.where(yh >= yl[0])[0][0] # bottom bound
+    iyt = np.where(yh >= yl[1])[0][1] # top bound
+    ix = slice(ixl,ixr)
+    iy = slice(iyb,iyt)
 
-    iz1 = np.where(z >= 1)[0][0]
-    iz = slice(0,iz1+1)
+    iz1 = np.where(z >= 1)[0][1]
+    iz = slice(0,iz1)
+    
+    xl_m = xlims_m[i]
+    yl_m = ylims_m[i]
+    ixm = slice(np.where(xh >= xl_m[0])[0][0], np.where(xh >= xl_m[1])[0][1])
+    iym = slice(np.where(yh >= yl_m[0])[0][0], np.where(yh >= yl_m[1])[0][1])
     
     # qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/60)*2)
     qix = int(np.round(len(xh[(xh>=xl[0]) & (xh<=xl[1])])/48)*2)
     
-    if i == 0:
+    if i == 0: # if file num is 13
         dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
-        thr = ds.variables['th'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv'][:].data[0,0,iy,ix] - 
-                    (ds.variables['qc'][:].data[0,0,iy,ix] + ds.variables['qr'][:].data[0,0,iy,ix] + 
-                     ds.variables['qi'][:].data[0,0,iy,ix] + ds.variables['qs'][:].data[0,0,iy,ix] + 
-                     ds.variables['qg'][:].data[0,0,iy,ix] + ds.variables['qhl'][:].data[0,0,iy,ix]))
-        thr0 = ds.variables['th0'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv0'][:].data[0,0,iy,ix])
-        thrpert = thr - thr0
-        del thr,thr0
+        # thr = ds.variables['th'][:].data[0,0,iym,ixm] * (1 + 0.61*ds.variables['qv'][:].data[0,0,iym,ixm] - 
+        #             (ds.variables['qc'][:].data[0,0,iym,ixm] + ds.variables['qr'][:].data[0,0,iym,ixm] + 
+        #              ds.variables['qi'][:].data[0,0,iym,ixm] + ds.variables['qs'][:].data[0,0,iym,ixm] + 
+        #              ds.variables['qg'][:].data[0,0,iym,ixm] + ds.variables['qhl'][:].data[0,0,iym,ixm]))
+        # thr0 = ds.variables['th0'][:].data[0,0,iym,ixm] * (1 + 0.61*ds.variables['qv0'][:].data[0,0,iym,ixm])
+        # thrpert = thr - thr0
+        # del thr,thr0
     else:
         dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
-    uinterp = ds.variables['uinterp'][:].data[0,iz,iy,ix]
-    vinterp = ds.variables['vinterp'][:].data[0,iz,iy,ix]
-    winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
-    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
-    S_N = np.gradient(uinterp, xh[ix]*1000, axis=2) - np.gradient(vinterp, yh[iy]*1000, axis=1)
-    S_S = np.gradient(vinterp, xh[ix]*1000, axis=2) + np.gradient(uinterp, yh[iy]*1000, axis=1)
-    OW = S_N**2 + S_S**2 - zvort**2
+    thrpert = ds.variables['thrpert'][:].data[0,iym,ixm]
+    uinterp = ds.variables['uinterp'][:].data[0,iz,iym,ixm]
+    vinterp = ds.variables['vinterp'][:].data[0,iz,iym,ixm]
+    wmax = np.max(ds.variables['winterp'][:].data[0,iz,iy,ix], axis=0)
+    wmax2 = np.max(ds.variables['winterp'][:].data[0,iz,iym,ixm], axis=0)
+    zvort = ds.variables['zvort'][:].data[0,iz,iym,ixm]
+    S_N = np.gradient(uinterp, xh[ixm]*1000, axis=2) - np.gradient(vinterp, yh[iym]*1000, axis=1)
+    S_S = np.gradient(vinterp, xh[ixm]*1000, axis=2) + np.gradient(uinterp, yh[iym]*1000, axis=1)
+    OWmin = np.min(S_N**2 + S_S**2 - zvort**2, axis=0)
     del S_N,S_S,zvort
     ds.close()
     
-    if i > 0:
-        ds = nc.Dataset(fp+f"pp/dyn_{fnums[i]:06d}.nc")
-        thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
-        ds.close()
+    
     
     
     if horiz_layout:
@@ -104,44 +185,55 @@ for i in np.arange(0,5):
             cb_flag = True
         else:
             cb_flag = False
+        
         c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[0,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-        axs1[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        axs1[0,i].contour(xh[ix], yh[iy], wmax, levels=[5], colors='k', linewidths=1)
         # axs1[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
         axs1[0,i].set_title(f"t={time:.0f} min", fontsize=14)
+        axs1[0,i].set_xticks([])
+        rect = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
+        axs1[0,1].add_patch(rect)
         
-        c2 = plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[0,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-        axs2[0,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-        axs2[0,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-        axs2[0,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        c2 = plot_cfill(xh[ixm], yh[iym], thrpert, 'thrpert', axs2[0,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_m, ylims=yl_m, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs2[0,i].contour(xh[ixm], yh[iym], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[0,i].contour(xh[ixm], yh[iym], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[0,i].quiver(xh[ixm][::qix], yh[iym][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         axs2[0,i].set_title(f"t={time:.0f} min", fontsize=14)
+        # axs2[0,i].set_xticks([])
+        rect2 = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
+        axs2[0,i].add_patch(rect2)
+        del rect,rect2
     
     elif vert_layout:
         # Vertical layout
         plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[i,0], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False, alpha=0.75)
-        axs1[i,0].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        axs1[i,0].contour(xh[ix], yh[iy], wmax, levels=[5], colors='k', linewidths=1)
         # axs1[i,0].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
         # axs1[i,0].set_title(f"t={time:.0f} min", fontsize=14)
         axs1[i,0].set_ylabel('y (km)', fontsize=15)
+        rect = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
+        axs1[i,0].add_patch(rect)
         axs1[i,0].xaxis.set_major_locator(MultipleLocator(10))
         axs1[i,0].yaxis.set_major_locator(MultipleLocator(10))
         
-        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[i,0], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False, alpha=0.75)
-        axs2[i,0].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-        axs2[i,0].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-        axs2[i,0].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        
+        plot_cfill(xh[ixm], yh[iym], thrpert, 'thrpert', axs2[i,0], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_m, ylims=yl_m, cbar=False, alpha=0.75)
+        axs2[i,0].contour(xh[ixm], yh[iym], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[i,0].contour(xh[ixm], yh[iym], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[i,0].quiver(xh[ixm][::qix], yh[iym][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[i,0].set_title(f"t={time:.0f} min", fontsize=14)
         axs2[i,0].set_ylabel('y (km)', fontsize=15)
+        rect2 = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
+        axs2[i,0].add_patch(rect2)
         axs2[i,0].xaxis.set_major_locator(MultipleLocator(10))
         axs2[i,0].yaxis.set_major_locator(MultipleLocator(10))
+        del rect,rect2
 
 
 
 # QLCS data
-for i in np.arange(0,5):
-    if i == 0:
-        fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/base/'
-    else:
-        fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/'
+for i in np.arange(0,1):
+    fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/'
     
     print(f"QLCS - cm1out_{fnums[i]:06d}")
     
@@ -156,41 +248,38 @@ for i in np.arange(0,5):
     
     xl = xlims[i]
     yl = ylims[i]
-    ixw = np.where(xh >= xl[0])[0][0] # west bound
-    ixe = np.where(xh >= xl[1])[0][0] # east bound
-    iys = np.where(yh >= yl[0])[0][0] # south bound
-    iyn = np.where(yh >= yl[1])[0][0] # north bound
-    ix = slice(ixw,ixe+1)
-    iy = slice(iys,iyn+1)
+    ixl = np.where(xh >= xl[0])[0][0] # left bound
+    ixr = np.where(xh >= xl[1])[0][1] # right bound
+    iyb = np.where(yh >= yl[0])[0][0] # bottom bound
+    iyt = np.where(yh >= yl[1])[0][1] # top bound
+    ix = slice(ixl,ixr)
+    iy = slice(iyb,iyt)
 
-    iz1 = np.where(z >= 1)[0][0]
-    iz = slice(0,iz1+1)
+    iz1 = np.where(z >= 1)[0][1]
+    iz = slice(0,iz1)
+    
+    xl_q = xlims_q[i]
+    yl_q = ylims_q[i]
+    ixq = slice(np.where(xh >= xl_q[0])[0][0], np.where(xh >= xl_q[1])[0][1])
+    iyq = slice(np.where(yh >= yl_q[0])[0][0], np.where(yh >= yl_q[1])[0][1])
     
     if i == 0:
         dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
-        thr = ds.variables['th'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv'][:].data[0,0,iy,ix] - 
-                    (ds.variables['qc'][:].data[0,0,iy,ix] + ds.variables['qr'][:].data[0,0,iy,ix] + 
-                     ds.variables['qi'][:].data[0,0,iy,ix] + ds.variables['qs'][:].data[0,0,iy,ix] + 
-                     ds.variables['qg'][:].data[0,0,iy,ix] + ds.variables['qhl'][:].data[0,0,iy,ix]))
-        thr0 = ds.variables['th0'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv0'][:].data[0,0,iy,ix])
-        thrpert = thr - thr0
-        del thr,thr0
     else:
         dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
-    uinterp = ds.variables['uinterp'][:].data[0,iz,iy,ix]
-    vinterp = ds.variables['vinterp'][:].data[0,iz,iy,ix]
-    winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
-    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
-    S_N = np.gradient(uinterp, xh[ix]*1000, axis=2) - np.gradient(vinterp, yh[iy]*1000, axis=1)
-    S_S = np.gradient(vinterp, xh[ix]*1000, axis=2) + np.gradient(uinterp, yh[iy]*1000, axis=1)
-    OW = S_N**2 + S_S**2 - zvort**2
+    thrpert = ds.variables['thrpert'][:].data[0,0,iyq,ixq]
+    uinterp = ds.variables['uinterp'][:].data[0,iz,iyq,ixq]
+    vinterp = ds.variables['vinterp'][:].data[0,iz,iyq,ixq]
+    wmax = np.max(ds.variables['winterp'][:].data[0,iz,iy,ix], axis=0)
+    wmax2 = np.max(ds.variables['winterp'][:].data[0,iz,iyq,ixq], axis=0)
+    zvort = ds.variables['zvort'][:].data[0,iz,iyq,ixq]
+    S_N = np.gradient(uinterp, xh[ixq]*1000, axis=2) - np.gradient(vinterp, yh[iyq]*1000, axis=1)
+    S_S = np.gradient(vinterp, xh[ixq]*1000, axis=2) + np.gradient(uinterp, yh[iyq]*1000, axis=1)
+    OWmin = np.min(S_N**2 + S_S**2 - zvort**2, axis=0)
     del S_N,S_S,zvort
     ds.close()
     
-    if i > 0:
-        ds = nc.Dataset(fp+f"pp/dyn_{fnums[i]:06d}.nc")
-        thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
-        ds.close()
+    
     
     
     if horiz_layout:
@@ -201,41 +290,52 @@ for i in np.arange(0,5):
             cb_flag = False
         
         plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[1,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-        axs1[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        axs1[1,i].contour(xh[ix], yh[iy], wmax, levels=[5], colors='k', linewidths=1)
         # axs1[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
         # axs1[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+        axs1[1,i].set_xticks([])
+        rect = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs1[1,i].add_patch(rect)
         
-        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[1,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-        axs2[1,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-        axs2[1,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-        axs2[1,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        plot_cfill(xh[ixq], yh[iyq], thrpert, 'thrpert', axs2[1,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_q, ylims=yl_q, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs2[1,i].contour(xh[ixq], yh[iyq], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[1,i].contour(xh[ixq], yh[iyq], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[1,i].quiver(xh[ixq][::qix], yh[iyq][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[1,i].set_title(f"t={time:.0f} min", fontsize=14)
+        # axs2[1,i].set_xticks()
+        rect2 = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs2[1,i].add_patch(rect2)
+        del rect,rect2
         
     elif vert_layout:
         # Vertical layout
         plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[i,1], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False, alpha=0.75)
-        axs1[i,1].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        axs1[i,1].contour(xh[ix], yh[iy], wmax, levels=[5], colors='k', linewidths=1)
         # axs1[i,1].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
         axs1[i,1].set_title(f"t={time:.0f} min", fontsize=16)
+        rect = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs1[i,1].add_patch(rect)
         axs1[i,1].xaxis.set_major_locator(MultipleLocator(10))
         axs1[i,1].yaxis.set_major_locator(MultipleLocator(10))
+        axs1[i,1].set_yticks([])
         
-        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[i,1], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=False, alpha=0.75)
-        axs2[i,1].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-        axs2[i,1].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-        axs2[i,1].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        plot_cfill(xh[ixq], yh[iyq], thrpert, 'thrpert', axs2[i,1], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_q, ylims=yl_q, cbar=False, alpha=0.75)
+        axs2[i,1].contour(xh[ixq], yh[iyq], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[i,1].contour(xh[ixq], yh[iyq], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[i,1].quiver(xh[ixq][::qix], yh[iyq][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         axs2[i,1].set_title(f"t={time:.0f} min", fontsize=16)
+        rect2 = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs2[i,1].add_patch(rect2)
         axs2[i,1].xaxis.set_major_locator(MultipleLocator(10))
         axs2[i,1].yaxis.set_major_locator(MultipleLocator(10))
+        # axs2[i,1].set_yticks([])
+        del rect,rect2
 
 
 
 # SUPERCELL data
-for i in np.arange(0,5):
-    if i == 0:
-        fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/base/'
-    else:
-        fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
+for i in np.arange(0,1):
+    fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
     
     print(f"SUPERCELL - cm1out_{fnums[i]:06d}")
     # thr_lims = [-10,0]
@@ -251,41 +351,37 @@ for i in np.arange(0,5):
     
     xl = xlims[i]
     yl = ylims[i]
-    ixw = np.where(xh >= xl[0])[0][0] # west bound
-    ixe = np.where(xh >= xl[1])[0][0] # east bound
-    iys = np.where(yh >= yl[0])[0][0] # south bound
-    iyn = np.where(yh >= yl[1])[0][0] # north bound
-    ix = slice(ixw,ixe+1)
-    iy = slice(iys,iyn+1)
+    ixl = np.where(xh >= xl[0])[0][0] # left bound
+    ixr = np.where(xh >= xl[1])[0][1] # right bound
+    iyb = np.where(yh >= yl[0])[0][0] # bottom bound
+    iyt = np.where(yh >= yl[1])[0][1] # top bound
+    ix = slice(ixl,ixr)
+    iy = slice(iyb,iyt)
 
-    iz1 = np.where(z >= 1)[0][0]
-    iz = slice(0,iz1+1)
+    iz1 = np.where(z >= 1)[0][1]
+    iz = slice(0,iz1)
+    
+    xl_s = xlims_s[i]
+    yl_s = ylims_s[i]
+    ixs = slice(np.where(xh >= xl_s[0])[0][0], np.where(xh >= xl_s[1])[0][1])
+    iys = slice(np.where(yh >= yl_s[0])[0][0], np.where(yh >= yl_s[1])[0][1])
     
     if i == 0:
         dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
-        thr = ds.variables['th'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv'][:].data[0,0,iy,ix] - 
-                    (ds.variables['qc'][:].data[0,0,iy,ix] + ds.variables['qr'][:].data[0,0,iy,ix] + 
-                     ds.variables['qi'][:].data[0,0,iy,ix] + ds.variables['qs'][:].data[0,0,iy,ix] + 
-                     ds.variables['qg'][:].data[0,0,iy,ix] + ds.variables['qhl'][:].data[0,0,iy,ix]))
-        thr0 = ds.variables['th0'][:].data[0,0,iy,ix] * (1 + 0.61*ds.variables['qv0'][:].data[0,0,iy,ix])
-        thrpert = thr - thr0
-        del thr,thr0
     else:
         dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
-    uinterp = ds.variables['uinterp'][:].data[0,iz,iy,ix]
-    vinterp = ds.variables['vinterp'][:].data[0,iz,iy,ix]
-    winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
-    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
-    S_N = np.gradient(uinterp, xh[ix]*1000, axis=2) - np.gradient(vinterp, yh[iy]*1000, axis=1)
-    S_S = np.gradient(vinterp, xh[ix]*1000, axis=2) + np.gradient(uinterp, yh[iy]*1000, axis=1)
-    OW = S_N**2 + S_S**2 - zvort**2
+    thrpert = ds.variables['thrpert'][:].data[0,0,iys,ixs]
+    uinterp = ds.variables['uinterp'][:].data[0,iz,iys,ixs]
+    vinterp = ds.variables['vinterp'][:].data[0,iz,iys,ixs]
+    wmax = np.max(ds.variables['winterp'][:].data[0,iz,iy,ix], axis=0)
+    wmax2 = np.max(ds.variables['winterp'][:].data[0,iz,iys,ixs], axis=0)
+    zvort = ds.variables['zvort'][:].data[0,iz,iys,ixs]
+    S_N = np.gradient(uinterp, xh[ixs]*1000, axis=2) - np.gradient(vinterp, yh[iys]*1000, axis=1)
+    S_S = np.gradient(vinterp, xh[ixs]*1000, axis=2) + np.gradient(uinterp, yh[iys]*1000, axis=1)
+    OWmin = np.min(S_N**2 + S_S**2 - zvort**2, axis=0)
     del S_N,S_S,zvort
     ds.close()
     
-    if i > 0:
-        ds = nc.Dataset(fp+f"pp/dyn_{fnums[i]:06d}.nc")
-        thrpert = ds.variables['thrpert'][:].data[0,iy,ix]
-        ds.close()
     
     
     if horiz_layout:
@@ -296,34 +392,46 @@ for i in np.arange(0,5):
             cb_flag = False
         
         plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[2,i], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-        axs1[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        axs1[2,i].contour(xh[ix], yh[iy], wmax, levels=[5], colors='k', linewidths=1)
         # axs1[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
         # axs1[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+        rect = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs1[2,i].add_patch(rect)
         
-        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[2,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=cb_flag, cbfs=12, alpha=0.75)
-        axs2[2,i].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-        axs2[2,i].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-        axs2[2,i].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        plot_cfill(xh[ixs], yh[iys], thrpert, 'thrpert', axs2[2,i], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_s, ylims=yl_s, cbar=cb_flag, cbfs=12, alpha=0.75)
+        axs2[2,i].contour(xh[ixs], yh[iys], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[2,i].contour(xh[ixs], yh[iys], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[2,i].quiver(xh[ixs][::qix], yh[iys][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[2,i].set_title(f"t={time:.0f} min", fontsize=14)
+        rect2 = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs2[2,i].add_patch(rect2)
+        del rect,rect2
         
     elif vert_layout:
         # Vertical layout
         c1 = plot_cfill(xh[ix], yh[iy], np.ma.masked_array(dbz, dbz<1), 'dbz', axs1[i,2], datalims=dbz_lims, xlims=xl, ylims=yl, cbar=False, alpha=0.75)
-        axs1[i,2].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1)
+        axs1[i,2].contour(xh[ix], yh[iy], wmax, levels=[5], colors='k', linewidths=1)
         # axs1[i,2].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=600, width=0.002, pivot='tail')
         # axs1[i,2].set_title(f"t={time:.0f} min", fontsize=14)
+        rect = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs1[i,2].add_patch(rect)
         axs1[i,2].xaxis.set_major_locator(MultipleLocator(10))
         axs1[i,2].yaxis.set_major_locator(MultipleLocator(10))
         cb1 = plt.colorbar(c1, ax=axs1[i,2], extend='both', ticks=np.linspace(0,70,8))
         cb1.set_label("$Z_H$ (dBZ)", fontsize=14)
+        axs1[i,2].set_yticks([])
         
-        plot_cfill(xh[ix], yh[iy], thrpert, 'thrpert', axs2[i,2], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl, ylims=yl, cbar=True, cbfs=15, alpha=0.75)
-        axs2[i,2].contour(xh[ix], yh[iy], np.max(winterp,axis=0), levels=[5], colors='k', linewidths=1, linestyles='-')
-        axs2[i,2].contour(xh[ix], yh[iy], np.ma.masked_array(np.min(OW,axis=0), np.max(winterp,axis=0)<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
-        axs2[i,2].quiver(xh[ix][::qix], yh[iy][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=375, width=0.0025, pivot='tail')
+        plot_cfill(xh[ixs], yh[iys], thrpert, 'thrpert', axs2[i,2], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_s, ylims=yl_s, cbar=True, cbfs=15, alpha=0.75)
+        axs2[i,2].contour(xh[ixs], yh[iys], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')
+        axs2[i,2].contour(xh[ixs], yh[iys], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
+        axs2[i,2].quiver(xh[ixs][::qix], yh[iys][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[i,2].set_title(f"t={time:.0f} min", fontsize=14)
+        rect2 = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        axs2[i,2].add_patch(rect2)
         axs2[i,2].xaxis.set_major_locator(MultipleLocator(10))
         axs2[i,2].yaxis.set_major_locator(MultipleLocator(10))
+        # axs2[i,2].set_yticks([])
+        del rect,rect2
     
 
 
@@ -350,7 +458,7 @@ elif vert_layout:
         axs2[4,j].set_xlabel('x (km)', fontsize=15)
 
 
-figsave = True
+figsave = False
 
 if figsave:
     fig1.savefig('/Users/morgan.schneider/Documents/merger/overview_dbz_v2.png', dpi=300)
@@ -1621,27 +1729,41 @@ if False:
         ds.close()
 
 
+
+        
+        
+
 # Save thrpert and thr0 to cm1out files so I don't have to move the pp files to NSSL storage
-# ** haven't run merger yet but I have run supercell and qlcs ** this might take me above 10TB idk
-if True:
-    sim = 'merger'
+if False:
+    fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
     
-    for fnum in np.arange(14,23):
-        print(f"File {sim}-125m/cm1out_{fnum:06d}.nc ...")
+    for fnum in np.arange(13,74):
+        print(f"File cm1out_{fnum:06d}.nc ...")
         
-        ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/{sim}-125m/pp/dyn_{fnum:06d}.nc")
-        thr_pert = ds.variables['thrpert'][:].data
-        thr_0 = ds.variables['thr0'][:].data
-        ds.close()
+        if fnum == 13:
+            ds = nc.Dataset(fp+f"cm1out_{fnum:06d}.nc")
+            thr = ds.variables['th'][:].data[0,:,:,:] * (1 + 0.61*ds.variables['qv'][:].data[0,:,:,:] - 
+                        (ds.variables['qc'][:].data[0,:,:,:] + ds.variables['qr'][:].data[0,:,:,:] + 
+                         ds.variables['qi'][:].data[0,:,:,:] + ds.variables['qs'][:].data[0,:,:,:] + 
+                         ds.variables['qg'][:].data[0,:,:,:] + ds.variables['qhl'][:].data[0,:,:,:]))
+            thr_0 = ds.variables['th0'][:].data[0,:,:,:] * (1 + 0.61*ds.variables['qv0'][:].data[0,:,:,:])
+            thr_pert = thr - thr_0
+            thr_0 = thr_0[:,-1,-1]
+            del thr
+            ds.close()
+        else:
+            ds = nc.Dataset(fp+f"pp/dyn_{fnum:06d}.nc")
+            thr_pert = ds.variables['thrpert'][:].data
+            thr_0 = ds.variables['thr0'][:].data
+            ds.close()
         
-        ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/{sim}-125m/cm1out_{fnum:06d}.nc", 'r+')
+        ds = nc.Dataset(fp+f"cm1out_{fnum:06d}.nc", 'r+')
         
         print( "... Writing thrpert ...")
         thrpert = ds.createVariable('thrpert', 'f4', ('nk', 'nj', 'ni'))
         thrpert.units = 'K'
         thrpert.long_name = 'perturbation density potential temperature'
         thrpert[:,:,:] = thr_pert[:,:,:]
-        
         
         print("... Writing thr0 ...")
         thr0 = ds.createVariable('thr0', 'f4', ('nk'))
@@ -1654,45 +1776,7 @@ if True:
         print("... Done!\n ---")
         
         del thr_pert,thr_0,thrpert,thr0
-
-
-
-
-# Save thrpert and thr0 to cm1out files (just for the total simulation files bc no pp)
-if False:
-    fn = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000013.nc'
-    
-    ds = nc.Dataset(fn)
-    thr = ds.variables['th'][:].data[0,:,:,:] * (1 + 0.61*ds.variables['qv'][:].data[0,:,:,:] - 
-                (ds.variables['qc'][:].data[0,:,:,:] + ds.variables['qr'][:].data[0,:,:,:] + 
-                 ds.variables['qi'][:].data[0,:,:,:] + ds.variables['qs'][:].data[0,:,:,:] + 
-                 ds.variables['qg'][:].data[0,:,:,:] + ds.variables['qhl'][:].data[0,:,:,:]))
-    thr_0 = ds.variables['th0'][:].data[0,:,:,:] * (1 + 0.61*ds.variables['qv0'][:].data[0,:,:,:])
-    thr_pert = thr - thr_0
-    thr_0 = thr_0[:,-1,-1]
-    del thr
-    ds.close()
-    
-    
-    ds = nc.Dataset(fn, 'r+')
-    
-    print( "... Writing thrpert ...")
-    thrpert = ds.createVariable('thrpert', 'f4', ('nk', 'nj', 'ni'))
-    thrpert.units = 'K'
-    thrpert.long_name = 'perturbation density potential temperature'
-    thrpert[:,:,:] = thr_pert[:,:,:]
-    
-    print("... Writing thr0 ...")
-    thr0 = ds.createVariable('thr0', 'f4', ('nk'))
-    thr0.units = 'K'
-    thr0.long_name = 'base state density potential temperature'
-    thr0[:] = thr_0[:]
-    
-    ds.close()
-    
-    print("... Done!\n ---")
-    
-    del thr_pert,thr_0,thrpert,thr0
+        
 
 
 
