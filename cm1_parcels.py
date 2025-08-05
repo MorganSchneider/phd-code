@@ -2558,10 +2558,10 @@ for i in range(len(times)):
     s6, = axs[3,i].plot(ptime[it], np.median(vort_cw[it,:], axis=1), col[5], linewidth=2)
 
 
-axs[0,0].legend(handles=[s1], labels=["w"], loc=3, fontsize=10)
-axs[1,0].legend(handles=[s2], labels=["Total |\u03c9|"], loc=3, fontsize=10)
-axs[2,0].legend(handles=[s3,s4], labels=["|\u03c9$_H$|", "\u03B6"], loc=3, fontsize=10, ncol=2)
-axs[3,0].legend(handles=[s5,s6], labels=["Streamwise", "Crosswise"], loc=3, fontsize=10, ncol=2)
+axs[0,0].legend(handles=[s1], labels=["w"], loc=3, fontsize=11)
+axs[1,0].legend(handles=[s2], labels=["Total |\u03c9|"], loc=3, fontsize=11)
+axs[2,0].legend(handles=[s3,s4], labels=["|\u03c9$_H$|", "\u03B6"], loc=3, fontsize=11, ncol=2)
+axs[3,0].legend(handles=[s5,s6], labels=["\u03c9$_{SW}$", "\u03c9$_{CW}$"], loc=3, fontsize=11, ncol=2)
 axs[3,0].set_xlabel('                                                        Time (min)', fontsize=14)
 
 axs[0,0].set_ylabel("Vertical\n velocity ", fontsize=12)
@@ -2579,7 +2579,7 @@ for i in range(2):
     axs[0,i].set_ylim([-15, 15]) # w
     axs[1,i].set_ylim([-0.02, 0.08]) # total -- [-0.02, 0.1] for 225
     axs[2,i].set_ylim([-0.04, 0.06]) # horiz and vert -- [-0.05, 0.09] for 225
-    axs[3,i].set_ylim([-0.04, 0.06]) # streamwise and crosswise -- [-0.07, 0.07] for 225
+    axs[3,i].set_ylim([-0.06, 0.06]) # streamwise and crosswise -- [-0.07, 0.07] for 225
     axs[3,i].tick_params(axis='x', which='major', labelsize=12)
     
     axs[0,i].yaxis.set_major_locator(MultipleLocator(5))

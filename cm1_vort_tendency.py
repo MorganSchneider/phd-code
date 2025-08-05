@@ -2703,7 +2703,7 @@ ix3 = slice(i1-8,i1+9)
 iy3 = slice(i2-8,i2+9)
 
 
-#%% Load data for composite vorticity tendency plots, all times - parcel-centered composites
+#%% Load data for composite vorticity tendency plots, all times - parcel-centered composites ***FOR PAPER FIG***
 
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
 

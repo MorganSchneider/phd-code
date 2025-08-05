@@ -691,7 +691,7 @@ from scipy.interpolate import interp1d
 fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
-mv_time = 210
+mv_time = 220
 
 if mv_time == 210:
     fn = 41
@@ -807,7 +807,7 @@ ds.close()
 
 
 
-figsave = True
+figsave = False
 
 
 
