@@ -323,7 +323,7 @@ for fn in [13]:
         dbfile.close()
         del winterp,B,OW,zvort
 
-#%% Plot cross sections ***PAPER FIGS HERE***
+#%% Plot cross sections ***OLD PAPER FIGS HERE***
 
 mv_time = 220
 
@@ -691,7 +691,7 @@ from scipy.interpolate import interp1d
 fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
-mv_time = 220
+mv_time = 210
 
 if mv_time == 210:
     fn = 41
@@ -703,7 +703,7 @@ elif mv_time == 225:
 
 
 
-# Read parcel data
+# Load parcel time
 ds = nc.Dataset(fp+'cm1out_pdata.nc')
 ptime = ds.variables['time'][:].data
 ds.close()
@@ -711,7 +711,7 @@ ds.close()
 ti = np.where(ptime == mv_time*60)[0][0]
 ti0 = np.where(ptime == 180*60)[0][0]
 
-
+# Load MV parcel data
 dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
 traj = pickle.load(dbfile)
 pids_mv = traj[f"{mv_time}min"]['pids']
@@ -720,22 +720,26 @@ y_mv = traj[f"{mv_time}min"]['y']
 z_mv = traj[f"{mv_time}min"]['z']
 u_mv = traj[f"{mv_time}min"]['u']
 v_mv = traj[f"{mv_time}min"]['v']
+w_mv = traj[f"{mv_time}min"]['w']
 dbfile.close()
 
+# Load parcel source region clusters
 dbfile = open(ip+f"traj_clusters/traj_clusters_{mv_time}min_v2.pkl", 'rb')
 c = pickle.load(dbfile)
 cc = c['mv1']
 dbfile.close()
 
 
-# Mid-level source
+# Mid-level source (0 -> LL inflow, 1 -> ML inflow, 2 -> supercell outflow, 3 -> QLCS outflow)
 x_ml = x_mv[:,(cc==1)]
 y_ml = y_mv[:,(cc==1)]
 z_ml = z_mv[:,(cc==1)]
 u_ml = u_mv[:,(cc==1)]
 v_ml = v_mv[:,(cc==1)]
+w_ml = w_mv[:,(cc==1)]
 
 
+# Load saved storm motion estimates
 dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
 sm = pickle.load(dbfile)
 u_storm = sm['u_storm']
@@ -745,15 +749,16 @@ dbfile.close()
 stimes = np.linspace(10800, 14400, 61)
 
 
+# Interpolate storm motion from model output timesto parcel output times (60 s to 15 s)
 fu = interp1d(stimes, u_storm)
 u_storm_interp = fu(ptime)
 fv = interp1d(stimes, v_storm)
 v_storm_interp = fv(ptime)
 
 
+# Get storm-relative trajectories starting from MV
 x_sr = np.zeros(shape=x_ml[:ti+1,:].shape, dtype=float)
 y_sr = np.zeros(shape=y_ml[:ti+1,:].shape, dtype=float)
-
 x_sr[ti,:] = x_ml[ti,:]
 y_sr[ti,:] = y_ml[ti,:]
 inds = np.linspace(ti-1, 0, ti)
@@ -764,19 +769,19 @@ for i in inds:
     delta_y = np.sum(v_storm_interp[i:ti] * dt)
     # delta_x = u_storm_interp[i] * dt
     # delta_y = v_storm_interp[i] * dt
-    x_new = x_ml[i] + delta_x
-    y_new = y_ml[i] + delta_y
-    
-    x_sr[i,:] = x_new
-    y_sr[i,:] = y_new
+    x_sr[i,:] = x_ml[i] + delta_x
+    y_sr[i,:] = y_ml[i] + delta_y
 
 
+# Median parcel trajectory
 x_median = np.median(x_sr[ti0:ti+1,:], axis=1)/1000
 y_median = np.median(y_sr[ti0:ti+1,:], axis=1)/1000
 z_median = np.median(z_ml[ti0:ti+1,:], axis=1)/1000
 u_median = np.median(u_ml[ti0:ti+1,:], axis=1)
 v_median = np.median(v_ml[ti0:ti+1,:], axis=1)
+w_median = np.median(w_ml[ti0:ti+1,:], axis=1)
 
+# Load saved parcel trajectory vorticity (interpolated from model fields)
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mv_time}min.pkl", 'rb')
 vort_traj = pickle.load(dbfile)
 xvort_ml = vort_traj['xvort_ml']
@@ -786,99 +791,205 @@ dbfile.close()
 xvort_median = np.median(xvort_ml[ti0:ti+1,:], axis=1)
 yvort_median = np.median(yvort_ml[ti0:ti+1,:], axis=1)
 
+# only plot every qit SR wind vectors (not actually used here oops)
 qit = 4
 u_sr = u_median[::qit] - u_storm[:len(x_median[::qit])]
 v_sr = v_median[::qit] - v_storm[:len(x_median[::qit])]
 
 
 
-
-if mv_time == 210:
-    xlp = [-30,20]
-    ylp = [-85,-45]
-elif mv_time == 220:
-    xlp = [-25,25]
-    ylp = [-80,-40]
-
-
 ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
+z = ds.variables['z'][:].data
 ds.close()
-
-ix = slice(np.where(xh >= xlp[0])[0][0], np.where(xh >= xlp[1])[0][1])
-iy = slice(np.where(yh >= ylp[0])[0][0], np.where(xh >= ylp[1])[0][1])
-
-if True:
-    ds = nc.Dataset(fp+f"cm1out_{fn+2:06d}.nc")
-    dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
-    ds.close()
-
-
-
-
-if mv_time == 210:
-    xlp = [-25,15]
-elif mv_time == 220:
-    xlp = [-20,20]
-elif mv_time == 225:
-    xlp = [-16.5,8.5]
 
 
 
 
 figsave = False
 
-from matplotlib.patches import FancyArrowPatch
-
-def add_vectors(ax, x, y, dx, dy, z, lengthscale=10, *args, **kwargs):
-    # SMALLER lengthscale for SHORTER arrows -- this is REVERSED from scale kwarg in quiver
-    zinds = np.argsort(z)
-    for j in range(len(x)):
-        i = zinds[j]
-        x1 = x[i]
-        y1 = y[i]
-        dx1 = dx[i]*lengthscale
-        dy1 = dy[i]*lengthscale
-        x2 = x1 + dx1
-        y2 = y1 + dy1
-        arrow = FancyArrowPatch((x1, y1), (x2, y2), *args, **kwargs)
-        ax.add_patch(arrow)
-        
-    return arrow
-
-from matplotlib.colors import LinearSegmentedColormap
-cmap = LinearSegmentedColormap.from_list('cmap', pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.9,205)))
 
 
+### TRAJECTORIES WITH VORTICITY VECTORS
+if False:
+    from matplotlib.patches import FancyArrowPatch
+    
+    def add_vectors(ax, x, y, dx, dy, z, lengthscale=10, *args, **kwargs):
+        # SMALLER lengthscale for SHORTER arrows -- this is REVERSED from scale kwarg in quiver
+        zinds = np.argsort(z)
+        for j in range(len(x)):
+            i = zinds[j]
+            x1 = x[i]
+            y1 = y[i]
+            dx1 = dx[i]*lengthscale
+            dy1 = dy[i]*lengthscale
+            x2 = x1 + dx1
+            y2 = y1 + dy1
+            arrow = FancyArrowPatch((x1, y1), (x2, y2), *args, **kwargs)
+            ax.add_patch(arrow)
+            
+        return arrow
+    
+    from matplotlib.colors import LinearSegmentedColormap
+    cmap = LinearSegmentedColormap.from_list('cmap', pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.9,205)))
+    
+    if mv_time == 210:
+        ix = slice(np.where(xh >= -30)[0][0], np.where(xh >= 20)[0][1])
+        iy = slice(np.where(yh >= -85)[0][0], np.where(xh >= -45)[0][1])
+    elif mv_time == 220:
+        ix = slice(np.where(xh >= -25)[0][0], np.where(xh >= 25)[0][1])
+        iy = slice(np.where(yh >= -80)[0][0], np.where(xh >= -40)[0][1])
+    
+    ds = nc.Dataset(fp+f"cm1out_{fn+2:06d}.nc")
+    dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
+    ds.close()
+    
+    if mv_time == 210:
+        xlp = [-25,15]
+    elif mv_time == 220:
+        xlp = [-20,20]
+    elif mv_time == 225:
+        xlp = [-16.5,8.5]
+    
+    
+    fig,ax = plt.subplots(1,1, figsize=(7,5), subplot_kw=dict(box_aspect=1), layout='constrained')
+    
+    l, = ax.plot([xh[0], xh[1]], [yh[0], yh[1]], 'gray', linewidth=1)
+    ax.contour(xh[ix], yh[iy], dbz, levels=[30], colors='gray', linewidths=1, zorder=0)
+    p = ax.scatter(x_median, y_median, s=80, c=z_median, cmap=cmap, vmin=0, vmax=3)
+    cb = plt.colorbar(p, ax=ax, extend='max')
+    cb.set_label("Parcel height (km)", fontsize=13)
+    # p = ax.scatter(x_median, y_median, s=30, c=zvort_median, cmap='ChaseSpectral', vmin=-0.04, vmax=0.04)
+    # cb = plt.colorbar(p, ax=ax, label="Parcel \u03B6 (s$^{-1}$)", extend='both')
+    # a_wind = add_vectors(ax, x_median[::qit], y_median[::qit], u_sr, v_sr, z_median[::qit],
+    #             lengthscale=0.2, arrowstyle='simple', mutation_scale=5, ec='k', fc='k', lw=0.5)
+    a_vort = add_vectors(ax, x_median[::qit], y_median[::qit]+0.5, xvort_median[::qit], yvort_median[::qit], z_median[::qit],
+                lengthscale=275, arrowstyle='simple', mutation_scale=9, ec='k', fc='lightgray', lw=0.75)
+    ax.set_xlabel('x (km)', fontsize=12)
+    ax.set_ylabel('y (km)', fontsize=12)
+    # ax.set_title(f"Parcels in the MV at {mv_time} min", fontsize=13)
+    ax.set_xlim(xlp)
+    ax.set_ylim(ylp)
+    ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
+    # plt.legend(handles=[l,a_vort,a_wind], labels=['30 dBZ',"\u03c9$_H$","SR wind"], loc=1, fontsize=10)
+    plt.legend(handles=[l,a_vort], labels=['30 dBZ',"\u03c9$_H$"], loc=1, fontsize=10)
+    
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/traj_vort2d_parcelheight_{mv_time:.0f}min_SR.png", dpi=300)
 
-fig,ax = plt.subplots(1,1, figsize=(7,5), subplot_kw=dict(box_aspect=1), layout='constrained')
-
-l, = ax.plot([xh[0], xh[1]], [yh[0], yh[1]], 'gray', linewidth=1)
-ax.contour(xh[ix], yh[iy], dbz, levels=[30], colors='gray', linewidths=1, zorder=0)
-p = ax.scatter(x_median, y_median, s=80, c=z_median, cmap=cmap, vmin=0, vmax=3)
-cb = plt.colorbar(p, ax=ax, extend='max')
-cb.set_label("Parcel height (km)", fontsize=13)
-# p = ax.scatter(x_median, y_median, s=30, c=zvort_median, cmap='ChaseSpectral', vmin=-0.04, vmax=0.04)
-# cb = plt.colorbar(p, ax=ax, label="Parcel \u03B6 (s$^{-1}$)", extend='both')
-# a_wind = add_vectors(ax, x_median[::qit], y_median[::qit], u_sr, v_sr, z_median[::qit],
-#             lengthscale=0.2, arrowstyle='simple', mutation_scale=5, ec='k', fc='k', lw=0.5)
-a_vort = add_vectors(ax, x_median[::qit], y_median[::qit]+0.5, xvort_median[::qit], yvort_median[::qit], z_median[::qit],
-            lengthscale=275, arrowstyle='simple', mutation_scale=9, ec='k', fc='lightgray', lw=0.75)
-ax.set_xlabel('x (km)', fontsize=12)
-ax.set_ylabel('y (km)', fontsize=12)
-ax.set_title(f"Parcels in the MV at {mv_time} min", fontsize=13)
-ax.set_xlim(xlp)
-ax.set_ylim(ylp)
-ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
-# plt.legend(handles=[l,a_vort,a_wind], labels=['30 dBZ',"\u03c9$_H$","SR wind"], loc=1, fontsize=10)
-plt.legend(handles=[l,a_vort], labels=['30 dBZ',"\u03c9$_H$"], loc=1, fontsize=10)
-
-if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/traj_vort2d_parcelheight_{mv_time:.0f}min_SR.png", dpi=300)
 
 
 
+import matplotlib as mpl
+parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
+                    np.vstack((pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.5,154)),
+                    pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,102)))))
+
+
+### TRAJECTORY PLAN VIEWS
+if False:
+    if mv_time == 210:
+        xl = [-30,20]
+        # yl = [-100,-50]
+        yl = [-90,-40]
+    elif mv_time == 220:
+        xl = [-30,20]
+        # yl = [-90,-40]
+        yl = [-85,-35]
+    
+    ix = slice(np.where(xh >= xl[0])[0][0], np.where(xh >= xl[1])[0][1])
+    iy = slice(np.where(yh >= yl[0])[0][0], np.where(xh >= yl[1])[0][1])
+    iz1 = slice(0, np.where(z >= 1)[0][1])
+    
+    ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
+    thr_plan = ds.variables['thrpert'][:].data[0,iy,ix]
+    # w_plan = np.max(ds.variables['winterp'][:].data[0,iz1,iy,ix], axis=0)
+    ds.close()
+    
+    wl = [-15,10]
+    
+    fig,ax = plt.subplots(1,1,figsize=(9,6), subplot_kw=dict(box_aspect=1), layout='constrained')
+    plot_contourf(xh[ix], yh[iy], thr_plan, 'thrpert', ax, levels=np.linspace(-16,16,17), datalims=[-16,16], cmap='PuOr_r', cbfs=14, xlims=xl, ylims=yl, extend='both', cbar=True)
+    # ax.contour(xh[ix], yh[iy], w_plan, levels=[5,10,15], colors=['gray','k','k'], linewidths=1, linestyles='-')
+    p = ax.scatter(x_median, y_median, s=80, c=w_median, cmap=parcel_cm, edgecolor='none', linewidth=0.25, vmin=wl[0], vmax=wl[1])
+    ax.scatter(x_median[::20], y_median[::20], s=80, c=w_median[::20], cmap=parcel_cm, edgecolor='k', linewidth=1.5, vmin=wl[0], vmax=wl[1])
+    cb = plt.colorbar(p, ax=ax, extend='both') #, ticks=np.linspace(wl[0],wl[1],11))
+    cb.set_label(label="Parcel $w$ (m s$^{-1}$)", fontsize=14)
+    for i in range(len(x_median[::20])):
+        t = ptime[ti0:ti+1][::20][i]/60
+        if mv_time == 210:
+            ax.text(x_median[::20][i]-2, y_median[::20][i]+1.5, f"{t:.0f}", fontsize=14, fontweight='bold')
+        elif mv_time == 220:
+            ax.text(x_median[::20][i]+0.75, y_median[::20][i]+0.5, f"{t:.0f}", fontsize=14, fontweight='bold')
+    ax.set_xlabel('x (km)', fontsize=14)
+    ax.set_ylabel('y (km)', fontsize=14)
+    # ax.set_title(f"Mid-level parcels in the MV at {mv_time} min", fontsize=14)
+    
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/traj_thr_plan_{mv_time}min_SR.png", dpi=300)
+
+
+
+
+
+# TRAJECTORY CROSS SECTIONS
+if True:
+    xl = [-30,15] #[-55,25]
+    zl = [0,3.5]
+    iz = slice(0, np.where(z >= zl[1])[0][1])
+    ix = slice(np.where(xh >= xl[0])[0][0], np.where(xh >= xl[1])[0][1])
+    iy = (np.abs(yh - np.median(y_ml[ti-9,:]/1000))).argmin()
+    
+    ds = nc.Dataset(fp+'cm1out_000013.nc')
+    prs0 = ds.variables['prs0'][:].data[0,iz,iy,ix]
+    ds.close()
+    
+    ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
+    thrpert = ds.variables['thrpert'][:].data[iz,iy,ix]
+    prspert = (ds.variables['prs'][:].data[0,iz,iy,ix] - prs0)/100
+    # winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
+    ds.close()
+    
+    wl = [-15,10]
+    
+    fig,ax = plt.subplots(1,1,figsize=(10,4), layout='constrained')
+    plot_contourf(xh[ix], z[iz], thrpert, 'thrpert', ax, levels=np.linspace(-16,16,17), datalims=[-16,16], cmap='PuOr_r', cbfs=13, xlims=xl, ylims=zl, extend='both')
+    # ax.contour(xh[ix], z[iz], prspert, levels=[-5,-4,-3,-2,-1,1,2,3,4,5], colors=['b','b','b','b','b','r','r','r','r','r'], linewidths=1, linestyles='-')
+    ax.contour(xh[ix], z[iz], prspert, levels=[-3,-2,-1,1,2,3], colors=['b','b','b','r','r','r'], linewidths=0.75, linestyles='-')
+    # ax.contour(xh[ix], z[iz], OW, levels=[-0.01,-0.0025,-0.001], colors='hotpink', linewidths=1, linestyles='-')
+    # ax.quiver(xh[ix][::qix], z[iz][::qiz], 0*winterp[::qiz,::qix], winterp[::qiz,::qix], scale=250, width=0.002, pivot='tail')
+    # ax.scatter(x_median, z_median, s=20, color='dimgray', marker='.')
+    p = ax.scatter(x_median, z_median, s=60, c=w_median, cmap=parcel_cm, edgecolor='none', linewidth=0.25, vmin=wl[0], vmax=wl[1])
+    ax.scatter(x_median[::20], z_median[::20], s=60, c=w_median[::20], cmap=parcel_cm, edgecolor='k', linewidth=1.5, vmin=wl[0], vmax=wl[1])
+    cb = plt.colorbar(p, ax=ax, extend='both') #, ticks=np.linspace(wl[0],wl[1],11))
+    cb.set_label("Parcel $w$ (m s$^{-1}$)", fontsize=13)
+    for i in range(len(x_median[::20])):
+        t = ptime[ti0:ti+1][::20][i]/60
+        if mv_time == 210:
+            ax.text(x_median[::20][i]+0.3, z_median[::20][i]+0.05, f"{t:.0f}", fontsize=12, fontweight='bold')
+        elif mv_time == 220:
+            if (i==1) | (i==3):
+                x_offset = -1; z_offset = -0.25
+            elif (i == 6):
+                x_offset = -0.2; z_offset = 0.1
+            elif i >= 7:
+                x_offset = -2.25; z_offset = 0.1
+            else:
+                x_offset = -1; z_offset = 0.1
+            ax.text(x_median[::20][i]+x_offset, z_median[::20][i]+z_offset, f"{t:.0f}", fontsize=12, fontweight='bold')
+    ax.set_xlabel('x (km)', fontsize=14)
+    ax.set_ylabel('z (km)', fontsize=14)
+    # ax.set_title(f"Mid-level parcels in the MV at {mv_time} min", fontsize=14)
+    
+    if figsave:
+        plt.savefig(f"/Users/morgan.schneider/Documents/merger/traj_thr_cross_{mv_time}min_SR.png", dpi=300)
+    
+    
+    
+    
+    
+    
 
 
     
