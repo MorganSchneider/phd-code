@@ -807,7 +807,7 @@ ds.close()
 
 
 
-figsave = False
+figsave = True
 
 
 
@@ -954,7 +954,7 @@ if True:
     wl = [-15,10]
     
     fig,ax = plt.subplots(1,1,figsize=(10,4), layout='constrained')
-    plot_contourf(xh[ix], z[iz], thrpert, 'thrpert', ax, levels=np.linspace(-16,16,17), datalims=[-16,16], cmap='PuOr_r', cbfs=13, xlims=xl, ylims=zl, extend='both')
+    plot_contourf(xh[ix], z[iz], thrpert, 'thrpert', ax, levels=np.linspace(-16,16,17), datalims=[-16,16], cmap='PuOr_r', cbfs=13, xlims=[-25,15], ylims=zl, extend='both')
     # ax.contour(xh[ix], z[iz], prspert, levels=[-5,-4,-3,-2,-1,1,2,3,4,5], colors=['b','b','b','b','b','r','r','r','r','r'], linewidths=1, linestyles='-')
     ax.contour(xh[ix], z[iz], prspert, levels=[-3,-2,-1,1,2,3], colors=['b','b','b','r','r','r'], linewidths=0.75, linestyles='-')
     # ax.contour(xh[ix], z[iz], OW, levels=[-0.01,-0.0025,-0.001], colors='hotpink', linewidths=1, linestyles='-')
