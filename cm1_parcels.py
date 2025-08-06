@@ -8,6 +8,7 @@ Created on Tue Dec 12 14:34:11 2023
 - PAPER FIGURES -
 traj_z+b+src
 traj_z+b+src_Q
+traj_z+b+src_S
 traj_timeseries
 traj_vort_timeseries
 
@@ -866,7 +867,7 @@ ds.close()
 xl = [-62,22]; yl = [-122,-38]
 
 
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000028.nc')
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000033.nc')
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 ix1 = np.where(xh >= xl[0])[0][0]; ix2 = np.where(xh >= xl[1])[0][1]; ix = slice(ix1,ix2)
@@ -1008,6 +1009,7 @@ if figsave:
 
 import matplotlib as mpl
 cm = mpl.colors.ListedColormap(['gold', 'mediumblue'])
+    
 
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_Q.pkl", 'rb')
@@ -1032,7 +1034,7 @@ ds.close()
 xl = [-62,22]; yl = [-122,-38]
 
 
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/cm1out_000028.nc')
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/cm1out_000033.nc')
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 ix1 = np.where(xh >= xl[0])[0][0]; ix2 = np.where(xh >= xl[1])[0][1]; ix = slice(ix1,ix2)
@@ -1068,7 +1070,6 @@ for i in range(3):
     
     
     # 3x3 panel trajectories colored by z, B, and source for qlcsonly
-    
     x0 = x_mv[:,(cc_mv==0)]; y0 = y_mv[:,(cc_mv==0)]; z0 = z_mv[:,(cc_mv==0)]; b0 = b_mv[:,(cc_mv==0)]; c0 = cc_mv[(cc_mv==0)]
     x3 = x_mv[:,(cc_mv==3)]; y3 = y_mv[:,(cc_mv==3)]; z3 = z_mv[:,(cc_mv==3)]; b3 = b_mv[:,(cc_mv==3)]; c3 = cc_mv[(cc_mv==3)]
     
@@ -1155,6 +1156,160 @@ figsave = False
 if figsave:
     fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_Q.png', dpi=300)
 
+
+
+
+#%% Same plot but for supercell ***MAYBE PAPER FIG***
+
+import matplotlib as mpl
+cm = mpl.colors.ListedColormap(['gold', 'red', 'deepskyblue'])
+    
+
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_S.pkl", 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/supercell-125m/boxes_s1.pkl", 'rb')
+box = pickle.load(dbfile)
+xb1 = box['x1_pp']
+xb2 = box['x2_pp']
+yb1 = box['y1_pp']
+yb2 = box['y2_pp']
+dbfile.close()
+
+
+fnums = [33, 43, 53]
+
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+xl = [-62,22]; yl = [-122,-38]
+
+
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/cm1out_000033.nc')
+xh = ds.variables['xh'][:].data
+yh = ds.variables['yh'][:].data
+ix1 = np.where(xh >= xl[0])[0][0]; ix2 = np.where(xh >= xl[1])[0][1]; ix = slice(ix1,ix2)
+iy1 = np.where(yh >= yl[0])[0][0]; iy2 = np.where(yh >= yl[1])[0][1]; iy = slice(iy1,iy2)
+ds.close()
+
+
+
+fig,axs = plt.subplots(3, 3, figsize=(9,8), subplot_kw=dict(box_aspect=1), sharex=True, sharey=True, layout='constrained')
+
+
+for i in range(3):
+    ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/cm1out_{fnums[i]:06d}.nc")
+    stime = ds.variables['time'][0]
+    t = stime/60
+    dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
+    ds.close()
+    
+    dbfile = open(f"/Users/morgan.schneider/Documents/merger/supercell-125m/traj_clusters_{t:.0f}min_v2.pkl", 'rb')
+    cc = pickle.load(dbfile)
+    cc_mv = cc['s1']
+    dbfile.close()
+    
+    ti = np.where(ptime == stime)[0][0]
+    
+    pids_mv = traj[f"{t:.0f}min"]['pids']
+    x_mv = traj[f"{t:.0f}min"]['x'][:ti+1,:]
+    y_mv = traj[f"{t:.0f}min"]['y'][:ti+1,:]
+    z_mv = traj[f"{t:.0f}min"]['z'][:ti+1,:]
+    w_mv = traj[f"{t:.0f}min"]['w'][:ti+1,:]
+    b_mv = traj[f"{t:.0f}min"]['b'][:ti+1,:]
+
+    
+    
+    # 3x3 panel trajectories colored by z, B, and source for qlcsonly
+    x0 = x_mv[:,(cc_mv==0)]; y0 = y_mv[:,(cc_mv==0)]; z0 = z_mv[:,(cc_mv==0)]; b0 = b_mv[:,(cc_mv==0)]; c0 = cc_mv[(cc_mv==0)]
+    x1 = x_mv[:,(cc_mv==1)]; y1 = y_mv[:,(cc_mv==1)]; z1 = z_mv[:,(cc_mv==1)]; b1 = b_mv[:,(cc_mv==1)]; c1 = cc_mv[(cc_mv==1)]
+    x2 = x_mv[:,(cc_mv==2)]; y2 = y_mv[:,(cc_mv==2)]; z2 = z_mv[:,(cc_mv==2)]; b2 = b_mv[:,(cc_mv==2)]; c2 = cc_mv[(cc_mv==2)]
+    
+    if i == 0:
+        xp = np.append(x0[:,::21], np.append(x1, x2, axis=1), axis=1)
+        yp = np.append(y0[:,::21], np.append(y1, y2, axis=1), axis=1)
+        zp = np.append(z0[:,::21], np.append(z1, z2, axis=1), axis=1)
+        bp = np.append(b0[:,::21], np.append(b1, b2, axis=1), axis=1)
+        cc = np.append(c0[::21], np.append(c1, c2))
+    if i == 1:
+        xp = np.append(x0[:,::7], np.append(x1, x2, axis=1), axis=1)
+        yp = np.append(y0[:,::7], np.append(y1, y2, axis=1), axis=1)
+        zp = np.append(z0[:,::7], np.append(z1, z2, axis=1), axis=1)
+        bp = np.append(b0[:,::7], np.append(b1, b2, axis=1), axis=1)
+        cc = np.append(c0[::7], np.append(c1, c2))
+    if i == 2:
+        xp = np.append(x0, np.append(x1, x2, axis=1), axis=1)
+        yp = np.append(y0, np.append(y1, y2, axis=1), axis=1)
+        zp = np.append(z0, np.append(z1, z2, axis=1), axis=1)
+        bp = np.append(b0, np.append(b1, b2, axis=1), axis=1)
+        cc = np.append(c0, np.append(c1, c2))
+    
+    
+    p1 = axs[0,i].scatter(xp/1000, yp/1000, s=0.5, c=zp/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3)
+    axs[0,i].contour(xh[ix], yh[iy], dbz, levels=[30], colors='k', linewidths=1)
+    r1 = patches.Rectangle((xb1[10*i+19],yb1[10*i+19]), 10, 10, fc='none', ec='k', lw=2)
+    axs[0,i].add_patch(r1)
+    axs[0,i].set_xlim(xl)
+    axs[0,i].set_ylim(yl)
+    axs[0,i].set_title(f"{t:.0f} min", fontsize=16)
+    
+    p2 = axs[1,i].scatter(xp/1000, yp/1000, s=0.5, c=bp, marker='.', cmap='HomeyerRainbow', vmin=-0.3, vmax=0.1)
+    axs[1,i].contour(xh[ix], yh[iy], dbz, levels=[30], colors='k', linewidths=1)
+    r2 = patches.Rectangle((xb1[10*i+19],yb1[10*i+19]), 10, 10, fc='none', ec='k', lw=2)
+    axs[1,i].add_patch(r2)
+    axs[1,i].set_xlim(xl)
+    axs[1,i].set_ylim(yl)
+    
+    p3 = axs[2,i].scatter([0,0], [0,0], s=1, c=[0,3], marker='.', cmap=cm, vmin=-0.5, vmax=2.5)
+    axs[2,i].scatter(xp/1000, yp/1000, s=0.5, c=np.tile(cc,(len(xp[:,0]),1)), marker='.', cmap=cm, vmin=-0.5, vmax=2.5)
+    axs[2,i].contour(xh[ix], yh[iy], dbz, levels=[30], colors='k', linewidths=1)
+    r3 = patches.Rectangle((xb1[10*i+19],yb1[10*i+19]), 10, 10, fc='none', ec='k', lw=2)
+    axs[2,i].add_patch(r3)
+    axs[2,i].set_xlim(xl)
+    axs[2,i].set_ylim(yl)
+    axs[2,i].set_xlabel('x (km)', fontsize=14)
+
+if False:
+    l1, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='gold')
+    l2, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='red')
+    l3, = axs[2,0].plot([xl[0]-2,xl[0]-1], [yl[0]-2,yl[0]-1], color='deepskyblue')
+    axs[2,0].legend(handles=[l1,l2,l3], labels=['Low-level inflow', 'Mid-level inflow', 'Supercell outflow'], loc='upper right', fontsize=8)
+
+cb1 = plt.colorbar(p1, ax=axs[0,2], extend='both', ticks=np.linspace(0,3,7))
+cb1.set_label("Height (km)", fontsize=12)
+# tl = cb1.ax.get_yticklabels()
+# cb1.ax.set_yticklabels(tl, ha='right')
+# cb1.ax.yaxis.set_tick_params(pad=30)
+
+cb2 = plt.colorbar(p2, ax=axs[1,2], extend='both', ticks=np.linspace(-0.3,0.1,5))
+cb2.set_label("Buoyancy (m s$^{-2}$)", fontsize=12)
+# tl = cb2.ax.get_yticklabels()
+# cb2.ax.set_yticklabels(tl, ha='right')
+# cb2.ax.yaxis.set_tick_params(pad=30)
+
+cb3 = plt.colorbar(p3, ax=axs[2,2], ticks=[0,1,2])
+cb3.ax.set_yticklabels([' Low-level\n inflow', ' Mid-level\n inflow', ' Supercell\n outflow'])
+# cb3.set_label("Source region", fontsize=12)
+
+axs[0,0].set_yticks(np.linspace(-120, -40, 5))
+axs[1,0].set_yticks(np.linspace(-120, -40, 5))
+axs[2,0].set_yticks(np.linspace(-120, -40, 5))
+
+axs[0,0].set_ylabel('y (km)', fontsize=14)
+axs[1,0].set_ylabel('y (km)', fontsize=14)
+axs[2,0].set_ylabel('y (km)', fontsize=14)
+
+axs[2,0].set_xlabel('x (km)', fontsize=14)
+axs[2,1].set_xlabel('x (km)', fontsize=14)
+axs[2,2].set_xlabel('x (km)', fontsize=14)
+
+figsave = False
+
+if figsave:
+    fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_S.png', dpi=300)
 
 
 
@@ -2106,10 +2261,7 @@ if False:
     
     for k in np.arange(13,74):
         print(f"cm1out_{k:06d}")
-        if k == 13:
-            fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/'
-        else:
-            fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
         
         ds = nc.Dataset(fp+f"cm1out_{k:06d}.nc")
         stime = ds.variables['time'][:].data[0]
@@ -2168,10 +2320,7 @@ if False:
     
     for k in np.arange(13,74):
         print(f"cm1out_{k:06d}")
-        if k == 13:
-            fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/'
-        else:
-            fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
         
         ds = nc.Dataset(fp+f"cm1out_{k:06d}.nc")
         stime = ds.variables['time'][:].data[0]
@@ -2236,10 +2385,7 @@ if False:
     
     for k in np.arange(13,74):
         print(f"cm1out_{k:06d}")
-        if k == 13:
-            fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/'
-        else:
-            fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+        fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
         
         ds = nc.Dataset(fp+f"cm1out_{k:06d}.nc")
         stime = ds.variables['time'][:].data[0]
@@ -2332,7 +2478,7 @@ if False:
     tmp = pickle.load(dbfile)
     dbfile.close()
     
-    save_vars = {'vort_sw_ml':vort_sw_ml, 'vort_cw_ml_signed':vort_cw_ml}
+    save_vars = {'vort_sw_ml':vort_sw_ml, 'vort_cw_ml':vort_cw_ml}
     tmp.update(save_vars)
     dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mvtime}min.pkl", 'wb')
     pickle.dump(tmp, dbfile)
@@ -2341,17 +2487,18 @@ if False:
 
 # correcting vort_cw maybe?
 if False:
-    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_200min.pkl", 'rb')
-    tmp = pickle.load(dbfile)
-    dbfile.close()
-    
-    vort_cw_wrong = tmp['vort_cw_ml_signed']
-    vort_cw_right = -1 * vort_cw_wrong
-    
-    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_200min.pkl", 'wb')
-    tmp.update({'vort_cw_ml_signed':vort_cw_ml_right})
-    pickle.dump(tmp, dbfile)
-    dbfile.close()
+    for i in [210,220,225]:
+        dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{i}min.pkl", 'rb')
+        tmp = pickle.load(dbfile)
+        dbfile.close()
+        
+        vort_cw_wrong = tmp['vort_cw_ml_signed']
+        vort_cw_right = -1 * vort_cw_wrong
+        
+        dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{i}min.pkl", 'wb')
+        tmp.update({'vort_cw_ml':vort_cw_right})
+        pickle.dump(tmp, dbfile)
+        dbfile.close()
 
 
 
@@ -2398,7 +2545,7 @@ for i in range(len(times)):
     hvort_ml = vort_traj['hvort_ml']
     vort_ml = vort_traj['vort_ml']
     vort_sw = vort_traj['vort_sw_ml']
-    vort_cw = vort_traj['vort_cw_ml_signed']
+    vort_cw = vort_traj['vort_cw_ml']
     dbfile.close()
     
     
@@ -2446,7 +2593,7 @@ axs[3].legend(handles=[s5,s6], labels=["Streamwise", "Crosswise"], loc=3, fontsi
 axs[0].set_ylim([-15, 15]) # w
 axs[1].set_ylim([-0.02, 0.08]) # total -- [-0.02, 0.1] for 225
 axs[2].set_ylim([-0.04, 0.06]) # horiz and vert -- [-0.05, 0.09] for 225
-axs[3].set_ylim([-0.04, 0.06]) # streamwise and crosswise -- [-0.07, 0.07] for 225
+axs[3].set_ylim([-0.06, 0.06]) # streamwise and crosswise -- [-0.07, 0.07] for 225
 # axs[0].set_yticks([-15, -10, -5, 0, 5, 10, 15])
 # # axs[1].set_yticks([-0.04, -0.02, 0, 0.02, 0.04, 0.06, 0.08])
 # # axs[1].set_yticks([-0.05, -0.025, 0, 0.025, 0.05, 0.075, 0.1])
@@ -2523,7 +2670,7 @@ for i in range(len(times)):
     hvort_ml = vort_traj['hvort_ml']
     vort_ml = vort_traj['vort_ml']
     vort_sw = vort_traj['vort_sw_ml']
-    vort_cw = vort_traj['vort_cw_ml_signed'] * -1
+    vort_cw = vort_traj['vort_cw_ml']
     dbfile.close()
     
     

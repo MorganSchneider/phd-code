@@ -92,7 +92,7 @@ for i in range(len(times)):
     yvort_ml = vort_traj['yvort_ml']
     hvort_ml = vort_traj['hvort_ml']
     svort_ml = vort_traj['vort_sw_ml']
-    cvort_ml = vort_traj['vort_cw_ml_signed']
+    cvort_ml = vort_traj['vort_cw_ml']
     dbfile.close()
     
     # stimes = np.zeros(shape=(16,), dtype=float)
@@ -158,9 +158,9 @@ for i in range(len(times)):
                     svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
                                                         + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
                                        - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
-                    cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
-                                                        + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
-                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
+                    cvort_term[m,p] = (1/ws_sr[it,p] * (-v_sr[it,p] * xvort_term[m,p] + u_sr[it,p] * yvort_term[m,p]
+                                                        - xvort_ml[it,p] * dvdt[it,p] + yvort_ml[it,p] * dudt[it,p])
+                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (-v_sr[it,p] * xvort_ml[it,p] + u_sr[it,p] * yvort_ml[it,p]))
                     
                     del dudx_ml,dvdy_ml,dwdz_ml
                 #end for p in range(len(pids_ml))
@@ -203,9 +203,9 @@ for i in range(len(times)):
                     svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
                                                         + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
                                        - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
-                    cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
-                                                        + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
-                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
+                    cvort_term[m,p] = (1/ws_sr[it,p] * (-v_sr[it,p] * xvort_term[m,p] + u_sr[it,p] * yvort_term[m,p]
+                                                        - xvort_ml[it,p] * dvdt[it,p] + yvort_ml[it,p] * dudt[it,p])
+                                       - ws_sr[it,p]**-2 * dwsdt[it,p] * (-v_sr[it,p] * xvort_ml[it,p] + u_sr[it,p] * yvort_ml[it,p]))
                     
                     del dudy_ml,dudz_ml,dvdx_ml,dvdz_ml,dwdx_ml,dwdy_ml
                 #end for p in range(len(pids_ml))
@@ -254,9 +254,9 @@ for i in range(len(times)):
                 svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
                                                     + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
                                    - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
-                cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
-                                                    + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
-                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
+                cvort_term[m,p] = (1/ws_sr[it,p] * (-v_sr[it,p] * xvort_term[m,p] + u_sr[it,p] * yvort_term[m,p]
+                                                    - xvort_ml[it,p] * dvdt[it,p] + yvort_ml[it,p] * dudt[it,p])
+                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (-v_sr[it,p] * xvort_ml[it,p] + u_sr[it,p] * yvort_ml[it,p]))
                 
                 del drdx_ml,drdy_ml,drdz_ml,dpdx_ml,dpdy_ml,dpdz_ml
             #end for p in range(len(pids_ml))
@@ -298,9 +298,9 @@ for i in range(len(times)):
                 svort_term[m,p] = (1/ws_sr[it,p] * (u_sr[it,p] * xvort_term[m,p] + v_sr[it,p] * yvort_term[m,p]
                                                     + xvort_ml[it,p] * dudt[it,p] + yvort_ml[it,p] * dvdt[it,p]) 
                                    - ws_sr[it,p]**-2 * dwsdt[it,p] * (u_sr[it,p] * xvort_ml[it,p] + v_sr[it,p] * yvort_ml[it,p]))
-                cvort_term[m,p] = (1/ws_sr[it,p] * (v_sr[it,p] * xvort_term[m,p] - u_sr[it,p] * yvort_term[m,p]
-                                                    + xvort_ml[it,p] * dvdt[it,p] - yvort_ml[it,p] * dudt[it,p])
-                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (v_sr[it,p] * xvort_ml[it,p] - u_sr[it,p] * yvort_ml[it,p]))
+                cvort_term[m,p] = (1/ws_sr[it,p] * (-v_sr[it,p] * xvort_term[m,p] + u_sr[it,p] * yvort_term[m,p]
+                                                    - xvort_ml[it,p] * dvdt[it,p] + yvort_ml[it,p] * dudt[it,p])
+                                   - ws_sr[it,p]**-2 * dwsdt[it,p] * (-v_sr[it,p] * xvort_ml[it,p] + u_sr[it,p] * yvort_ml[it,p]))
                 
                 del del2xvort_ml,del2yvort_ml,del2zvort_ml
             #end for p in range(len(pids_ml))
@@ -1170,7 +1170,7 @@ for fn in np.arange(28,59):
         
         stretch_h = (xvort/hvort) * stretch_x + (yvort/hvort) * stretch_y
         stretch_sw = (u_sr/ws_sr) * stretch_x + (v_sr/ws_sr) * stretch_y
-        stretch_cw = (v_sr/ws_sr) * stretch_x - (u_sr/ws_sr) * stretch_y
+        stretch_cw = (-v_sr/ws_sr) * stretch_x + (u_sr/ws_sr) * stretch_y
         
         dat = {'x':xh[ix], 'y':yh[iy], 'z':zh[iz],
                'stretch_x':stretch_x, 'stretch_y':stretch_y, 'stretch_z':stretch_z,
@@ -1198,7 +1198,7 @@ for fn in np.arange(28,59):
         
         tilt_h = (xvort/hvort) * tilt_x + (yvort/hvort) * tilt_y
         tilt_sw = (u_sr/ws_sr) * tilt_x + (v_sr/ws_sr) * tilt_y
-        tilt_cw = (v_sr/ws_sr) * tilt_x - (u_sr/ws_sr) * tilt_y
+        tilt_cw = (-v_sr/ws_sr) * tilt_x + (u_sr/ws_sr) * tilt_y
         
         dat = {'x':xh[ix], 'y':yh[iy], 'z':zh[iz],
                'tilt_x':tilt_x, 'tilt_y':tilt_y, 'tilt_z':tilt_z,
@@ -1224,7 +1224,7 @@ for fn in np.arange(28,59):
         
         bcl_h = (xvort/hvort) * bcl_x + (yvort/hvort) * bcl_y
         bcl_sw = (u_sr/ws_sr) * bcl_x + (v_sr/ws_sr) * bcl_y
-        bcl_cw = (v_sr/ws_sr) * bcl_x - (u_sr/ws_sr) * bcl_y
+        bcl_cw = (-v_sr/ws_sr) * bcl_x + (u_sr/ws_sr) * bcl_y
         
         dat = {'x':xh[ix], 'y':yh[iy], 'z':zh[iz],
                'bcl_x':bcl_x, 'bcl_y':bcl_y, 'bcl_z':bcl_z,
@@ -1248,7 +1248,7 @@ for fn in np.arange(28,59):
         
         fric_h = (xvort/hvort) * fric_x + (yvort/hvort) * fric_y
         fric_sw = (u_sr/ws_sr) * fric_x + (v_sr/ws_sr) * fric_y
-        fric_cw = (v_sr/ws_sr) * fric_x - (u_sr/ws_sr) * fric_y
+        fric_cw = (-v_sr/ws_sr) * fric_x + (u_sr/ws_sr) * fric_y
         
         dat = {'x':xh[ix], 'y':yh[iy], 'z':zh[iz],
                'fric_x':fric_x, 'fric_y':fric_y, 'fric_z':fric_z,
@@ -1258,12 +1258,63 @@ for fn in np.arange(28,59):
     
     del u,v,w,xvort,yvort,zvort,u_sr,v_sr,ws_sr,hvort
 
+
+
+#%%
+
+mvtime = 220
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ptime = ds.variables['time'][:].data
+ds.close()
+
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime}min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+
+pids_ml = traj[f"{mvtime}min"]['pids'][(cc == 1)]
+x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]
+y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]
+z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]
+
+
+ti = np.where(ptime == mvtime*60)[0][0]
+z_med = np.round(np.median(z_ml[ti,:]), decimals=-1)
+dz = 100
+
+pids_layer = pids_ml[(z_ml[ti,:] >= z_med-dz) & (z_ml[ti,:] <= z_med+dz)]
+
+# Total pids ml: 65 pids at 210 min, 51 pids at 220 min
+# within +/- 200 m: 30 pids at 210 min, 27 pids at 220 min
+# within +/- 100 m: 13 pids at 210 min, 18 pids at 220 min
+# within +/- 150 m: 21 pids at 210 min, 22 pids at 220 min
+
+
 #%% Calculate tendency plan views - parcel-centered composites
 
-mvtime = 210
-fnum = 53
+#         210 min   220 min
+#
+# min     204 m     184 m
+# max     998 m     988 m
+# mean    628 m     587 m
+# median  698 m     599 m
+# 25%     341 m     394 m
+# 75%     867 m     740 m
 
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000014.nc')
+mvtime = 210
+
+if mvtime == 210:
+    fnum = 43
+elif mvtime == 220:
+    fnum = 53
+
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000013.nc')
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
@@ -1283,7 +1334,7 @@ ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.n
 ptime = ds.variables['time'][:].data
 ds.close()
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime:.0f}min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime}min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -1292,6 +1343,8 @@ pids_ml = traj[f"{mvtime}min"]['pids'][(cc == 1)]
 x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]/1000
 y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]/1000
 z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]/1000
+
+
 
 
 ip = f"/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/"
@@ -1362,7 +1415,7 @@ for fn in np.arange(fnum-15,fnum+1):
     ws_sr = np.sqrt(u_sr**2 + v_sr**2)
     hvort = np.sqrt(xvort**2 + yvort**2)
     svort = (u_sr/ws_sr) * xvort + (v_sr/ws_sr) * yvort
-    cvort = (v_sr/ws_sr) * xvort - (u_sr/ws_sr) * yvort
+    cvort = (-v_sr/ws_sr) * xvort + (u_sr/ws_sr) * yvort
     ds.close()
     
     
@@ -1415,7 +1468,7 @@ for fn in np.arange(fnum-15,fnum+1):
         sz[p,m,:,:] = zvort[k,j,i] * dwdz[k,j,i]
         sh[p,m,:,:] = (xvort[k,j,i]/hvort[k,j,i]) * sx[p,m,:,:] + (yvort[k,j,i]/hvort[k,j,i]) * sy[p,m,:,:]
         ssw[p,m,:,:] = (u_sr[k,j,i]/ws_sr[k,j,i]) * sx[p,m,:,:] + (v_sr[k,j,i]/ws_sr[k,j,i]) * sy[p,m,:,:]
-        scw[p,m,:,:] = (v_sr[k,j,i]/ws_sr[k,j,i]) * sx[p,m,:,:] - (u_sr[k,j,i]/ws_sr[k,j,i]) * sy[p,m,:,:]
+        scw[p,m,:,:] = (-v_sr[k,j,i]/ws_sr[k,j,i]) * sx[p,m,:,:] + (u_sr[k,j,i]/ws_sr[k,j,i]) * sy[p,m,:,:]
         
         # Tilting
         tx[p,m,:,:] = yvort[k,j,i] * dudy[k,j,i] + zvort[k,j,i] * dudz[k,j,i]
@@ -1423,7 +1476,7 @@ for fn in np.arange(fnum-15,fnum+1):
         tz[p,m,:,:] = xvort[k,j,i] * dwdx[k,j,i] + yvort[k,j,i] * dwdy[k,j,i]
         th[p,m,:,:] = (xvort[k,j,i]/hvort[k,j,i]) * tx[p,m,:,:] + (yvort[k,j,i]/hvort[k,j,i]) * ty[p,m,:,:]
         tsw[p,m,:,:] = (u_sr[k,j,i]/ws_sr[k,j,i]) * tx[p,m,:,:] + (v_sr[k,j,i]/ws_sr[k,j,i]) * ty[p,m,:,:]
-        tcw[p,m,:,:] = (v_sr[k,j,i]/ws_sr[k,j,i]) * tx[p,m,:,:] - (u_sr[k,j,i]/ws_sr[k,j,i]) * ty[p,m,:,:]
+        tcw[p,m,:,:] = (-v_sr[k,j,i]/ws_sr[k,j,i]) * tx[p,m,:,:] + (u_sr[k,j,i]/ws_sr[k,j,i]) * ty[p,m,:,:]
         
         if tilt_components:
             # x vorticity components
@@ -1437,7 +1490,7 @@ for fn in np.arange(fnum-15,fnum+1):
             t_zy[p,m,:,:] = yvort[k,j,i] * dwdy[k,j,i]
             t_zsw[p,m,:,:] = svort[k,j,i] * ((u_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] + 
                                            (v_sr[k,j,i]/ws_sr[k,j,i]) * dwdy[k,j,i])
-            t_zcw[p,m,:,:] = cvort[k,j,i] * ((v_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] -
+            t_zcw[p,m,:,:] = cvort[k,j,i] * ((-v_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] +
                                            (u_sr[k,j,i]/ws_sr[k,j,i]) * dwdy[k,j,i])
             
         # Baroclinic
@@ -1445,7 +1498,7 @@ for fn in np.arange(fnum-15,fnum+1):
         by[p,m,:,:] = (1/1.1)**2 * (drdz[k,j,i] * dpdx[k,j,i] - drdx[k,j,i] * dpdz[k,j,i])
         bh[p,m,:,:] = (xvort[k,j,i]/hvort[k,j,i]) * bx[p,m,:,:] + (yvort[k,j,i]/hvort[k,j,i]) * by[p,m,:,:]
         bsw[p,m,:,:] = (u_sr[k,j,i]/ws_sr[k,j,i]) * bx[p,m,:,:] + (v_sr[k,j,i]/ws_sr[k,j,i]) * by[p,m,:,:]
-        bcw[p,m,:,:] = (v_sr[k,j,i]/ws_sr[k,j,i]) * bx[p,m,:,:] - (u_sr[k,j,i]/ws_sr[k,j,i]) * by[p,m,:,:]
+        bcw[p,m,:,:] = (-v_sr[k,j,i]/ws_sr[k,j,i]) * bx[p,m,:,:] + (u_sr[k,j,i]/ws_sr[k,j,i]) * by[p,m,:,:]
         
     times[m] = stime/60
     m = m + 1
@@ -1492,7 +1545,9 @@ if True:
             'tilt_x':tilt_x, 'tilt_y':tilt_y, 'tilt_z':tilt_z, 'tilt_h':tilt_h,
             'tilt_sw':tilt_sw, 'tilt_cw':tilt_cw, 'bcl_x':bcl_x, 'bcl_y':bcl_y,
             'bcl_h':bcl_h, 'bcl_sw':bcl_sw, 'bcl_cw':bcl_cw}
-    save_to_pickle(data, ip+f"vten_traj_{mvtime}min.pkl", new_pkl=True)
+    save_to_pickle(data, ip+f"vten_traj_{mvtime}min_v2.pkl", new_pkl=True)
+
+
 
 
 #%% Load data for plan views of tendency - median parcel
@@ -2747,7 +2802,7 @@ z2_median = np.median(z2_ml, axis=1)
 
 
 # Load model grid
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000014.nc')
+ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000013.nc')
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data

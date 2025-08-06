@@ -323,7 +323,7 @@ for fn in [13]:
         dbfile.close()
         del winterp,B,OW,zvort
 
-#%% Plot cross sections ***OLD PAPER FIGS HERE***
+#%% Plot cross sections (old paper figs don't use)
 
 mv_time = 220
 
@@ -687,6 +687,7 @@ if figsave:
 #%% Same figures but with storm-relative trajectories ***PAPER FIGS HERE***
 
 from scipy.interpolate import interp1d
+from matplotlib.ticker import MultipleLocator
 
 fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
 ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
@@ -697,8 +698,6 @@ if mv_time == 210:
     fn = 41
 elif mv_time == 220:
     fn = 51
-elif mv_time == 225:
-    fn = 56
 
 
 
@@ -924,6 +923,8 @@ if False:
             ax.text(x_median[::20][i]+0.75, y_median[::20][i]+0.5, f"{t:.0f}", fontsize=14, fontweight='bold')
     ax.set_xlabel('x (km)', fontsize=14)
     ax.set_ylabel('y (km)', fontsize=14)
+    ax.set_yticks(np.linspace(yl[0], yl[1], 6))
+    # ax.tick_params(axis='both', labelsize=11)
     # ax.set_title(f"Mid-level parcels in the MV at {mv_time} min", fontsize=14)
     
     if figsave:
@@ -934,7 +935,7 @@ if False:
 
 
 # TRAJECTORY CROSS SECTIONS
-if True:
+if False:
     xl = [-30,15] #[-55,25]
     zl = [0,3.5]
     iz = slice(0, np.where(z >= zl[1])[0][1])
