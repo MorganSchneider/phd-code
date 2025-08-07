@@ -43,36 +43,17 @@ y1_s = box['y1_pp']
 y2_s = box['y2_pp']
 dbfile.close()
 
-xmin = np.zeros(shape=(5,), dtype=float)
-ymin = np.zeros(shape=(5,), dtype=float)
-xmax = np.zeros(shape=(5,), dtype=float)
-ymax = np.zeros(shape=(5,), dtype=float)
 
+pad = 5
 
-for i in range(5):
-    if i == 0:
-        j = 0
-    else:
-        j = 15*i - 1
-    xmin[i] = np.min([x1_m[j], x1_q[j], x1_s[j]])
-    ymin[i] = np.min([y1_m[j], y1_q[j], y1_s[j]])
-    xmax[i] = np.max([x2_m[j], x2_q[j], x2_s[j]])
-    ymax[i] = np.max([y2_m[j], y2_q[j], y2_s[j]])
+xlims_m = [[x1_m[i]-pad, x2_m[i]+pad] for i in [0,14,29,44,59]]
+ylims_m = [[y1_m[i]-pad, y2_m[i]+pad] for i in [0,14,29,44,59]]
 
-xdiff = xmax - xmin
-ydiff = ymax - ymin
+xlims_q = [[x1_q[i]-pad, x2_q[i]+pad] for i in [0,14,29,44,59]]
+ylims_q = [[y1_q[i]-pad, y2_q[i]+pad] for i in [0,14,29,44,59]]
 
-maxdiff = np.max([xdiff, ydiff])
-ax_width = maxdiff + 20
-
-xlims_m = [[x1_m[i]-10, x2_m[i]+10] for i in [0,14,29,44,59]]
-ylims_m = [[y1_m[i]-10, y2_m[i]+10] for i in [0,14,29,44,59]]
-
-xlims_q = [[x1_q[i]-10, x2_q[i]+10] for i in [0,14,29,44,59]]
-ylims_q = [[y1_q[i]-10, y2_q[i]+10] for i in [0,14,29,44,59]]
-
-xlims_s = [[x1_s[i]-10, x2_s[i]+10] for i in [0,14,29,44,59]]
-ylims_s = [[y1_s[i]-10, y2_s[i]+10] for i in [0,14,29,44,59]]
+xlims_s = [[x1_s[i]-pad, x2_s[i]+pad] for i in [0,14,29,44,59]]
+ylims_s = [[y1_s[i]-pad, y2_s[i]+pad] for i in [0,14,29,44,59]]
 
 xm = [x1_m[i] for i in [0,14,29,44,59]]; ym = [y1_m[i] for i in [0,14,29,44,59]]
 xq = [x1_q[i] for i in [0,14,29,44,59]]; yq = [y1_q[i] for i in [0,14,29,44,59]]
@@ -98,6 +79,13 @@ xs[4] = xs[4]+0; ys[4] = ys[4]+0
 
 xlims = [[-60,-10], [-52,-2], [-44,6], [-36,14], [-28,22]]
 ylims = [[-130,-80], [-112,-62], [-94,-44], [-76,-26], [-58,-8]]
+
+
+
+
+    
+
+
 
 
 #%% Make plot
@@ -200,9 +188,9 @@ for i in np.arange(0,5):
         axs2[0,i].quiver(xh[ixm][::qix], yh[iym][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         axs2[0,i].set_title(f"t={time:.0f} min", fontsize=14)
         # axs2[0,i].set_xticks([])
-        rect2 = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
-        axs2[0,i].add_patch(rect2)
-        del rect,rect2
+        # rect2 = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
+        # axs2[0,i].add_patch(rect2)
+        del rect
     
     elif vert_layout:
         # Vertical layout
@@ -223,16 +211,16 @@ for i in np.arange(0,5):
         axs2[i,0].quiver(xh[ixm][::qix], yh[iym][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[i,0].set_title(f"t={time:.0f} min", fontsize=14)
         axs2[i,0].set_ylabel('y (km)', fontsize=15)
-        rect2 = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
-        axs2[i,0].add_patch(rect2)
-        axs2[i,0].xaxis.set_major_locator(MultipleLocator(10))
-        axs2[i,0].yaxis.set_major_locator(MultipleLocator(10))
-        del rect,rect2
+        # rect2 = patches.Rectangle((xm[i], ym[i]), 10, 10, linewidth=1.5, linestyle='-', edgecolor='k', facecolor='none')
+        # axs2[i,0].add_patch(rect2)
+        axs2[i,0].xaxis.set_major_locator(MultipleLocator(5))
+        axs2[i,0].yaxis.set_major_locator(MultipleLocator(5))
+        del rect
 
 
 
 # QLCS data
-for i in np.arange(0,1):
+for i in np.arange(0,5):
     fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/'
     
     print(f"QLCS - cm1out_{fnums[i]:06d}")
@@ -267,7 +255,7 @@ for i in np.arange(0,1):
         dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
     else:
         dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
-    thrpert = ds.variables['thrpert'][:].data[0,0,iyq,ixq]
+    thrpert = ds.variables['thrpert'][:].data[0,iyq,ixq]
     uinterp = ds.variables['uinterp'][:].data[0,iz,iyq,ixq]
     vinterp = ds.variables['vinterp'][:].data[0,iz,iyq,ixq]
     wmax = np.max(ds.variables['winterp'][:].data[0,iz,iy,ix], axis=0)
@@ -303,9 +291,9 @@ for i in np.arange(0,1):
         axs2[1,i].quiver(xh[ixq][::qix], yh[iyq][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[1,i].set_title(f"t={time:.0f} min", fontsize=14)
         # axs2[1,i].set_xticks()
-        rect2 = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
-        axs2[1,i].add_patch(rect2)
-        del rect,rect2
+        # rect2 = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        # axs2[1,i].add_patch(rect2)
+        del rect
         
     elif vert_layout:
         # Vertical layout
@@ -324,17 +312,17 @@ for i in np.arange(0,1):
         axs2[i,1].contour(xh[ixq], yh[iyq], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
         axs2[i,1].quiver(xh[ixq][::qix], yh[iyq][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         axs2[i,1].set_title(f"t={time:.0f} min", fontsize=16)
-        rect2 = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
-        axs2[i,1].add_patch(rect2)
-        axs2[i,1].xaxis.set_major_locator(MultipleLocator(10))
-        axs2[i,1].yaxis.set_major_locator(MultipleLocator(10))
+        # rect2 = patches.Rectangle((xq[i], yq[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        # axs2[i,1].add_patch(rect2)
+        axs2[i,1].xaxis.set_major_locator(MultipleLocator(5))
+        axs2[i,1].yaxis.set_major_locator(MultipleLocator(5))
         # axs2[i,1].set_yticks([])
-        del rect,rect2
+        del rect
 
 
 
 # SUPERCELL data
-for i in np.arange(0,1):
+for i in np.arange(0,5):
     fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
     
     print(f"SUPERCELL - cm1out_{fnums[i]:06d}")
@@ -370,7 +358,7 @@ for i in np.arange(0,1):
         dbz = ds.variables['dbz2'][:].data[0,0,iy,ix]
     else:
         dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
-    thrpert = ds.variables['thrpert'][:].data[0,0,iys,ixs]
+    thrpert = ds.variables['thrpert'][:].data[0,iys,ixs]
     uinterp = ds.variables['uinterp'][:].data[0,iz,iys,ixs]
     vinterp = ds.variables['vinterp'][:].data[0,iz,iys,ixs]
     wmax = np.max(ds.variables['winterp'][:].data[0,iz,iy,ix], axis=0)
@@ -403,9 +391,9 @@ for i in np.arange(0,1):
         axs2[2,i].contour(xh[ixs], yh[iys], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
         axs2[2,i].quiver(xh[ixs][::qix], yh[iys][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[2,i].set_title(f"t={time:.0f} min", fontsize=14)
-        rect2 = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
-        axs2[2,i].add_patch(rect2)
-        del rect,rect2
+        # rect2 = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        # axs2[2,i].add_patch(rect2)
+        del rect
         
     elif vert_layout:
         # Vertical layout
@@ -426,12 +414,12 @@ for i in np.arange(0,1):
         axs2[i,2].contour(xh[ixs], yh[iys], np.ma.masked_array(OWmin, wmax2<5), levels=[-0.001], colors='r', linewidths=1.2, linestyles='-')
         axs2[i,2].quiver(xh[ixs][::qix], yh[iys][::qix], uinterp[0,::qix,::qix]+6, vinterp[0,::qix,::qix], color='k', scale=250, width=0.004, pivot='tail')
         # axs2[i,2].set_title(f"t={time:.0f} min", fontsize=14)
-        rect2 = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
-        axs2[i,2].add_patch(rect2)
-        axs2[i,2].xaxis.set_major_locator(MultipleLocator(10))
-        axs2[i,2].yaxis.set_major_locator(MultipleLocator(10))
+        # rect2 = patches.Rectangle((xs[i], ys[i]), 10, 10, linewidth=1.5, edgecolor='k', facecolor='none')
+        # axs2[i,2].add_patch(rect2)
+        axs2[i,2].xaxis.set_major_locator(MultipleLocator(5))
+        axs2[i,2].yaxis.set_major_locator(MultipleLocator(5))
         # axs2[i,2].set_yticks([])
-        del rect,rect2
+        del rect
     
 
 

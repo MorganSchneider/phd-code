@@ -844,12 +844,14 @@ if False:
 import matplotlib as mpl
 cm = mpl.colors.ListedColormap(['gold', 'red', 'deepskyblue', 'mediumblue'])
 
+use_SR = True
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
+
+dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
 traj = pickle.load(dbfile)
 dbfile.close()
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/boxes_s1.pkl", 'rb')
+dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/boxes_s1.pkl', 'rb')
 box = pickle.load(dbfile)
 xb1 = box['x1_pp']
 xb2 = box['x2_pp']
@@ -864,7 +866,25 @@ ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.n
 ptime = ds.variables['time'][:].data
 ds.close()
 
-xl = [-62,22]; yl = [-122,-38]
+
+if use_SR:
+    from scipy.interpolate import interp1d
+    dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+    sm = pickle.load(dbfile)
+    u_storm = sm['u_storm']
+    v_storm = sm['v_storm']
+    dbfile.close
+    stimes = np.linspace(10800, 14400, 61)
+    
+    # Interpolate storm motion from model output timesto parcel output times (60 s to 15 s)
+    fu = interp1d(stimes, u_storm)
+    u_storm_interp = fu(ptime)
+    fv = interp1d(stimes, v_storm)
+    v_storm_interp = fv(ptime)
+    
+    xl = [-52,32]; yl = [-92,-8]
+else:
+    xl = [-62,22]; yl = [-122,-38]
 
 
 ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000033.nc')
@@ -873,6 +893,7 @@ yh = ds.variables['yh'][:].data
 ix1 = np.where(xh >= xl[0])[0][0]; ix2 = np.where(xh >= xl[1])[0][1]; ix = slice(ix1,ix2)
 iy1 = np.where(yh >= yl[0])[0][0]; iy2 = np.where(yh >= yl[1])[0][1]; iy = slice(iy1,iy2)
 ds.close()
+
 
 
 
@@ -902,7 +923,7 @@ for i in range(3):
     w_mv = traj[f"{t:.0f}min"]['w'][:ti+1, (cc_mv <= 3)]
     b_mv = traj[f"{t:.0f}min"]['b'][:ti+1, (cc_mv <= 3)]
     cc_mv = cc_mv[(cc_mv <= 3)]
-
+    
     
     
     # 3x3 panel trajectories colored by z, B, and source for merger
@@ -929,6 +950,11 @@ for i in range(3):
         zp = np.append(np.append(np.append(z0[:,::3], z1[:,::2], axis=1), z2[:,:], axis=1), z3[:,::6], axis=1)
         bp = np.append(np.append(np.append(b0[:,::3], b1[:,::2], axis=1), b2[:,:], axis=1), b3[:,::6], axis=1)
         cc = np.append(np.append(np.append(c0[::3], c1[::2]), c2[:]), c3[::6])
+    
+    if use_SR:
+        xp,yp = get_SR_positions(xp, yp, u_storm_interp[:ti+1], v_storm_interp[:ti+1], 15)
+    
+    
     
     # 15*i+14 for 195/210/225, 10*i+19 for 200/210/220
     
@@ -987,9 +1013,9 @@ cb3.ax.set_yticklabels([' Low-level\n inflow', ' Mid-level\n inflow',
                         ' Supercell\n outflow', ' QLCS\n outflow'])
 # cb3.set_label("Source region", fontsize=12)
 
-axs[0,0].set_yticks(np.linspace(-120, -40, 5))
-axs[1,0].set_yticks(np.linspace(-120, -40, 5))
-axs[2,0].set_yticks(np.linspace(-120, -40, 5))
+axs[0,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
+axs[1,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
+axs[2,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
 
 axs[0,0].set_ylabel('y (km)', fontsize=14)
 axs[1,0].set_ylabel('y (km)', fontsize=14)
@@ -1002,14 +1028,15 @@ axs[2,2].set_xlabel('x (km)', fontsize=14)
 figsave = False
 
 if figsave:
-    fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src.png', dpi=300)
+    fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_SR.png', dpi=300)
 
 
 #%% Same plot but for qlcsonly ***PAPER FIG***
 
 import matplotlib as mpl
 cm = mpl.colors.ListedColormap(['gold', 'mediumblue'])
-    
+
+use_SR = True
 
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_Q.pkl", 'rb')
@@ -1031,7 +1058,25 @@ ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/cm1out_pdata.nc'
 ptime = ds.variables['time'][:].data
 ds.close()
 
-xl = [-62,22]; yl = [-122,-38]
+
+if use_SR:
+    from scipy.interpolate import interp1d
+    dbfile = open('/Users/morgan.schneider/Documents/merger/qlcs-125m/storm_motion.pkl', 'rb')
+    sm = pickle.load(dbfile)
+    u_storm = sm['u_storm']
+    v_storm = sm['v_storm']
+    dbfile.close
+    stimes = np.linspace(10800, 14400, 61)
+    
+    # Interpolate storm motion from model output timesto parcel output times (60 s to 15 s)
+    fu = interp1d(stimes, u_storm)
+    u_storm_interp = fu(ptime)
+    fv = interp1d(stimes, v_storm)
+    v_storm_interp = fv(ptime)
+    
+    xl = [-52,32]; yl = [-112,-28]
+else:
+    xl = [-62,22]; yl = [-122,-38]
 
 
 ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/cm1out_000033.nc')
@@ -1040,6 +1085,7 @@ yh = ds.variables['yh'][:].data
 ix1 = np.where(xh >= xl[0])[0][0]; ix2 = np.where(xh >= xl[1])[0][1]; ix = slice(ix1,ix2)
 iy1 = np.where(yh >= yl[0])[0][0]; iy2 = np.where(yh >= yl[1])[0][1]; iy = slice(iy1,iy2)
 ds.close()
+
 
 
 
@@ -1093,6 +1139,10 @@ for i in range(3):
         bp = np.append(b0[:,::7], b3[:,::7], axis=1)
         cc = np.append(c0[::7], c3[::7])
     
+    if use_SR:
+        xp,yp = get_SR_positions(xp, yp, u_storm_interp[:ti+1], v_storm_interp[:ti+1], 15)
+    
+    
     
     p1 = axs[0,i].scatter(xp/1000, yp/1000, s=0.5, c=zp/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3)
     axs[0,i].contour(xh[ix], yh[iy], dbz, levels=[30], colors='k', linewidths=1)
@@ -1139,9 +1189,9 @@ cb3 = plt.colorbar(p3, ax=axs[2,2], ticks=[0,3])
 cb3.ax.set_yticklabels([' Low-level\n inflow', ' QLCS\n outflow'])
 # cb3.set_label("Source region", fontsize=12)
 
-axs[0,0].set_yticks(np.linspace(-120, -40, 5))
-axs[1,0].set_yticks(np.linspace(-120, -40, 5))
-axs[2,0].set_yticks(np.linspace(-120, -40, 5))
+axs[0,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
+axs[1,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
+axs[2,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
 
 axs[0,0].set_ylabel('y (km)', fontsize=14)
 axs[1,0].set_ylabel('y (km)', fontsize=14)
@@ -1154,7 +1204,7 @@ axs[2,2].set_xlabel('x (km)', fontsize=14)
 figsave = False
 
 if figsave:
-    fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_Q.png', dpi=300)
+    fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_QLCS_SR.png', dpi=300)
 
 
 
@@ -1163,7 +1213,8 @@ if figsave:
 
 import matplotlib as mpl
 cm = mpl.colors.ListedColormap(['gold', 'red', 'deepskyblue'])
-    
+
+use_SR = True
 
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_S.pkl", 'rb')
@@ -1185,7 +1236,26 @@ ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/cm1out_pdat
 ptime = ds.variables['time'][:].data
 ds.close()
 
-xl = [-62,22]; yl = [-122,-38]
+
+if use_SR:
+    from scipy.interpolate import interp1d
+    dbfile = open('/Users/morgan.schneider/Documents/merger/supercell-125m/storm_motion.pkl', 'rb')
+    sm = pickle.load(dbfile)
+    u_storm = sm['u_storm']
+    v_storm = sm['v_storm']
+    dbfile.close
+    stimes = np.linspace(10800, 14400, 61)
+    
+    # Interpolate storm motion from model output timesto parcel output times (60 s to 15 s)
+    fu = interp1d(stimes, u_storm)
+    u_storm_interp = fu(ptime)
+    fv = interp1d(stimes, v_storm)
+    v_storm_interp = fv(ptime)
+    
+    xl = [-52,32]; yl = [-102,-18]
+else:
+    xl = [-62,22]; yl = [-122,-38]
+
 
 
 ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/cm1out_000033.nc')
@@ -1194,6 +1264,7 @@ yh = ds.variables['yh'][:].data
 ix1 = np.where(xh >= xl[0])[0][0]; ix2 = np.where(xh >= xl[1])[0][1]; ix = slice(ix1,ix2)
 iy1 = np.where(yh >= yl[0])[0][0]; iy2 = np.where(yh >= yl[1])[0][1]; iy = slice(iy1,iy2)
 ds.close()
+
 
 
 
@@ -1247,6 +1318,10 @@ for i in range(3):
         bp = np.append(b0, np.append(b1, b2, axis=1), axis=1)
         cc = np.append(c0, np.append(c1, c2))
     
+    if use_SR:
+        xp,yp = get_SR_positions(xp, yp, u_storm_interp[:ti+1], v_storm_interp[:ti+1], 15)
+    
+    
     
     p1 = axs[0,i].scatter(xp/1000, yp/1000, s=0.5, c=zp/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=3)
     axs[0,i].contour(xh[ix], yh[iy], dbz, levels=[30], colors='k', linewidths=1)
@@ -1294,9 +1369,9 @@ cb3 = plt.colorbar(p3, ax=axs[2,2], ticks=[0,1,2])
 cb3.ax.set_yticklabels([' Low-level\n inflow', ' Mid-level\n inflow', ' Supercell\n outflow'])
 # cb3.set_label("Source region", fontsize=12)
 
-axs[0,0].set_yticks(np.linspace(-120, -40, 5))
-axs[1,0].set_yticks(np.linspace(-120, -40, 5))
-axs[2,0].set_yticks(np.linspace(-120, -40, 5))
+axs[0,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
+axs[1,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
+axs[2,0].set_yticks(np.linspace(yl[0]+2, yl[1]-2, 5))
 
 axs[0,0].set_ylabel('y (km)', fontsize=14)
 axs[1,0].set_ylabel('y (km)', fontsize=14)
@@ -1309,7 +1384,7 @@ axs[2,2].set_xlabel('x (km)', fontsize=14)
 figsave = False
 
 if figsave:
-    fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_S.png', dpi=300)
+    fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_SUP_SR.png', dpi=300)
 
 
 
@@ -2135,35 +2210,35 @@ if figsave:
 
 #%% Calculate storm motion and save to pickle
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+
+ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
 
 
 # Calculate storm motion for streamwise/crosswise vorticity
 if 'u_storm' not in locals():
     dbfile = open(ip+'boxes_s1.pkl', 'rb') # interchange with boxes_q
     box = pickle.load(dbfile)
-    x1_m = 1000 * np.array(box['x1_pp'])
-    y1_m = 1000 * np.array(box['y1_pp'])
+    x1 = 1000 * np.array(box['x1_pp'])
+    y1 = 1000 * np.array(box['y1_pp'])
     dbfile.close()
     
-    for i in range(len(x1_m)-1):
-        if x1_m[i+1] == x1_m[i]:
+    for i in range(len(x1)-1):
+        if x1[i+1] == x1[i]:
             if (i != 0):
-                x1_m[i] = (x1_m[i+1] + x1_m[i-1]) / 2
+                x1[i] = (x1[i+1] + x1[i-1]) / 2
             else:
-                x1_m[i+1] = (x1_m[i+2] + x1_m[i]) / 2
+                x1[i+1] = (x1[i+2] + x1[i]) / 2
         
-        if y1_m[i+1] == y1_m[i]:
+        if y1[i+1] == y1[i]:
             if (i != 0):
-                y1_m[i] = (y1_m[i+1] + y1_m[i-1]) / 2
+                y1[i] = (y1[i+1] + y1[i-1]) / 2
             else:
-                y1_m[i+1] = (y1_m[i+2] + y1_m[i]) / 2
+                y1[i+1] = (y1[i+2] + y1[i]) / 2
     
     u_s = np.zeros(shape=(61,), dtype=float)
     v_s = np.zeros(shape=(61,), dtype=float)
-    u_s[1:] = np.gradient(x1_m, np.linspace(10860, 14400, 60))
-    v_s[1:] = np.gradient(y1_m, np.linspace(10860, 14400, 60))
+    u_s[1:] = np.gradient(x1, np.linspace(10860, 14400, 60))
+    v_s[1:] = np.gradient(y1, np.linspace(10860, 14400, 60))
     
     if u_s[1] == u_s[2]:
         u_s[0] = u_s[1]
@@ -2190,6 +2265,9 @@ if False:
     # for i in range(len(u_storm)):
     #     f.write(f"{u_storm[i]:.3f}\t{v_storm[i]:.3f}\n")
     # f.close()
+
+
+
 
 
 

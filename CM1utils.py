@@ -180,6 +180,42 @@ def movmean(data, npts):
     return data_mean
 
 
+# Calculates storm-relative parcel trajectories from ground(domain)-relative
+def get_SR_positions(x, y, u_storm, v_storm, delta_t, center_index=None, forward=False):
+    # x,y: domain-relative positions in m. Time axis must be the first dimension and must be the same length as u_storm and v_storm!
+    # u_storm, v_storm: u and v components of storm motion, 1D arrays
+    # delta_t: parcel time step in s, float
+    # center_index: index of x/y position to calculate trajectories relative to. Default is last element
+    if center_index is None:
+        ti = len(u_storm) - 1
+    else:
+        ti = center_index
+    
+    x_sr = np.zeros(shape=x.shape, dtype=float)
+    y_sr = np.zeros(shape=y.shape, dtype=float)
+    x_sr[ti,:] = x[ti,:]
+    y_sr[ti,:] = y[ti,:]
+    inds = np.linspace(ti-1, 0, ti)
+    for i in inds:
+        i = int(i)
+        delta_x = np.sum(u_storm[i:ti] * delta_t)
+        delta_y = np.sum(v_storm[i:ti] * delta_t)
+        x_sr[i,:] = x[i] + delta_x
+        y_sr[i,:] = y[i] + delta_y
+    
+    if forward is True:
+        forward_inds = np.linspace(ti+1, len(u_storm)-1, len(u_storm)-ti-1)
+        for i in forward_inds:
+            i = int(i)
+            delta_x = np.sum(u_storm[ti:i] * delta_t)
+            delta_y = np.sum(v_storm[ti:i] * delta_t)
+            x_sr[i,:] = x[i] + delta_x
+            y_sr[i,:] = y[i] + delta_y
+    
+    return x_sr,y_sr
+    
+
+
 # Wrapper function for pcolormesh
 def plot_cfill(x, y, data, field, ax, datalims=None, xlims=None, ylims=None,
                cmap=None, cbar=True, cbfs=None, **kwargs):
