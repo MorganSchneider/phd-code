@@ -108,7 +108,8 @@ elif vert_layout:
 
 # MERGER data
 for i in np.arange(0,5):
-    fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+    # fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+    fp = '/Users/morgan.schneider/Documents/merger/merger-125m/temporary/'
     
     print(f"MERGER - cm1out_{fnums[i]:06d}")
     
@@ -221,7 +222,8 @@ for i in np.arange(0,5):
 
 # QLCS data
 for i in np.arange(0,5):
-    fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/'
+    # fp = '/Volumes/Promise_Pegasus_70TB/merger/qlcs-125m/'
+    fp = '/Users/morgan.schneider/Documents/merger/qlcs-125m/temporary/'
     
     print(f"QLCS - cm1out_{fnums[i]:06d}")
     
@@ -305,7 +307,7 @@ for i in np.arange(0,5):
         axs1[i,1].add_patch(rect)
         axs1[i,1].xaxis.set_major_locator(MultipleLocator(10))
         axs1[i,1].yaxis.set_major_locator(MultipleLocator(10))
-        axs1[i,1].set_yticks([])
+        # axs1[i,1].set_yticks([])
         
         plot_cfill(xh[ixq], yh[iyq], thrpert, 'thrpert', axs2[i,1], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_q, ylims=yl_q, cbar=False, alpha=0.75)
         axs2[i,1].contour(xh[ixq], yh[iyq], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')
@@ -323,7 +325,8 @@ for i in np.arange(0,5):
 
 # SUPERCELL data
 for i in np.arange(0,5):
-    fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
+    # fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
+    fp = '/Users/morgan.schneider/Documents/merger/supercell-125m/temporary/'
     
     print(f"SUPERCELL - cm1out_{fnums[i]:06d}")
     # thr_lims = [-10,0]
@@ -407,7 +410,7 @@ for i in np.arange(0,5):
         axs1[i,2].yaxis.set_major_locator(MultipleLocator(10))
         cb1 = plt.colorbar(c1, ax=axs1[i,2], extend='both', ticks=np.linspace(0,70,8))
         cb1.set_label("$Z_H$ (dBZ)", fontsize=14)
-        axs1[i,2].set_yticks([])
+        # axs1[i,2].set_yticks([])
         
         plot_cfill(xh[ixs], yh[iys], thrpert, 'thrpert', axs2[i,2], datalims=thr_lims, cmap='YlGnBu_r', xlims=xl_s, ylims=yl_s, cbar=True, cbfs=15, alpha=0.75)
         axs2[i,2].contour(xh[ixs], yh[iys], wmax2, levels=[5], colors='k', linewidths=1, linestyles='-')

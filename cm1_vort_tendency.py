@@ -1260,43 +1260,8 @@ for fn in np.arange(28,59):
 
 
 
-#%%
-
-mvtime = 210
-
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
-traj = pickle.load(dbfile)
-dbfile.close()
-
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
-ptime = ds.variables['time'][:].data
-ds.close()
-
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime}min_v2.pkl", 'rb')
-tmp = pickle.load(dbfile)
-cc = tmp['mv1']
-dbfile.close()
 
 
-pids_ml = traj[f"{mvtime}min"]['pids'][(cc == 1)]
-x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]
-y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]
-z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]
-
-
-ti = np.where(ptime == mvtime*60)[0][0]
-z_med = np.round(np.median(z_ml[ti,:]), decimals=-1)
-dz = 100
-
-pids_layer = pids_ml[(z_ml[ti,:] >= z_med-dz) & (z_ml[ti,:] <= z_med+dz)]
-
-# Total pids ml: 65 pids at 210 min, 51 pids at 220 min
-# within +/- 100 m: 13 pids at 210 min (20%) - 44th %ile to 62nd %ile ->  -6 to +12
-#                   18 pids at 220 min (35%) - 38th %ile to 72nd %ile -> -12 to +22
-# within +/- 150 m: 21 pids at 210 min (32%) - 42nd %ile to 72nd %ile ->  -8 to +22
-#                   22 pids at 220 min (43%) - 34th %ile to 76th %ile -> -16 to +26
-# within +/- 200 m: 30 pids at 210 min (46%) - 36th %ile to 80th %ile -> -14 to +30
-#                   27 pids at 220 min (53%) - 26th %ile to 78th %ile -> -24 to +28
 
 
 #%% Calculate tendency plan views - parcel-centered composites
@@ -1310,14 +1275,24 @@ pids_layer = pids_ml[(z_ml[ti,:] >= z_med-dz) & (z_ml[ti,:] <= z_med+dz)]
 # 25%     341 m     394 m
 # 75%     867 m     740 m
 
-mvtime = 210
+# Total pids ml: 65 pids at 210 min, 51 pids at 220 min
+# within +/- 100 m: 13 pids at 210 min (20%) - 44th %ile to 62nd %ile ->  -6 to +12
+#                   18 pids at 220 min (35%) - 38th %ile to 72nd %ile -> -12 to +22
+# within +/- 150 m: 21 pids at 210 min (32%) - 42nd %ile to 72nd %ile ->  -8 to +22
+#                   22 pids at 220 min (43%) - 34th %ile to 76th %ile -> -16 to +26
+# within +/- 200 m: 30 pids at 210 min (46%) - 36th %ile to 80th %ile -> -14 to +30
+#                   27 pids at 220 min (53%) - 26th %ile to 78th %ile -> -24 to +28
+
+
+mvtime = 220
 
 if mvtime == 210:
     fnum = 43
 elif mvtime == 220:
     fnum = 53
 
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000013.nc')
+# ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000013.nc')
+ds = nc.Dataset('/Users/morgan.schneider/Documents/merger/merger-125m/temporary/cm1out_000043.nc')
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
@@ -1333,13 +1308,14 @@ dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
 traj = pickle.load(dbfile)
 dbfile.close()
 
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+# ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ds = nc.Dataset('/Users/morgan.schneider/Documents/merger/merger-125m/temporary/cm1out_pdata.nc')
 ptime = ds.variables['time'][:].data
 ds.close()
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{mvtime}min_v2.pkl", 'rb')
-tmp = pickle.load(dbfile)
-cc = tmp['mv1']
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_{mvtime}min_v2.pkl", 'rb')
+ccs = pickle.load(dbfile)
+cc = ccs['mv1']
 dbfile.close()
 
 pids_ml = traj[f"{mvtime}min"]['pids'][(cc == 1)]
@@ -1347,59 +1323,46 @@ x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]/1000
 y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]/1000
 z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]/1000
 
-# for using a specific layer
-ti = np.where(ptime == mvtime*60)[0][0]
-zm = np.round(np.median(z_ml[ti,:]), decimals=-1)
-dz = 100
+# # for using a specific layer
+# ti = np.where(ptime == mvtime*60)[0][0]
+# zm = np.round(np.median(z_ml[ti,:]), decimals=-1)
+# dz = 150
 
-pids_ml = pids_ml[(z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
-x_ml = x_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
-y_ml = y_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
-z_ml = z_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+# pids_ml = pids_ml[(z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+# x_ml = x_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+# y_ml = y_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+# z_ml = z_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
 
 
-ip = f"/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/"
+ip = f"/Users/morgan.schneider/Documents/merger/merger-125m/"
 
-times = np.zeros(shape=(16,), dtype=float)
 
-sx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-sy = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-sz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-sh = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-ssw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-scw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+times = np.zeros(shape=(11,), dtype=float)
 
-tx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-ty = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-tz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-th = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-tsw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-tcw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-
-bx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-by = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-bh = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-bsw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-bcw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+tmp = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+sx=tmp; sy=tmp; sz=tmp; sh=tmp; ssw=tmp; scw=tmp
+tx=tmp; ty=tmp; tz=tmp; th=tmp; tsw=tmp; tcw=tmp;
+bx=tmp; by=tmp; bh=tmp; bsw=tmp; bcw=tmp;
 
 tilt_components = False
 
 if tilt_components: # individual tilting directions
-    t_xy = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-    t_xz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-    t_yx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-    t_yz = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-    t_zx = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-    t_zy = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-    t_zsw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
-    t_zcw = np.zeros(shape=(len(pids_ml),16,17,17), dtype=float)
+    t_xy = tmp
+    t_xz = tmp
+    t_yx = tmp
+    t_yz = tmp
+    t_zx = tmp
+    t_zy = tmp
+    t_zsw = tmp
+    t_zcw = tmp
 
 
 m = 0
-for fn in np.arange(fnum-15,fnum+1):
+for fn in np.arange(fnum-10,fnum+1):
     print(f"cm1out_{fn:06d}")
     
-    ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_{fn:06d}.nc")
+    # ds = nc.Dataset(f"/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_{fn:06d}.nc")
+    ds = nc.Dataset(f"/Users/morgan.schneider/Documents/merger/merger-125m/temporary/cm1out_{fn:06d}.nc")
     stime = ds.variables['time'][:].data[0]
     it = np.where(ptime == stime)[0][0]
     
@@ -1408,8 +1371,8 @@ for fn in np.arange(fnum-15,fnum+1):
     ymin = np.min(y_ml[it,:]); iy1 = np.abs(yh - ymin).argmin()
     ymax = np.max(y_ml[it,:]); iy2 = np.abs(yh - ymax).argmin()
     zmax = np.max(z_ml[it,:]); iz1 = np.abs(zh - zmax).argmin()
-    ix = slice(ix1-16, ix2+17)
-    iy = slice(iy1-16, iy2+17)
+    ix = slice(ix1-20, ix2+21)
+    iy = slice(iy1-20, iy2+21)
     iz = slice(0, iz1+8)
     
     u = ds.variables['uinterp'][:].data[0,iz,iy,ix]
@@ -1469,8 +1432,8 @@ for fn in np.arange(fnum-15,fnum+1):
         ixp = np.abs(xh[ix]-xp).argmin()
         iyp = np.abs(yh[iy]-yp).argmin()
         k = np.abs(zh[iz]-zp).argmin()
-        i = slice(ixp-8,ixp+9)
-        j = slice(iyp-8,iyp+9)
+        i = slice(ixp-16,ixp+17)
+        j = slice(iyp-16,iyp+17)
         
         
         # Stretching
@@ -1516,7 +1479,19 @@ for fn in np.arange(fnum-15,fnum+1):
     
     # del u_sr,v_sr,ws_sr,xvort,yvort,zvort,hvort,svort,cvort
     del dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz,drdx,drdy,drdz,dpdx,dpdy,dpdz
-    
+
+
+# Save with individual parcels
+if True:
+    data = {'time':times, 'stretch_x':sx, 'stretch_y':sy, 'stretch_z':sz,
+            'stretch_h':sh, 'stretch_sw':ssw, 'stretch_cw':scw,
+            'tilt_x':tx, 'tilt_y':ty, 'tilt_z':tz, 'tilt_h':th,
+            'tilt_sw':tsw, 'tilt_cw':tcw, 'bcl_x':bx, 'bcl_y':by,
+            'bcl_h':bh, 'bcl_sw':bsw, 'bcl_cw':bcw}
+    save_to_pickle(data, ip+f"vten_traj_{mvtime}min_parcels.pkl", new_pkl=True)
+
+#%%
+
 stretch_x = np.mean(sx, axis=0)
 stretch_y = np.mean(sy, axis=0)
 stretch_z = np.mean(sz, axis=0)
@@ -1549,21 +1524,22 @@ if tilt_components:
     #del t_xy,t_xz,t_yx,t_yz,t_zx,t_zy,t_zsw,t_zcw
     
 # del sx,sy,sz,sh,ssw,scw,tx,ty,tz,th,tsw,tcw,bx,by,bh,bsw,bcw
-    
-if True:
+
+# Save composited terms
+if False:
     data = {'time':times, 'stretch_x':stretch_x, 'stretch_y':stretch_y, 'stretch_z':stretch_z,
             'stretch_h':stretch_h, 'stretch_sw':stretch_sw, 'stretch_cw':stretch_cw,
             'tilt_x':tilt_x, 'tilt_y':tilt_y, 'tilt_z':tilt_z, 'tilt_h':tilt_h,
             'tilt_sw':tilt_sw, 'tilt_cw':tilt_cw, 'bcl_x':bcl_x, 'bcl_y':bcl_y,
             'bcl_h':bcl_h, 'bcl_sw':bcl_sw, 'bcl_cw':bcl_cw}
-    save_to_pickle(data, ip+f"vten_traj_{mvtime}min_+{dz}m.pkl", new_pkl=True)
+    save_to_pickle(data, ip+f"vten_traj_{mvtime}min.pkl", new_pkl=True)
 
 
 
 
 #%% Load data for plan views of tendency - median parcel
 
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
 t = 203
 mvtime = 210
@@ -2769,13 +2745,15 @@ ix3 = slice(i1-8,i1+9)
 iy3 = slice(i2-8,i2+9)
 
 
-#%% Load data for composite vorticity tendency plots, all times - parcel-centered composites ***FOR PAPER FIG***
+#%% Load data for composite vorticity tendency plots, all times - parcel-centered composites ***FOR PAPER FIGS***
 
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/'
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
+# fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+fp = '/Users/morgan.schneider/Documents/merger/merger-125m/temporary/'
 
 # Load parcel time
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+ds = nc.Dataset(fp+'cm1out_pdata.nc')
 ptime = ds.variables['time'][:].data
 ds.close()
 
@@ -2785,7 +2763,7 @@ traj = pickle.load(dbfile)
 dbfile.close()
 
 # Load 210 min source regions and pull mid-level source
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_210min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_210min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -2795,7 +2773,7 @@ y1_ml = traj[f"210min"]['y'][:,(cc==1)]/1000
 z1_ml = traj[f"210min"]['z'][:,(cc==1)]/1000
 
 # Load 220 min source regions and pull mid-level source
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_220min_v2.pkl", 'rb')
+dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_220min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -2813,7 +2791,7 @@ z2_median = np.median(z2_ml, axis=1)
 
 
 # Load model grid
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_000013.nc')
+ds = nc.Dataset(fp+'cm1out_000013.nc')
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
@@ -2961,12 +2939,12 @@ figsave = False
 # x2 = xh[ix2]; y2 = yh[iy2]
 # x3 = xh[ix3]; y3 = yh[iy3]
 
-xl1 = [-2, 2]; yl1 = [-2, 2]
-xl2 = [-2, 2]; yl2 = [-2, 2]
-xl3 = [-2, 2]; yl3 = [-2, 2]
-x1 = np.linspace(-2, 2, 17); y1 = np.linspace(-2, 2, 17)
-x2 = np.linspace(-2, 2, 17); y2 = np.linspace(-2, 2, 17)
-x3 = np.linspace(-2, 2, 17); y3 = np.linspace(-2, 2, 17)
+xl1 = [-1, 1]; yl1 = [-1, 1]
+xl2 = [-1, 1]; yl2 = [-1, 1]
+xl3 = [-1, 1]; yl3 = [-1, 1]
+x1 = np.linspace(xl1[0], xl1[1], 17); y1 = np.linspace(yl1[0], yl1[1], 17)
+x2 = np.linspace(xl2[0], xl2[1], 17); y2 = np.linspace(yl2[0], yl2[1], 17)
+x3 = np.linspace(xl3[0], xl3[1], 17); y3 = np.linspace(yl3[0], yl3[1], 17)
 xp1 = [0]; yp1 = [0]
 xp2 = [0]; yp2 = [0]
 xp3 = [0]; yp3 = [0]
