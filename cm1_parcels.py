@@ -1074,7 +1074,7 @@ if use_SR:
     fv = interp1d(stimes, v_storm)
     v_storm_interp = fv(ptime)
     
-    xl = [-52,32]; yl = [-112,-28]
+    xl = [-52,32]; yl = [-102,-18]
 else:
     xl = [-62,22]; yl = [-122,-38]
 
@@ -1201,7 +1201,7 @@ axs[2,0].set_xlabel('x (km)', fontsize=14)
 axs[2,1].set_xlabel('x (km)', fontsize=14)
 axs[2,2].set_xlabel('x (km)', fontsize=14)
 
-figsave = False
+figsave = True
 
 if figsave:
     fig.savefig('/Users/morgan.schneider/Documents/merger/traj_z+B+src_QLCS_SR.png', dpi=300)

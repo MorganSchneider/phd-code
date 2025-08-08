@@ -1262,7 +1262,7 @@ for fn in np.arange(28,59):
 
 #%%
 
-mvtime = 220
+mvtime = 210
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
 traj = pickle.load(dbfile)
@@ -1291,9 +1291,12 @@ dz = 100
 pids_layer = pids_ml[(z_ml[ti,:] >= z_med-dz) & (z_ml[ti,:] <= z_med+dz)]
 
 # Total pids ml: 65 pids at 210 min, 51 pids at 220 min
-# within +/- 200 m: 30 pids at 210 min, 27 pids at 220 min
-# within +/- 100 m: 13 pids at 210 min, 18 pids at 220 min
-# within +/- 150 m: 21 pids at 210 min, 22 pids at 220 min
+# within +/- 100 m: 13 pids at 210 min (20%) - 44th %ile to 62nd %ile ->  -6 to +12
+#                   18 pids at 220 min (35%) - 38th %ile to 72nd %ile -> -12 to +22
+# within +/- 150 m: 21 pids at 210 min (32%) - 42nd %ile to 72nd %ile ->  -8 to +22
+#                   22 pids at 220 min (43%) - 34th %ile to 76th %ile -> -16 to +26
+# within +/- 200 m: 30 pids at 210 min (46%) - 36th %ile to 80th %ile -> -14 to +30
+#                   27 pids at 220 min (53%) - 26th %ile to 78th %ile -> -24 to +28
 
 
 #%% Calculate tendency plan views - parcel-centered composites
@@ -1344,7 +1347,15 @@ x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]/1000
 y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]/1000
 z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]/1000
 
+# for using a specific layer
+ti = np.where(ptime == mvtime*60)[0][0]
+zm = np.round(np.median(z_ml[ti,:]), decimals=-1)
+dz = 100
 
+pids_ml = pids_ml[(z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+x_ml = x_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+y_ml = y_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+z_ml = z_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
 
 
 ip = f"/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_vten/"
@@ -1419,35 +1430,35 @@ for fn in np.arange(fnum-15,fnum+1):
     ds.close()
     
     
-    # dudx = np.gradient(u, xh[ix]*1000, axis=2)
-    # dudy = np.gradient(u, yh[iy]*1000, axis=1)
-    # dudz = np.gradient(u, zh[iz]*1000, axis=0)
-    # dvdx = np.gradient(v, xh[ix]*1000, axis=2)
-    # dvdy = np.gradient(v, yh[iy]*1000, axis=1)
-    # dvdz = np.gradient(v, zh[iz]*1000, axis=0)
-    # dwdx = np.gradient(w, xh[ix]*1000, axis=2)
-    # dwdy = np.gradient(w, yh[iy]*1000, axis=1)
-    # dwdz = np.gradient(w, zh[iz]*1000, axis=0)
-    # drdx = np.gradient(rho, xh[ix]*1000, axis=2)
-    # drdy = np.gradient(rho, yh[iy]*1000, axis=1)
-    # drdz = np.gradient(rho, zh[iz]*1000, axis=0)
-    # dpdx = np.gradient(prs, xh[ix]*1000, axis=2)
-    # dpdy = np.gradient(prs, yh[iy]*1000, axis=1)
-    # dpdz = np.gradient(prs, zh[iz]*1000, axis=0)
-    # del u,v,w,rho,prs
+    dudx = np.gradient(u, xh[ix]*1000, axis=2)
+    dudy = np.gradient(u, yh[iy]*1000, axis=1)
+    dudz = np.gradient(u, zh[iz]*1000, axis=0)
+    dvdx = np.gradient(v, xh[ix]*1000, axis=2)
+    dvdy = np.gradient(v, yh[iy]*1000, axis=1)
+    dvdz = np.gradient(v, zh[iz]*1000, axis=0)
+    dwdx = np.gradient(w, xh[ix]*1000, axis=2)
+    dwdy = np.gradient(w, yh[iy]*1000, axis=1)
+    dwdz = np.gradient(w, zh[iz]*1000, axis=0)
+    drdx = np.gradient(rho, xh[ix]*1000, axis=2)
+    drdy = np.gradient(rho, yh[iy]*1000, axis=1)
+    drdz = np.gradient(rho, zh[iz]*1000, axis=0)
+    dpdx = np.gradient(prs, xh[ix]*1000, axis=2)
+    dpdy = np.gradient(prs, yh[iy]*1000, axis=1)
+    dpdz = np.gradient(prs, zh[iz]*1000, axis=0)
+    del u,v,w,rho,prs
     
-    zz,yy,xx = np.meshgrid(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000, indexing='ij')
-    du = mc.gradient(u, coordinates=(zz,yy,xx))
-    dv = mc.gradient(v, coordinates=(zz,yy,xx))
-    dw = mc.gradient(w, coordinates=(zz,yy,xx))
-    drho = mc.gradient(rho, coordinates=(zz,yy,xx))
-    dprs = mc.gradient(prs, coordinates=(zz,yy,xx))
-    dudx = du[2]; dudy = du[1]; dudz = du[0]
-    dvdx = dv[2]; dvdy = dv[1]; dvdz = dv[0]
-    dwdx = dw[2]; dwdy = dw[1]; dwdz = dw[0]
-    drdx = drho[2]; drdy = drho[1]; drdz = drho[0]
-    dpdx = dprs[2]; dpdy = dprs[1]; dpdz = dprs[0]
-    del u,v,w,rho,prs,du,dv,dw,drho,dprs
+    # zz,yy,xx = np.meshgrid(zh[iz]*1000, yh[iy]*1000, xh[ix]*1000, indexing='ij')
+    # du = mc.gradient(u, coordinates=(zz,yy,xx))
+    # dv = mc.gradient(v, coordinates=(zz,yy,xx))
+    # dw = mc.gradient(w, coordinates=(zz,yy,xx))
+    # drho = mc.gradient(rho, coordinates=(zz,yy,xx))
+    # dprs = mc.gradient(prs, coordinates=(zz,yy,xx))
+    # dudx = du[2]; dudy = du[1]; dudz = du[0]
+    # dvdx = dv[2]; dvdy = dv[1]; dvdz = dv[0]
+    # dwdx = dw[2]; dwdy = dw[1]; dwdz = dw[0]
+    # drdx = drho[2]; drdy = drho[1]; drdz = drho[0]
+    # dpdx = dprs[2]; dpdy = dprs[1]; dpdz = dprs[0]
+    # del u,v,w,rho,prs,du,dv,dw,drho,dprs
     
     
     for p in range(len(pids_ml)):
@@ -1545,7 +1556,7 @@ if True:
             'tilt_x':tilt_x, 'tilt_y':tilt_y, 'tilt_z':tilt_z, 'tilt_h':tilt_h,
             'tilt_sw':tilt_sw, 'tilt_cw':tilt_cw, 'bcl_x':bcl_x, 'bcl_y':bcl_y,
             'bcl_h':bcl_h, 'bcl_sw':bcl_sw, 'bcl_cw':bcl_cw}
-    save_to_pickle(data, ip+f"vten_traj_{mvtime}min_v2.pkl", new_pkl=True)
+    save_to_pickle(data, ip+f"vten_traj_{mvtime}min_+{dz}m.pkl", new_pkl=True)
 
 
 
