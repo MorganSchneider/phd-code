@@ -1339,22 +1339,35 @@ ip = f"/Users/morgan.schneider/Documents/merger/merger-125m/"
 
 times = np.zeros(shape=(11,), dtype=float)
 
-tmp = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-sx=tmp; sy=tmp; sz=tmp; sh=tmp; ssw=tmp; scw=tmp
-tx=tmp; ty=tmp; tz=tmp; th=tmp; tsw=tmp; tcw=tmp;
-bx=tmp; by=tmp; bh=tmp; bsw=tmp; bcw=tmp;
+sx = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+sy = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+sz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+sh = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+ssw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+scw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+tx = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+ty = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+tz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+th = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+tsw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+tcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bx = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+by = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bh = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bsw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
 
 tilt_components = False
 
 if tilt_components: # individual tilting directions
-    t_xy = tmp
-    t_xz = tmp
-    t_yx = tmp
-    t_yz = tmp
-    t_zx = tmp
-    t_zy = tmp
-    t_zsw = tmp
-    t_zcw = tmp
+    t_xy = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    t_xz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    t_yx = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    t_yz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    t_zx = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    t_zy = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    t_zsw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    t_zcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
 
 
 m = 0
@@ -1477,20 +1490,21 @@ for fn in np.arange(fnum-10,fnum+1):
     times[m] = stime/60
     m = m + 1
     
-    # del u_sr,v_sr,ws_sr,xvort,yvort,zvort,hvort,svort,cvort
+    del u_sr,v_sr,ws_sr,xvort,yvort,zvort,hvort,svort,cvort
     del dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz,drdx,drdy,drdz,dpdx,dpdy,dpdz
 
 
 # Save with individual parcels
-if True:
+if False:
     data = {'time':times, 'stretch_x':sx, 'stretch_y':sy, 'stretch_z':sz,
             'stretch_h':sh, 'stretch_sw':ssw, 'stretch_cw':scw,
             'tilt_x':tx, 'tilt_y':ty, 'tilt_z':tz, 'tilt_h':th,
             'tilt_sw':tsw, 'tilt_cw':tcw, 'bcl_x':bx, 'bcl_y':by,
             'bcl_h':bh, 'bcl_sw':bsw, 'bcl_cw':bcw}
-    save_to_pickle(data, ip+f"vten_traj_{mvtime}min_parcels.pkl", new_pkl=True)
+    dbfile = open(ip+f"vten_traj_{mvtime}min_parcels.pkl", 'wb')
+    pickle.dump(data, dbfile)
+    dbfile.close()
 
-#%%
 
 stretch_x = np.mean(sx, axis=0)
 stretch_y = np.mean(sy, axis=0)
@@ -2753,9 +2767,12 @@ ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 fp = '/Users/morgan.schneider/Documents/merger/merger-125m/temporary/'
 
 # Load parcel time
-ds = nc.Dataset(fp+'cm1out_pdata.nc')
-ptime = ds.variables['time'][:].data
-ds.close()
+# if 'ptime' not in locals():
+#     ds = nc.Dataset(fp+'cm1out_pdata.nc')
+#     ptime = ds.variables['time'][:].data
+#     ds.close()
+
+ptime = np.linspace(10800,14400,241)
 
 # Load filtered parcel data
 dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
@@ -2768,9 +2785,9 @@ tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
 
-x1_ml = traj[f"210min"]['x'][:,(cc==1)]/1000
-y1_ml = traj[f"210min"]['y'][:,(cc==1)]/1000
-z1_ml = traj[f"210min"]['z'][:,(cc==1)]/1000
+x1_ml = traj[f"210min"]['x'][:,(cc==1)]
+y1_ml = traj[f"210min"]['y'][:,(cc==1)]
+z1_ml = traj[f"210min"]['z'][:,(cc==1)]
 
 # Load 220 min source regions and pull mid-level source
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_220min_v2.pkl", 'rb')
@@ -2778,9 +2795,9 @@ tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
 
-x2_ml = traj[f"220min"]['x'][:,(cc==1)]/1000
-y2_ml = traj[f"220min"]['y'][:,(cc==1)]/1000
-z2_ml = traj[f"220min"]['z'][:,(cc==1)]/1000
+x2_ml = traj[f"220min"]['x'][:,(cc==1)]
+y2_ml = traj[f"220min"]['y'][:,(cc==1)]
+z2_ml = traj[f"220min"]['z'][:,(cc==1)]
 
 x1_median = np.median(x1_ml, axis=1)
 y1_median = np.median(y1_ml, axis=1)
@@ -2791,29 +2808,35 @@ z2_median = np.median(z2_ml, axis=1)
 
 
 # Load model grid
-ds = nc.Dataset(fp+'cm1out_000013.nc')
+ds = nc.Dataset(fp+'cm1out_000043.nc')
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
 ds.close()
 
 # Load vorticity tendencies
-dbfile = open(ip+f"vten_traj_210min.pkl", 'rb')
+dbfile = open(ip+f"vten_traj_210min_parcels.pkl", 'rb')
 vten1 = pickle.load(dbfile)
 stime1 = vten1['time']
 dbfile.close()
 
-dbfile = open(ip+f"vten_traj_220min.pkl", 'rb')
+dbfile = open(ip+f"vten_traj_220min_parcels.pkl", 'rb')
 vten2 = pickle.load(dbfile)
 stime2 = vten2['time']
 dbfile.close()
 
 
+# Choose parcel ending layer
+dz = 150
+it210 = np.where(ptime == 210*60)[0][0]
+it220 = np.where(ptime == 220*60)[0][0]
+iz1 = ((z1_ml[it210,:] >= z1_median[it210]-dz) & (z1_ml[it210,:] <= z1_median[it210]+dz))
+iz2 = ((z2_ml[it220,:] >= z2_median[it220]-dz) & (z2_ml[it220,:] <= z2_median[it220]+dz))
 
 ### Choose averaging times ###
 times1 = np.arange(203,209)
 times2 = np.arange(214,219)
-times3 = np.arange(218,221)
+times3 = np.arange(218,220)
 
 
 ### Time 1 ###
@@ -2821,25 +2844,25 @@ it0 = np.where(stime1 == times1[0])[0][0]
 itf = np.where(stime1 == times1[-1])[0][0]
 it1 = slice(it0,itf)
 
-stretch_x1 = np.mean(vten1['stretch_x'][it1,:,:], axis=0)
-stretch_y1 = np.mean(vten1['stretch_y'][it1,:,:], axis=0)
-stretch_z1 = np.mean(vten1['stretch_z'][it1,:,:], axis=0)
-stretch_h1 = np.mean(vten1['stretch_h'][it1,:,:], axis=0)
-stretch_sw1 = np.mean(vten1['stretch_sw'][it1,:,:], axis=0)
-stretch_cw1 = np.mean(vten1['stretch_cw'][it1,:,:], axis=0)
+stretch_x1 = np.mean(vten1['stretch_x'][iz1,it1,:,:], axis=(0,1))
+stretch_y1 = np.mean(vten1['stretch_y'][iz1,it1,:,:], axis=(0,1))
+stretch_z1 = np.mean(vten1['stretch_z'][iz1,it1,:,:], axis=(0,1))
+stretch_h1 = np.mean(vten1['stretch_h'][iz1,it1,:,:], axis=(0,1))
+stretch_sw1 = np.mean(vten1['stretch_sw'][iz1,it1,:,:], axis=(0,1))
+stretch_cw1 = np.mean(vten1['stretch_cw'][iz1,it1,:,:], axis=(0,1))
 
-tilt_x1 = np.mean(vten1['tilt_x'][it1,:,:], axis=0)
-tilt_y1 = np.mean(vten1['tilt_y'][it1,:,:], axis=0)
-tilt_z1 = np.mean(vten1['tilt_z'][it1,:,:], axis=0)
-tilt_h1 = np.mean(vten1['tilt_h'][it1,:,:], axis=0)
-tilt_sw1 = np.mean(vten1['tilt_sw'][it1,:,:], axis=0)
-tilt_cw1 = np.mean(vten1['tilt_cw'][it1,:,:], axis=0)
+tilt_x1 = np.mean(vten1['tilt_x'][iz1,it1,:,:], axis=(0,1))
+tilt_y1 = np.mean(vten1['tilt_y'][iz1,it1,:,:], axis=(0,1))
+tilt_z1 = np.mean(vten1['tilt_z'][iz1,it1,:,:], axis=(0,1))
+tilt_h1 = np.mean(vten1['tilt_h'][iz1,it1,:,:], axis=(0,1))
+tilt_sw1 = np.mean(vten1['tilt_sw'][iz1,it1,:,:], axis=(0,1))
+tilt_cw1 = np.mean(vten1['tilt_cw'][iz1,it1,:,:], axis=(0,1))
 
-bcl_x1 = np.mean(vten1['bcl_x'][it1,:,:], axis=0)
-bcl_y1 = np.mean(vten1['bcl_y'][it1,:,:], axis=0)
-bcl_h1 = np.mean(vten1['bcl_h'][it1,:,:], axis=0)
-bcl_sw1 = np.mean(vten1['bcl_sw'][it1,:,:], axis=0)
-bcl_cw1 = np.mean(vten1['bcl_cw'][it1,:,:], axis=0)
+bcl_x1 = np.mean(vten1['bcl_x'][iz1,it1,:,:], axis=(0,1))
+bcl_y1 = np.mean(vten1['bcl_y'][iz1,it1,:,:], axis=(0,1))
+bcl_h1 = np.mean(vten1['bcl_h'][iz1,it1,:,:], axis=(0,1))
+bcl_sw1 = np.mean(vten1['bcl_sw'][iz1,it1,:,:], axis=(0,1))
+bcl_cw1 = np.mean(vten1['bcl_cw'][iz1,it1,:,:], axis=(0,1))
 
 
 ### Time 2 ###
@@ -2847,25 +2870,25 @@ it0 = np.where(stime2 == times2[0])[0][0]
 itf = np.where(stime2 == times2[-1])[0][0]
 it2 = slice(it0,itf)
 
-stretch_x2 = np.mean(vten2['stretch_x'][it2,:,:], axis=0)
-stretch_y2 = np.mean(vten2['stretch_y'][it2,:,:], axis=0)
-stretch_z2 = np.mean(vten2['stretch_z'][it2,:,:], axis=0)
-stretch_h2 = np.mean(vten2['stretch_h'][it2,:,:], axis=0)
-stretch_sw2 = np.mean(vten2['stretch_sw'][it2,:,:], axis=0)
-stretch_cw2 = np.mean(vten2['stretch_cw'][it2,:,:], axis=0)
+stretch_x2 = np.mean(vten2['stretch_x'][iz2,it2,:,:], axis=(0,1))
+stretch_y2 = np.mean(vten2['stretch_y'][iz2,it2,:,:], axis=(0,1))
+stretch_z2 = np.mean(vten2['stretch_z'][iz2,it2,:,:], axis=(0,1))
+stretch_h2 = np.mean(vten2['stretch_h'][iz2,it2,:,:], axis=(0,1))
+stretch_sw2 = np.mean(vten2['stretch_sw'][iz2,it2,:,:], axis=(0,1))
+stretch_cw2 = np.mean(vten2['stretch_cw'][iz2,it2,:,:], axis=(0,1))
 
-tilt_x2 = np.mean(vten2['tilt_x'][it2,:,:], axis=0)
-tilt_y2 = np.mean(vten2['tilt_y'][it2,:,:], axis=0)
-tilt_z2 = np.mean(vten2['tilt_z'][it2,:,:], axis=0)
-tilt_h2 = np.mean(vten2['tilt_h'][it2,:,:], axis=0)
-tilt_sw2 = np.mean(vten2['tilt_sw'][it2,:,:], axis=0)
-tilt_cw2 = np.mean(vten2['tilt_cw'][it2,:,:], axis=0)
+tilt_x2 = np.mean(vten2['tilt_x'][iz2,it2,:,:], axis=(0,1))
+tilt_y2 = np.mean(vten2['tilt_y'][iz2,it2,:,:], axis=(0,1))
+tilt_z2 = np.mean(vten2['tilt_z'][iz2,it2,:,:], axis=(0,1))
+tilt_h2 = np.mean(vten2['tilt_h'][iz2,it2,:,:], axis=(0,1))
+tilt_sw2 = np.mean(vten2['tilt_sw'][iz2,it2,:,:], axis=(0,1))
+tilt_cw2 = np.mean(vten2['tilt_cw'][iz2,it2,:,:], axis=(0,1))
 
-bcl_x2 = np.mean(vten2['bcl_x'][it2,:,:], axis=0)
-bcl_y2 = np.mean(vten2['bcl_y'][it2,:,:], axis=0)
-bcl_h2 = np.mean(vten2['bcl_h'][it2,:,:], axis=0)
-bcl_sw2 = np.mean(vten2['bcl_sw'][it2,:,:], axis=0)
-bcl_cw2 = np.mean(vten2['bcl_cw'][it2,:,:], axis=0)
+bcl_x2 = np.mean(vten2['bcl_x'][iz2,it2,:,:], axis=(0,1))
+bcl_y2 = np.mean(vten2['bcl_y'][iz2,it2,:,:], axis=(0,1))
+bcl_h2 = np.mean(vten2['bcl_h'][iz2,it2,:,:], axis=(0,1))
+bcl_sw2 = np.mean(vten2['bcl_sw'][iz2,it2,:,:], axis=(0,1))
+bcl_cw2 = np.mean(vten2['bcl_cw'][iz2,it2,:,:], axis=(0,1))
 
 
 ### Time 3 ###
@@ -2873,25 +2896,25 @@ it0 = np.where(stime2 == times3[0])[0][0]
 itf = np.where(stime2 == times3[-1])[0][0]
 it3 = slice(it0,itf)
 
-stretch_x3 = np.mean(vten2['stretch_x'][it3,:,:], axis=0)
-stretch_y3 = np.mean(vten2['stretch_y'][it3,:,:], axis=0)
-stretch_z3 = np.mean(vten2['stretch_z'][it3,:,:], axis=0)
-stretch_h3 = np.mean(vten2['stretch_h'][it3,:,:], axis=0)
-stretch_sw3 = np.mean(vten2['stretch_sw'][it3,:,:], axis=0)
-stretch_cw3 = np.mean(vten2['stretch_cw'][it3,:,:], axis=0)
+stretch_x3 = np.mean(vten2['stretch_x'][iz2,it3,:,:], axis=(0,1))
+stretch_y3 = np.mean(vten2['stretch_y'][iz2,it3,:,:], axis=(0,1))
+stretch_z3 = np.mean(vten2['stretch_z'][iz2,it3,:,:], axis=(0,1))
+stretch_h3 = np.mean(vten2['stretch_h'][iz2,it3,:,:], axis=(0,1))
+stretch_sw3 = np.mean(vten2['stretch_sw'][iz2,it3,:,:], axis=(0,1))
+stretch_cw3 = np.mean(vten2['stretch_cw'][iz2,it3,:,:], axis=(0,1))
 
-tilt_x3 = np.mean(vten2['tilt_x'][it3,:,:], axis=0)
-tilt_y3 = np.mean(vten2['tilt_y'][it3,:,:], axis=0)
-tilt_z3 = np.mean(vten2['tilt_z'][it3,:,:], axis=0)
-tilt_h3 = np.mean(vten2['tilt_h'][it3,:,:], axis=0)
-tilt_sw3 = np.mean(vten2['tilt_sw'][it3,:,:], axis=0)
-tilt_cw3 = np.mean(vten2['tilt_cw'][it3,:,:], axis=0)
+tilt_x3 = np.mean(vten2['tilt_x'][iz2,it3,:,:], axis=(0,1))
+tilt_y3 = np.mean(vten2['tilt_y'][iz2,it3,:,:], axis=(0,1))
+tilt_z3 = np.mean(vten2['tilt_z'][iz2,it3,:,:], axis=(0,1))
+tilt_h3 = np.mean(vten2['tilt_h'][iz2,it3,:,:], axis=(0,1))
+tilt_sw3 = np.mean(vten2['tilt_sw'][iz2,it3,:,:], axis=(0,1))
+tilt_cw3 = np.mean(vten2['tilt_cw'][iz2,it3,:,:], axis=(0,1))
 
-bcl_x3 = np.mean(vten2['bcl_x'][it3,:,:], axis=0)
-bcl_y3 = np.mean(vten2['bcl_y'][it3,:,:], axis=0)
-bcl_h3 = np.mean(vten2['bcl_h'][it3,:,:], axis=0)
-bcl_sw3 = np.mean(vten2['bcl_sw'][it3,:,:], axis=0)
-bcl_cw3 = np.mean(vten2['bcl_cw'][it3,:,:], axis=0)
+bcl_x3 = np.mean(vten2['bcl_x'][iz2,it3,:,:], axis=(0,1))
+bcl_y3 = np.mean(vten2['bcl_y'][iz2,it3,:,:], axis=(0,1))
+bcl_h3 = np.mean(vten2['bcl_h'][iz2,it3,:,:], axis=(0,1))
+bcl_sw3 = np.mean(vten2['bcl_sw'][iz2,it3,:,:], axis=(0,1))
+bcl_cw3 = np.mean(vten2['bcl_cw'][iz2,it3,:,:], axis=(0,1))
 
 
 itp1 = np.where(ptime/60 == times1[-1])[0][0]
@@ -2939,15 +2962,14 @@ figsave = False
 # x2 = xh[ix2]; y2 = yh[iy2]
 # x3 = xh[ix3]; y3 = yh[iy3]
 
-xl1 = [-1, 1]; yl1 = [-1, 1]
-xl2 = [-1, 1]; yl2 = [-1, 1]
-xl3 = [-1, 1]; yl3 = [-1, 1]
-x1 = np.linspace(xl1[0], xl1[1], 17); y1 = np.linspace(yl1[0], yl1[1], 17)
-x2 = np.linspace(xl2[0], xl2[1], 17); y2 = np.linspace(yl2[0], yl2[1], 17)
-x3 = np.linspace(xl3[0], xl3[1], 17); y3 = np.linspace(yl3[0], yl3[1], 17)
-xp1 = [0]; yp1 = [0]
-xp2 = [0]; yp2 = [0]
-xp3 = [0]; yp3 = [0]
+xl = [-2, 2]; yl = [-2, 2]
+xx = np.linspace(xl[0], xl[1], 33); yy = np.linspace(yl[0], yl[1], 33)
+xp = 0; yp = 0
+
+xl1 = xl; xl2 = xl; xl3 = xl; yl1 = yl; yl2 = yl; yl3 = yl
+xp1 = xp; xp2 = xp; xp3 = xp; yp1 = yp; yp2 = yp; yp3 = yp
+x1 = xx; x2 = xx; x3 = xx; y1 = yy; y2 = yy; y3 = yy
+
 
 
 lims = [-3e-4, 3e-4]
@@ -2956,6 +2978,8 @@ levs = np.append(np.append([-0.01], levs), [0.01])
 
 lims1 = lims; lims2 = lims; lims3 = lims
 levs1 = levs; levs2 = levs; levs3 = levs
+
+# cb_ticks = np.linspace()
 
 # lims1 = [-4e-4, 4e-4]; levs1 = np.linspace(lims1[0], lims1[1], 41)
 # lims2 = [-4e-4, 4e-4]; levs2 = np.linspace(lims2[0], lims2[1], 41)
@@ -2973,7 +2997,7 @@ fig,ax = plt.subplots(3, 2, figsize=(7,9), sharex=True, sharey=True, layout='con
 
 plot_contourf(x1, y1, tilt_z1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,0].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_title(f"                                       {times1[0]}-{times1[-1]} min", fontsize=16)
 ax[0,0].set_ylabel('y (km)', fontsize=14)
 
@@ -2983,11 +3007,11 @@ cb1.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
 # cb1.set_ticks(np.linspace(-3e-4, 3e-4, 7))
 cb1.formatter.set_powerlimits((0,0))
 # ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,1].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 plot_contourf(x2, y2, tilt_z2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,0].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_title(f"                                       {times2[0]}-{times2[-1]} min", fontsize=16)
 ax[1,0].set_ylabel('y (km)', fontsize=14)
 
@@ -2997,11 +3021,11 @@ cb2.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
 # cb2.set_ticks(np.linspace(-3e-4, 3e-4, 7))
 cb2.formatter.set_powerlimits((0,0))
 # ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,1].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 plot_contourf(x3, y3, tilt_z3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,0].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_title(f"                                       {times3[0]}-{times3[-1]} min", fontsize=16)
 ax[2,0].set_xlabel('x (km)', fontsize=14)
 ax[2,0].set_ylabel('y (km)', fontsize=14)
@@ -3012,7 +3036,7 @@ cb3.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
 # cb3.set_ticks(np.linspace(-3e-4, 3e-4, 7))
 cb3.formatter.set_powerlimits((0,0))
 # ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,1].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_xlabel('x (km)', fontsize=14)
 
 for i in range(3):
@@ -3036,61 +3060,61 @@ fig,ax = plt.subplots(3, 3, figsize=(9.5,9), sharex=True, sharey=True, layout='c
 
 plot_contourf(x1, y1, tilt_h1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,0].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x1, y1, stretch_h1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,1].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=16)
 
 c1 = plot_contourf(x1, y1, bcl_h1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03c9$_H$/dt (s$^{-2}$)", fontsize=12)
-cb1.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+# cb1.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
 cb1.formatter.set_powerlimits((0,0))
 # ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,2].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x2, y2, tilt_h2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,0].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x2, y2, stretch_h2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,1].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=16)
 
 c2 = plot_contourf(x2, y2, bcl_h2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03c9$_H$/dt (s$^{-2}$)", fontsize=12)
-cb2.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+# cb2.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
 cb2.formatter.set_powerlimits((0,0))
 # ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,2].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x3, y3, tilt_h3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,0].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=14)
 ax[2,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x3, y3, stretch_h3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,1].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=16)
 ax[2,1].set_xlabel('x (km)', fontsize=14)
 
 c3 = plot_contourf(x3, y3, bcl_h3, 'zvort', ax[2,2], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03c9$_H$/dt (s$^{-2}$)", fontsize=12)
-cb3.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+# cb3.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
 cb3.formatter.set_powerlimits((0,0))
 # ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,2].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=14)
 
 for i in range(3):
@@ -3117,12 +3141,12 @@ fig,ax = plt.subplots(3, 3, figsize=(9.5,9), sharex=True, sharey=True, layout='c
 
 plot_contourf(x1, y1, tilt_x1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,0].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x1, y1, stretch_x1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,1].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=16)
 
 c1 = plot_contourf(x1, y1, bcl_x1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
@@ -3130,17 +3154,17 @@ cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=12)
 cb1.formatter.set_powerlimits((0,0))
 # ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,2].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x2, y2, tilt_x2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,0].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x2, y2, stretch_x2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,1].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=16)
 
 c2 = plot_contourf(x2, y2, bcl_x2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
@@ -3148,18 +3172,18 @@ cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=12)
 cb2.formatter.set_powerlimits((0,0))
 # ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,2].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x3, y3, tilt_x3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,0].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=14)
 ax[2,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x3, y3, stretch_x3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,1].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=16)
 ax[2,1].set_xlabel('x (km)', fontsize=14)
 
@@ -3168,7 +3192,7 @@ cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03BE/dt (s$^{-2}$)", fontsize=12)
 cb3.formatter.set_powerlimits((0,0))
 # ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,2].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=14)
 
 plt.suptitle(f"Composite \u03BE tendency (parcel-centered)", fontsize=18)
@@ -3184,12 +3208,12 @@ fig,ax = plt.subplots(3, 3, figsize=(9.5,9), sharex=True, sharey=True, layout='c
 
 plot_contourf(x1, y1, tilt_y1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,0].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x1, y1, stretch_y1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,1].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=16)
 
 c1 = plot_contourf(x1, y1, bcl_y1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
@@ -3197,17 +3221,17 @@ cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=12)
 cb1.formatter.set_powerlimits((0,0))
 # ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,2].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x2, y2, tilt_y2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,0].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x2, y2, stretch_y2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,1].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=16)
 
 c2 = plot_contourf(x2, y2, bcl_y2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
@@ -3215,18 +3239,18 @@ cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=12)
 cb2.formatter.set_powerlimits((0,0))
 # ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,2].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x3, y3, tilt_y3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,0].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=14)
 ax[2,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x3, y3, stretch_y3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,1].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=16)
 ax[2,1].set_xlabel('x (km)', fontsize=14)
 
@@ -3235,7 +3259,7 @@ cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03B7/dt (s$^{-2}$)", fontsize=12)
 cb3.formatter.set_powerlimits((0,0))
 # ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,2].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=14)
 
 plt.suptitle(f"Composite \u03B7 tendency (parcel-centered)", fontsize=18)
@@ -3252,12 +3276,12 @@ fig,ax = plt.subplots(3, 3, figsize=(9.5,9), sharex=True, sharey=True, layout='c
 
 plot_contourf(x1, y1, tilt_sw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,0].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x1, y1, stretch_sw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,1].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=16)
 
 c1 = plot_contourf(x1, y1, bcl_sw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
@@ -3265,17 +3289,17 @@ cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=12)
 cb1.formatter.set_powerlimits((0,0))
 # ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,2].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x2, y2, tilt_sw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,0].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x2, y2, stretch_sw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,1].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=16)
 
 c2 = plot_contourf(x2, y2, bcl_sw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
@@ -3283,18 +3307,18 @@ cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=12)
 cb2.formatter.set_powerlimits((0,0))
 # ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,2].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x3, y3, tilt_sw3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,0].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=14)
 ax[2,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x3, y3, stretch_sw3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,1].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=16)
 ax[2,1].set_xlabel('x (km)', fontsize=14)
 
@@ -3303,7 +3327,7 @@ cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03c9$_{SW}$/dt (s$^{-2}$)", fontsize=12)
 cb3.formatter.set_powerlimits((0,0))
 # ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,2].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=14)
 
 plt.suptitle(f"Composite streamwise \u03c9 tendency (parcel-centered)", fontsize=18)
@@ -3319,12 +3343,12 @@ fig,ax = plt.subplots(3, 3, figsize=(9.5,9), sharex=True, sharey=True, layout='c
 
 plot_contourf(x1, y1, tilt_cw1, 'zvort', ax[0,0], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,0].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,0].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,0].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x1, y1, stretch_cw1, 'zvort', ax[0,1], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
 # ax[0,1].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,1].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,1].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0,1].set_title(f"{times1[0]}-{times1[-1]} min", fontsize=16)
 
 c1 = plot_contourf(x1, y1, bcl_cw1, 'zvort', ax[0,2], levels=levs1, datalims=lims1, xlims=xl1, ylims=yl1, cmap=cm, cbar=False)
@@ -3332,17 +3356,17 @@ cb1 = plt.colorbar(c1, ax=ax[0,2], extend='both')
 cb1.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=12)
 cb1.formatter.set_powerlimits((0,0))
 # ax[0,2].scatter(xp1, yp1, s=30, color='k', marker='.')
-ax[0,2].scatter(np.median(xp1), np.median(yp1), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0,2].scatter(xp1, yp1, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x2, y2, tilt_cw2, 'zvort', ax[1,0], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,0].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,0].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,0].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x2, y2, stretch_cw2, 'zvort', ax[1,1], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
 # ax[1,1].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,1].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,1].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1,1].set_title(f"{times2[0]}-{times2[-1]} min", fontsize=16)
 
 c2 = plot_contourf(x2, y2, bcl_cw2, 'zvort', ax[1,2], levels=levs2, datalims=lims2, xlims=xl2, ylims=yl2, cmap=cm, cbar=False)
@@ -3350,18 +3374,18 @@ cb2 = plt.colorbar(c2, ax=ax[1,2], extend='both')
 cb2.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=12)
 cb2.formatter.set_powerlimits((0,0))
 # ax[1,2].scatter(xp2, yp2, s=30, color='k', marker='.')
-ax[1,2].scatter(np.median(xp2), np.median(yp2), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1,2].scatter(xp2, yp2, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 
 
 plot_contourf(x3, y3, tilt_cw3, 'zvort', ax[2,0], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,0].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,0].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,0].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,0].set_xlabel('x (km)', fontsize=14)
 ax[2,0].set_ylabel('y (km)', fontsize=14)
 
 plot_contourf(x3, y3, stretch_cw3, 'zvort', ax[2,1], levels=levs3, datalims=lims3, xlims=xl3, ylims=yl3, cmap=cm, cbar=False)
 # ax[2,1].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,1].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,1].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,1].set_title(f"{times3[0]}-{times3[-1]} min", fontsize=16)
 ax[2,1].set_xlabel('x (km)', fontsize=14)
 
@@ -3370,7 +3394,7 @@ cb3 = plt.colorbar(c3, ax=ax[2,2], extend='both')
 cb3.set_label("d\u03c9$_{CW}$/dt (s$^{-2}$)", fontsize=12)
 cb3.formatter.set_powerlimits((0,0))
 # ax[2,2].scatter(xp3, yp3, s=30, color='k', marker='.')
-ax[2,2].scatter(np.median(xp3), np.median(yp3), s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2,2].scatter(xp3, yp3, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2,2].set_xlabel('x (km)', fontsize=14)
 
 plt.suptitle(f"Composite crosswise \u03c9 tendency (parcel-centered)", fontsize=18)
