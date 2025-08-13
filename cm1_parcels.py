@@ -30,8 +30,8 @@ from matplotlib import patches
 
 # Parcel data dimensions (time, pid)
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/supercell-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/supercell-125m/'
+# fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
 # Read parcel data
 ds = nc.Dataset(fp+'cm1out_pdata.nc')
@@ -74,9 +74,9 @@ zh = ds.variables['z'][:].data
 dbz = ds.variables['dbz'][:].data[0,0,:,:]
 ds.close()
 
-# ds = nc.Dataset(fp+"base/cm1out_000013.nc")
-# dbz0 = ds.variables['dbz2'][:].data[0,0,:,:]
-# ds.close()
+ds = nc.Dataset(fp+"base/cm1out_000013.nc")
+dbz0 = ds.variables['dbz2'][:].data[0,0,:,:]
+ds.close()
 
 # Filter trajectories
 
@@ -84,7 +84,7 @@ ds.close()
 
 ti = np.where(ptime == stime)[0][0]
 
-box_name = 'SUPERCELL'
+box_name = 'MERGER'
 
 dbfile = open(ip+'boxes_s1.pkl', 'rb')
 box = pickle.load(dbfile)
@@ -93,6 +93,7 @@ x2 = box['x2_pp'][fnum-14]
 y1 = box['y1_pp'][fnum-14]
 y2 = box['y2_pp'][fnum-14]
 dbfile.close()
+
 
 wvort_cond = (zvort[ti,:]>=0.01) & (w[ti,:]>=5) & (z[ti,:]<=1000) & (z[ti,:]>=100) & (x[ti,:]>=x1*1000) & (x[ti,:]<=x2*1000) & (y[ti,:]>=y1*1000) & (y[ti,:]<=y2*1000)
 
@@ -403,7 +404,7 @@ if True:
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
     p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=b_mv[0,:], marker='.', cmap='HomeyerRainbow', vmin=-0.2, vmax=0.1)
-    ax.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
+    ax.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
     ax.set_xlim(xl)
     ax.set_ylim(yl)
     ax.set_title(f"{box_name} - Starting buoyancy for parcels at {stime/60:.0f} min")
@@ -415,7 +416,7 @@ if True:
     
     fig,ax = plt.subplots(1,1,figsize=(8,6))
     p = ax.scatter(x_mv[0,:]/1000, y_mv[0,:]/1000, s=5, c=z_mv[0,:]/1000, marker='.', cmap='HomeyerRainbow', vmin=0, vmax=2)
-    ax.contour(xh, yh, dbz0, levels=[30], colors='k', linewidths=1)
+    ax.contour(xh, yh, dbz, levels=[30], colors='k', linewidths=1)
     ax.set_xlim(xl)
     ax.set_ylim(yl)
     ax.set_title(f"{box_name} - Starting height for parcels at {stime/60:.0f} min")

@@ -457,9 +457,11 @@ if figsave:
 
 
 
-#%% Make single time overview plots (dBZ, w, thrpert, zvort)
+#%% Make single time/single panel overview plots
 ######################
-ip = '/Users/morgan.schneider/Documents/merger/qlcs-125m/'
+
+fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
 
 wlims = [-15,15]
 thr_lims = [-15,15]
@@ -468,16 +470,43 @@ vort_lims = [-0.1,0.1]
 dbz_lims = [1,70]
 
 
-
 ######################
 
 
-xlims = [-180,180]
-ylims = [-180,180]
+xlims = [-25, -5]
+ylims = [-80, -60]
 qix = 35 #10
 
-levs = [0, 0.1, 0.5, 1]
+# xlims = [-21.2, -13.2] # 210 min
+# ylims = [-70.3, -62.3]
+
+# xlims = [-10, 0] # 220 min
+# ylims = [-60, -50]
+
+xlims = [-20, 0]
+ylims = [-70, -50]
+
+
 figsave = False
+
+
+
+ds = nc.Dataset(ip+f"temporary/cm1out_000053.nc")
+xh = ds.variables['xh'][:].data
+yh = ds.variables['yh'][:].data
+z = ds.variables['z'][:].data
+
+ix = slice(np.where(xh >= xlims[0])[0][0], np.where(xh >= xlims[1])[0][1])
+iy = slice(np.where(yh >= ylims[0])[0][0], np.where(yh >= ylims[1])[0][1])
+iz = slice(0, np.where(z >= 2)[0][1])
+
+winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
+zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
+
+ds.close()
+
+
+
 
 # for lev in levs:
 #     iz = np.where(z >= lev)[0][0]
@@ -510,26 +539,50 @@ figsave = False
 #         plt.savefig(ip+f"imgs_dbz/dbz_{1000*z[iz]:.0f}m_{time:03.0f}min.png", dpi=400)
 
 
-xlims = [x1, x2]
-ylims = [y1, y2]
-iz1 = np.where(z>=1)[0][0]
-qix = 6
 
-# shade dbz, thrpert, or zvort?
-fig,ax = plt.subplots(1,1,figsize=(8,6))
+#%%
 
-plot_cfill(xf, yf, thrpert[0,:,:], 'thrpert', ax, datalims=thr_lims, xlims=xlims, ylims=ylims)
-ax.contour(xh, yh, dbz[0,:,:], levels=[10], colors='darkgray', linewidths=1, linestyles='--')
-ax.contour(xh, yh, zvort[0,:,:], levels=[0.02,0.04,0.06,0.08,0.1], colors=['gold','darkorange','red','darkorchid','blue'], linewidths=1)
-ax.contour(xh, yh, np.max(w[0:iz1,:,:], axis=0), levels=[10,20,30], colors='k', linewidths=1)
-ax.contour(xh, yh, np.min(w[0:iz1,:,:], axis=0), levels=[-30,-20,-10], colors='dodgerblue', linewidths=1, linestyles='--')
-ax.quiver(xh[::qix], yh[::qix], uinterp[0,::qix,::qix], vinterp[0,::qix,::qix], scale=275, width=0.004, pivot='middle')
-ax.set_xlabel('x (km)')
-ax.set_ylabel('y (km)')
-ax.set_title(f"$t={time:.0f}$ min", fontsize=14)
+iz1km = np.where(z >= 1)[0][0]
+iz2km = np.where(z >= 2)[0][0]
+izp = np.where(z >= 0.7)[0][0]
 
-if figsave:
-    plt.savefig(ip+f"imgs_dbz/sfc_{time:03.0f}min.png", dpi=400)
+
+
+if False:
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    
+    plot_contourf(xh[ix], yh[iy], winterp[iz3,:,:], 'w', ax, levels=np.linspace(-20, 20, 21), datalims=[-20,20], xlims=xlims, ylims=ylims)
+    ax.contour(xh[ix], yh[iy], zvort[iz3,:,:], levels=np.linspace(0.01, 0.1, 10), colors='k', linewidths=1)
+    # ax.contour(xh[ix], yh[iy], zvort[iz3,:,:], levels=np.linspace(-0.1, -0.01, 10), colors='b', linewidths=1)
+    ax.set_xlabel('x (km)')
+    ax.set_ylabel('y (km)')
+    # ax.set_title(f"$t={time:.0f}$ min", fontsize=14)
+    
+    
+    
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    
+    plot_contourf(xh[ix], yh[iy], winterp[iz1km,:,:], 'w', ax, levels=np.linspace(-15, 15, 31), datalims=[-15,15], xlims=xlims, ylims=ylims)
+    ax.contour(xh[ix], yh[iy], winterp[iz3,:,:], levels=[5, 10, 15], colors='k', linewidths=1)
+    ax.contour(xh[ix], yh[iy], winterp[iz5,:,:], levels=[5, 10, 15], colors='b', linewidths=1.5)
+    ax.set_xlabel('x (km)')
+    ax.set_ylabel('y (km)')
+    # ax.set_title(f"$t={time:.0f}$ min", fontsize=14)
+    
+    plt.show()
+
+if True:
+    fig,ax = plt.subplots(1,1,figsize=(8,6))
+    
+    plot_contourf(xh[ix], yh[iy], zvort[iz2km,:,:], 'zvort', ax, levels=np.linspace(-0.05, 0.05, 21), datalims=[-0.05, 0.05], xlims=xlims, ylims=ylims)
+    ax.contour(xh[ix], yh[iy], winterp[iz2km,:,:], levels=[5, 10, 15], colors='k', linewidths=1.5)
+    # ax.contour(xh[ix], yh[iy], zvort[iz3,:,:], levels=np.linspace(0.01, 0.1, 10), colors='k', linewidths=1)
+    # ax.contour(xh[ix], yh[iy], zvort[iz3,:,:], levels=np.linspace(-0.1, -0.01, 10), colors='b', linewidths=1)
+    ax.set_xlabel('x (km)')
+    ax.set_ylabel('y (km)')
+    ax.set_title('zvort at 2 km, 220 min')
+    
+    plt.show()
 
 
 

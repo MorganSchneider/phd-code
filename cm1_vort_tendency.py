@@ -1284,6 +1284,7 @@ for fn in np.arange(28,59):
 #                   27 pids at 220 min (53%) - 26th %ile to 78th %ile -> -24 to +28
 
 
+
 mvtime = 220
 
 if mvtime == 210:
@@ -1297,6 +1298,9 @@ xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
 ds.close()
+
+xh = np.linspace(-179.9375, 179.9375, 2880)
+yh = np.linspace(-179.9375, 179.9375, 2880)
 
 dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
 sm = pickle.load(dbfile)
