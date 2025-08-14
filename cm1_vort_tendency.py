@@ -1264,7 +1264,7 @@ for fn in np.arange(28,59):
 
 
 
-#%% Calculate tendency plan views - parcel-centered composites
+#%% Calculate tendency plan views - parcel-centered composites ***FOR PAPER FIGS***
 
 #         210 min   220 min
 #
@@ -2779,12 +2779,12 @@ fp = '/Users/morgan.schneider/Documents/merger/merger-125m/temporary/'
 ptime = np.linspace(10800,14400,241)
 
 # Load filtered parcel data
-dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+dbfile = open(ip+'traj_MV1.pkl', 'rb')
 traj = pickle.load(dbfile)
 dbfile.close()
 
 # Load 210 min source regions and pull mid-level source
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_210min_v2.pkl", 'rb')
+dbfile = open(ip+f"traj_clusters_210min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -2794,7 +2794,7 @@ y1_ml = traj[f"210min"]['y'][:,(cc==1)]
 z1_ml = traj[f"210min"]['z'][:,(cc==1)]
 
 # Load 220 min source regions and pull mid-level source
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters_220min_v2.pkl", 'rb')
+dbfile = open(ip+f"traj_clusters_220min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc = tmp['mv1']
 dbfile.close()
@@ -3054,7 +3054,7 @@ for i in range(3):
 plt.suptitle(f"Composite \u03B6 tendency (parcel-centered)", fontsize=16)
 
 if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/zvort_composite_v2.png", dpi=300)
+    plt.savefig(ip+f"vort_tendency/zvort_composite_v2.png", dpi=300)
 
 
 
@@ -3132,7 +3132,7 @@ for i in range(3):
 plt.suptitle(f"Composite |\u03c9$_H$| tendency (parcel-centered)", fontsize=18)
 
 if figsave:
-    plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/hvort_composite_v2.png", dpi=300)
+    plt.savefig(ip+f"vort_tendency/hvort_composite_v2.png", dpi=300)
 
 
 
