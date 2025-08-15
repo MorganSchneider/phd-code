@@ -494,7 +494,7 @@ if True:
     
     # was levels=np.linspace(-0.012,0,7), datalims=[-0.012,0]
     # c = plot_cfill(times, zz, OW_min_m, 'OW', ax1, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
-    c = plot_contourf(times, zz, OW_min_m, 'OW', ax1, levels=np.linspace(-0.012,0,7), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop], extend='min')
+    c = plot_contourf(times, zz, OW_min_m, 'OW', ax1, levels=np.linspace(-0.012,0,13), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop], extend='min')
     ax1.contour(times, zz, w_max_m, levels=[10,15,20], colors=['dimgray','k','k'], linestyles=['-','-','-'], linewidths=[1.25,1.25,2.5])
     ax1.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax1.set_xlabel('Time (min)')
@@ -503,7 +503,7 @@ if True:
     
     # was levels=np.linspace(-0.03,0,16), datalims=[-0.012,0]
     # plot_cfill(times, zz, OW_min_q, 'OW', ax2, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
-    plot_contourf(times, zz, OW_min_q, 'OW', ax2, levels=np.linspace(-0.03,0,16), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
+    plot_contourf(times, zz, OW_min_q, 'OW', ax2, levels=np.linspace(-0.03,0,31), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
     ax2.contour(times, zz, w_max_q, levels=[10,15,20], colors=['dimgray','k','k'], linestyles=['-','-','-'], linewidths=[1.25,1.25,2.5])
     ax2.axvline(210, color='k', linewidth=1.5, linestyle='--')
     # ax2.set_xlabel('Time (min)')
@@ -512,7 +512,7 @@ if True:
     
     # was levels=np.linspace(-0.02,0,11), datalims=[-0.012,0]
     # plot_cfill(times, zz, OW_min_s, 'OW', ax3, datalims=[-0.01,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
-    plot_contourf(times, zz, OW_min_s, 'OW', ax3, levels=np.linspace(-0.02,0,11), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
+    plot_contourf(times, zz, OW_min_s, 'OW', ax3, levels=np.linspace(-0.02,0,21), datalims=[-0.012,0], cmap=cm, cbar=False, xlims=[180,240], ylims=[0,ztop])
     ax3.contour(times, zz, w_max_s, levels=[10,15,20], colors=['dimgray','k','k'], linestyles=['-','-','-'], linewidths=[1.25,1.25,2.5])
     ax3.axvline(210, color='k', linewidth=1.5, linestyle='--')
     ax3.set_xlabel('Time (min)')
@@ -522,7 +522,7 @@ if True:
     cb = plt.colorbar(c, ax=[ax1,ax2,ax3], extend='min')
     cb.set_label("OW (s$^{-2}$)", fontsize=14)
     cb.formatter.set_powerlimits((0,0))
-    cb.set_ticks(np.linspace(-0.012,0,7))
+    cb.set_ticks(np.linspace(-0.012,0,13))
     
     if figsave:
         plt.savefig(f"/Users/morgan.schneider/Documents/merger/timeheights_OW+w_v2.png", dpi=300)
