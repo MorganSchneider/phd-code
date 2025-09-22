@@ -3438,7 +3438,8 @@ dbfile.close()
 
 z_ml = traj[f"{time}min"]['z'][:,(cc==1)]
 z_median = np.median(z_ml, axis=1)
-
+u_ml = traj[f"{time}min"]['u'][:,(cc==1)]
+v_ml = traj[f"{time}min"]['v'][:,(cc==1)]
 
 
 # Load vorticity tendencies
@@ -3453,7 +3454,7 @@ itmv = np.where(ptime == time*60)[0][0]
 iz = ((z_ml[itmv,:] >= z_median[itmv]-dz) & (z_ml[itmv,:] <= z_median[itmv]+dz))
 
 ### Choose averaging times ###
-times = np.arange(218,221)
+times = np.arange(217,220)
 
 
 it0 = np.where(stime == times[0])[0][0]
@@ -3526,8 +3527,8 @@ ws_storm = np.sqrt(u_storm**2 + v_storm**2)
 dbfile.close()
 
 
-u_sr = np.mean(u_storm[times[0]-180:times[-1]-179])
-v_sr = np.mean(v_storm[times[0]-180:times[-1]-179])
+u_sr = np.mean(np.median(u_ml[itp,iz], axis=0)) - np.mean(u_storm[times[0]-180:times[-1]-179])
+v_sr = np.mean(np.median(v_ml[itp,iz], axis=0)) - np.mean(v_storm[times[0]-180:times[-1]-179])
 ws_sr = np.mean(ws_storm[times[0]-180:times[-1]-179])
 swvort = np.mean(np.median(vort_sw, axis=0))
 cwvort = np.mean(np.median(vort_cw, axis=0))
@@ -3536,7 +3537,7 @@ swvort_y = v_sr/ws_sr * swvort
 cwvort_x = -v_sr/ws_sr * cwvort
 cwvort_y = u_sr/ws_sr * cwvort
 
-#%% Make the plots
+#% Make the plots
 
 from matplotlib.ticker import MultipleLocator
 
