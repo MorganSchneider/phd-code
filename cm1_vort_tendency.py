@@ -2994,6 +2994,7 @@ levs1 = levs; levs2 = levs; levs3 = levs
 
 cm = 'balance'
 
+xl1 = [-1, 1]; xl2 = [-1, 1]; xl3 = [-1, 1]
 
 
 ### Vertical ###
@@ -3045,10 +3046,10 @@ ax[2,1].set_xlabel('x (km)', fontsize=14)
 
 for i in range(3):
     for j in range(2):
-        ax[i,j].xaxis.set_major_locator(MultipleLocator(1))
-        ax[i,j].xaxis.set_minor_locator(MultipleLocator(0.5))
-        ax[i,j].yaxis.set_major_locator(MultipleLocator(1))
-        ax[i,j].yaxis.set_minor_locator(MultipleLocator(0.5))
+        ax[i,j].xaxis.set_major_locator(MultipleLocator(0.5))
+        ax[i,j].xaxis.set_minor_locator(MultipleLocator(0.25))
+        ax[i,j].yaxis.set_major_locator(MultipleLocator(0.5))
+        ax[i,j].yaxis.set_minor_locator(MultipleLocator(0.25))
         ax[i,j].tick_params(axis='both', labelsize=12)
 
 plt.suptitle(f"Composite \u03B6 tendency (parcel-centered)", fontsize=16)
@@ -3123,10 +3124,10 @@ ax[2,2].set_xlabel('x (km)', fontsize=14)
 
 for i in range(3):
     for j in range(3):
-        ax[i,j].xaxis.set_major_locator(MultipleLocator(1))
-        ax[i,j].xaxis.set_minor_locator(MultipleLocator(0.5))
-        ax[i,j].yaxis.set_major_locator(MultipleLocator(1))
-        ax[i,j].yaxis.set_minor_locator(MultipleLocator(0.5))
+        ax[i,j].xaxis.set_major_locator(MultipleLocator(0.5))
+        ax[i,j].xaxis.set_minor_locator(MultipleLocator(0.25))
+        ax[i,j].yaxis.set_major_locator(MultipleLocator(0.5))
+        ax[i,j].yaxis.set_minor_locator(MultipleLocator(0.25))
         ax[i,j].tick_params(axis='both', labelsize=12)
 
 plt.suptitle(f"Composite |\u03c9$_H$| tendency (parcel-centered)", fontsize=18)
@@ -3406,6 +3407,341 @@ plt.suptitle(f"Composite crosswise \u03c9 tendency (parcel-centered)", fontsize=
 if figsave:
     plt.savefig(f"/Users/morgan.schneider/Documents/merger/merger-125m/vort_tendency/cwvort_composite.png", dpi=300)
 
+
+
+#%% Plan views of my chosen times ***PAPER FIGS?***
+
+fp = '/Users/mschne28/Documents/merger/merger-125m/'
+
+time = 220
+
+# Load coordinate data
+dbfile = open(fp+'coords.pkl', 'rb')
+coords = pickle.load(dbfile)
+xh = coords['xh']
+yh = coords['yh']
+zh = coords['zh']
+ptime = coords['ptime']
+dbfile.close()
+
+
+# Load filtered parcel data
+dbfile = open(fp+'traj_MV1.pkl', 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+# Load source regions and pull mid-level source
+dbfile = open(fp+f"traj_clusters_{time}min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc = tmp['mv1']
+dbfile.close()
+
+z_ml = traj[f"{time}min"]['z'][:,(cc==1)]
+z_median = np.median(z_ml, axis=1)
+
+
+
+# Load vorticity tendencies
+dbfile = open(fp+f"vten_traj_{time}min_parcels.pkl", 'rb')
+vten = pickle.load(dbfile)
+stime = vten['time']
+dbfile.close()
+
+# Choose parcel ending layer
+dz = 1000
+itmv = np.where(ptime == time*60)[0][0]
+iz = ((z_ml[itmv,:] >= z_median[itmv]-dz) & (z_ml[itmv,:] <= z_median[itmv]+dz))
+
+### Choose averaging times ###
+times = np.arange(218,221)
+
+
+it0 = np.where(stime == times[0])[0][0]
+itf = np.where(stime == times[-1])[0][0]
+it = slice(it0,itf+1)
+
+
+
+stretch_x = np.mean(vten['stretch_x'][iz,it,:,:], axis=(0,1))
+stretch_y = np.mean(vten['stretch_y'][iz,it,:,:], axis=(0,1))
+stretch_z = np.mean(vten['stretch_z'][iz,it,:,:], axis=(0,1))
+stretch_h = np.mean(vten['stretch_h'][iz,it,:,:], axis=(0,1))
+stretch_sw = np.mean(vten['stretch_sw'][iz,it,:,:], axis=(0,1))
+stretch_cw = np.mean(vten['stretch_cw'][iz,it,:,:], axis=(0,1))
+
+tilt_x = np.mean(vten['tilt_x'][iz,it,:,:], axis=(0,1))
+tilt_y = np.mean(vten['tilt_y'][iz,it,:,:], axis=(0,1))
+tilt_z = np.mean(vten['tilt_z'][iz,it,:,:], axis=(0,1))
+tilt_h = np.mean(vten['tilt_h'][iz,it,:,:], axis=(0,1))
+tilt_sw = np.mean(vten['tilt_sw'][iz,it,:,:], axis=(0,1))
+tilt_cw = np.mean(vten['tilt_cw'][iz,it,:,:], axis=(0,1))
+
+bcl_x = np.mean(vten['bcl_x'][iz,it,:,:], axis=(0,1))
+bcl_y = np.mean(vten['bcl_y'][iz,it,:,:], axis=(0,1))
+bcl_h = np.mean(vten['bcl_h'][iz,it,:,:], axis=(0,1))
+bcl_sw = np.mean(vten['bcl_sw'][iz,it,:,:], axis=(0,1))
+bcl_cw = np.mean(vten['bcl_cw'][iz,it,:,:], axis=(0,1))
+
+
+# does each term contribute positively or negatively to crosswise vorticity in its current direction (AKA magnitude)
+dbfile = open(fp+f"hvort_traj_{time}min.pkl", 'rb')
+vort_traj = pickle.load(dbfile)
+vort_x = vort_traj['xvort_ml']
+vort_y = vort_traj['yvort_ml']
+vort_sw = vort_traj['vort_sw_ml']
+vort_cw = vort_traj['vort_cw_ml']
+dbfile.close()
+
+itp0 = np.where(ptime == times[0]*60)[0][0]
+itpf = np.where(ptime == times[-1]*60)[0][0]
+itp = slice(itp0,itpf+1)
+vort_sw = vort_sw[itp,iz]
+vort_cw = vort_cw[itp,iz]
+
+cw_sign = vort_cw / np.abs(vort_cw)
+
+scw = vten['stretch_cw'][iz,it,:,:]
+tcw = vten['tilt_cw'][iz,it,:,:]
+bcw = vten['bcl_cw'][iz,it,:,:]
+
+for i in range(len(times)):
+    for j in range(len(iz[(iz)])):
+        scw[j,i,:,:] = scw[j,i,:,:] * cw_sign[i,j]
+        tcw[j,i,:,:] = tcw[j,i,:,:] * cw_sign[i,j]
+        bcw[j,i,:,:] = bcw[j,i,:,:] * cw_sign[i,j]
+
+stretch_cw2 = np.mean(scw, axis=(0,1))
+tilt_cw2 = np.mean(tcw, axis=(0,1))
+bcl_cw2 = np.mean(bcw, axis=(0,1))
+
+xvort = np.mean(np.median(vort_x[itp,iz], axis=0))
+yvort = np.mean(np.median(vort_y[itp,iz], axis=0))
+
+# Load storm motion
+dbfile = open(fp+'storm_motion.pkl', 'rb')
+sm = pickle.load(dbfile)
+u_storm = sm['u_storm']
+v_storm = sm['v_storm']
+ws_storm = np.sqrt(u_storm**2 + v_storm**2)
+dbfile.close()
+
+
+u_sr = np.mean(u_storm[times[0]-180:times[-1]-179])
+v_sr = np.mean(v_storm[times[0]-180:times[-1]-179])
+ws_sr = np.mean(ws_storm[times[0]-180:times[-1]-179])
+swvort = np.mean(np.median(vort_sw, axis=0))
+cwvort = np.mean(np.median(vort_cw, axis=0))
+swvort_x = u_sr/ws_sr * swvort
+swvort_y = v_sr/ws_sr * swvort
+cwvort_x = -v_sr/ws_sr * cwvort
+cwvort_y = u_sr/ws_sr * cwvort
+
+#%% Make the plots
+
+from matplotlib.ticker import MultipleLocator
+
+from matplotlib.patches import FancyArrowPatch
+
+def add_vectors(ax, x, y, dx, dy, lengthscale=10, *args, **kwargs):
+    # SMALLER lengthscale for SHORTER arrows -- this is REVERSED from scale kwarg in quiver
+    for i in range(len(x)):
+        x1 = x[i]
+        y1 = y[i]
+        dx1 = dx[i]*lengthscale
+        dy1 = dy[i]*lengthscale
+        x2 = x1 + dx1
+        y2 = y1 + dy1
+        arrow = FancyArrowPatch((x1, y1), (x2, y2), *args, **kwargs)
+        ax.add_patch(arrow)
+        
+    return arrow
+
+
+figsave = False
+
+
+xx = np.linspace(-2, 2, 33)
+yy = np.linspace(-2, 2, 33)
+lims = [-2e-4, 2e-4]
+levs = np.linspace(lims[0], lims[1], 41)
+levs = np.append(np.append([-0.01], levs), [0.01])
+xl = [-1, 1]
+yl = [-1, 1]
+
+cm = 'balance'
+
+
+### Vertical ###
+fig,ax = plt.subplots(1, 2, figsize=(8,4), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xx, yy, tilt_z, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0].set_xlabel('x (km)', fontsize=14)
+ax[0].set_ylabel('y (km)', fontsize=14)
+ax[0].text(0.2, -0.9, 'Tilting', color='k', fontsize=18, fontweight='bold')
+# ax[0].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
+a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.02, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+c = plot_contourf(xx, yy, stretch_z, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+cb = plt.colorbar(c, ax=ax[1], extend='both')
+cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
+# cb.set_ticks(np.linspace(-3e-4, 3e-4, 7))
+cb.formatter.set_powerlimits((0,0))
+ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1].set_xlabel('x (km)', fontsize=14)
+ax[1].text(-0.2, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
+# ax[1].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
+a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.02, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+for i in range(2):
+    ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].xaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].yaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].tick_params(axis='both', labelsize=12)
+
+plt.suptitle(f" Composite \u03B6 tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
+
+if figsave:
+    plt.savefig(fp+f"figs/zvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
+
+
+
+### Horizontal ###
+fig,ax = plt.subplots(1, 3, figsize=(9.5,3.5), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xx, yy, tilt_h, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0].set_xlabel('x (km)', fontsize=14)
+ax[0].set_ylabel('y (km)', fontsize=14)
+ax[0].text(0.15, -0.9, 'Tilting', color='k', fontsize=18, fontweight='bold')
+a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.02, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+# a_swvort = add_vectors(ax[0], [0], [0], [swvort_x], [swvort_y],
+#             lengthscale=20, arrowstyle='simple', mutation_scale=12, ec='k', fc='magenta', lw=1)
+# a_cwvort = add_vectors(ax[0], [0], [0], [cwvort_x], [cwvort_y],
+#             lengthscale=20, arrowstyle='simple', mutation_scale=12, ec='k', fc='blue', lw=1)
+ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+
+plot_contourf(xx, yy, stretch_h, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_xlabel('x (km)', fontsize=14)
+ax[1].text(-0.4, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
+a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.02, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+c = plot_contourf(xx, yy, bcl_h, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d\u03c9$_H$/dt (s$^{-2}$)", fontsize=12)
+# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2].set_xlabel('x (km)', fontsize=14)
+ax[2].text(-0.3, -0.9, 'Baroclinic', color='k', fontsize=18, fontweight='bold')
+a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.02, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+for i in range(3):
+    ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].xaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].yaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].tick_params(axis='both', labelsize=12)
+
+plt.suptitle(f" Composite |\u03c9$_H$| tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
+
+if figsave:
+    plt.savefig(fp+f"figs/hvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
+
+
+#%% Streamwise and crosswise plots
+
+### Streamwise ###
+fig,ax = plt.subplots(1, 3, figsize=(9.5,3.5), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xx, yy, tilt_sw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0].set_xlabel('x (km)', fontsize=14)
+ax[0].set_ylabel('y (km)', fontsize=14)
+ax[0].text(0.15, -0.9, 'Tilting', color='k', fontsize=18, fontweight='bold')
+
+plot_contourf(xx, yy, stretch_sw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_xlabel('x (km)', fontsize=14)
+ax[1].text(-0.4, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
+
+c = plot_contourf(xx, yy, bcl_sw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d\u03c9$_{{sw}}$/dt (s$^{-2}$)", fontsize=12)
+# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2].set_xlabel('x (km)', fontsize=14)
+ax[2].text(-0.3, -0.9, 'Baroclinic', color='k', fontsize=18, fontweight='bold')
+
+for i in range(3):
+    ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].xaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].yaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].tick_params(axis='both', labelsize=12)
+
+plt.suptitle(f" Composite \u03c9$_{{sw}}$ tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
+
+if figsave:
+    plt.savefig(fp+f"figs/swvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
+
+
+
+### Streamwise ###
+fig,ax = plt.subplots(1, 3, figsize=(9.5,3.5), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xx, yy, tilt_cw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0].set_xlabel('x (km)', fontsize=14)
+ax[0].set_ylabel('y (km)', fontsize=14)
+ax[0].text(0.15, -0.9, 'Tilting', color='k', fontsize=18, fontweight='bold')
+
+plot_contourf(xx, yy, stretch_cw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_xlabel('x (km)', fontsize=14)
+ax[1].text(-0.4, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
+
+c = plot_contourf(xx, yy, bcl_cw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+cb = plt.colorbar(c, ax=ax[2], extend='both')
+cb.set_label("d\u03c9$_{{sw}}$/dt (s$^{-2}$)", fontsize=12)
+# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.formatter.set_powerlimits((0,0))
+ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[2].set_xlabel('x (km)', fontsize=14)
+ax[2].text(-0.3, -0.9, 'Baroclinic', color='k', fontsize=18, fontweight='bold')
+
+for i in range(3):
+    ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].xaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].yaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].tick_params(axis='both', labelsize=12)
+
+plt.suptitle(f" Composite \u03c9$_{{cw}}$ tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
+
+if figsave:
+    plt.savefig(fp+f"figs/cwvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
 
 
 #%% Composite tendency animations?
