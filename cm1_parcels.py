@@ -1576,8 +1576,9 @@ if figsave:
 
 from matplotlib.ticker import MultipleLocator
 
+fp = '/Users/mschne28/Documents/merger/merger-125m/'
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/traj_MV1.pkl", 'rb')
+dbfile = open(fp+f"traj_MV1.pkl", 'rb')
 traj_mv1 = pickle.load(dbfile)
 dbfile.close()
 
@@ -1585,9 +1586,13 @@ dbfile.close()
 fnums = [33, 43, 53]
 times = [200, 210, 220]
 
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
-ptime = ds.variables['time'][:].data/60
-ds.close()
+# ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+# ptime = ds.variables['time'][:].data/60
+# ds.close()
+dbfile = open(fp+f"coords.pkl", 'rb')
+coords = pickle.load(dbfile)
+ptime = coords['ptime']/60
+dbfile.close()
 
 n = np.where(ptime == 220)[0][0]
 
@@ -1607,7 +1612,7 @@ for i in range(3):
     it2 = np.where(ptime > t)[0][0]
     it = slice(it1,it2)
     
-    dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{t:.0f}min_v2.pkl", 'rb')
+    dbfile = open(fp+f"traj_clusters_{t:.0f}min_v2.pkl", 'rb')
     cc = pickle.load(dbfile)
     cc_mv1 = cc['mv1']
     if i == 2:
@@ -1638,6 +1643,15 @@ for i in range(3):
                              np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.25, color=col4)
         ax[3,i].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
                              np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.25, color=col4)
+        
+        # ax[0,i].plot(ptime[it], np.max(z_mv1[it,c]/1000, axis=1), col4, linewidth=0.5)
+        # ax[0,i].plot(ptime[it], np.min(z_mv1[it,c]/1000, axis=1), col4, linewidth=0.5)
+        # ax[1,i].plot(ptime[it], np.max(b_mv1[it,c], axis=1), col4, linewidth=0.5)
+        # ax[1,i].plot(ptime[it], np.min(b_mv1[it,c], axis=1), col4, linewidth=0.5)
+        # ax[2,i].plot(ptime[it], np.max(w_mv1[it,c], axis=1), col4, linewidth=0.5)
+        # ax[2,i].plot(ptime[it], np.min(w_mv1[it,c], axis=1), col4, linewidth=0.5)
+        # ax[3,i].plot(ptime[it], np.max(zvort_mv1[it,c], axis=1), col4, linewidth=0.5)
+        # ax[3,i].plot(ptime[it], np.min(zvort_mv1[it,c], axis=1), col4, linewidth=0.5)
     
     # supercell cold pool
     if np.any(cc_mv1 == 2):
@@ -1650,6 +1664,15 @@ for i in range(3):
                              np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.3, color=col3)
         ax[3,i].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
                              np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.3, color=col3)
+        
+        # ax[0,i].plot(ptime[it], np.max(z_mv1[it,c]/1000, axis=1), col3, linewidth=1)
+        # ax[0,i].plot(ptime[it], np.min(z_mv1[it,c]/1000, axis=1), col3, linewidth=1)
+        # ax[1,i].plot(ptime[it], np.max(b_mv1[it,c], axis=1), col3, linewidth=1)
+        # ax[1,i].plot(ptime[it], np.min(b_mv1[it,c], axis=1), col3, linewidth=1)
+        # ax[2,i].plot(ptime[it], np.max(w_mv1[it,c], axis=1), col3, linewidth=1)
+        # ax[2,i].plot(ptime[it], np.min(w_mv1[it,c], axis=1), col3, linewidth=1)
+        # ax[3,i].plot(ptime[it], np.max(zvort_mv1[it,c], axis=1), col3, linewidth=1)
+        # ax[3,i].plot(ptime[it], np.min(zvort_mv1[it,c], axis=1), col3, linewidth=1)
     
     # low-level inflow
     if np.any(cc_mv1 == 0):
@@ -1662,6 +1685,15 @@ for i in range(3):
                              np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.3, color=col1)
         ax[3,i].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
                              np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.3, color=col1)
+        
+        # ax[0,i].plot(ptime[it], np.max(z_mv1[it,c]/1000, axis=1), col1, linewidth=1)
+        # ax[0,i].plot(ptime[it], np.min(z_mv1[it,c]/1000, axis=1), col1, linewidth=1)
+        # ax[1,i].plot(ptime[it], np.max(b_mv1[it,c], axis=1), col1, linewidth=1)
+        # ax[1,i].plot(ptime[it], np.min(b_mv1[it,c], axis=1), col1, linewidth=1)
+        # ax[2,i].plot(ptime[it], np.max(w_mv1[it,c], axis=1), col1, linewidth=1)
+        # ax[2,i].plot(ptime[it], np.min(w_mv1[it,c], axis=1), col1, linewidth=1)
+        # ax[3,i].plot(ptime[it], np.max(zvort_mv1[it,c], axis=1), col1, linewidth=1)
+        # ax[3,i].plot(ptime[it], np.min(zvort_mv1[it,c], axis=1), col1, linewidth=1)
     
     # mid-level inflow
     if np.any(cc_mv1 == 1):
@@ -1674,6 +1706,15 @@ for i in range(3):
                              np.percentile(w_mv1[it,c], 75, axis=1), alpha=0.2, color=col2)
         ax[3,i].fill_between(ptime[it], np.percentile(zvort_mv1[it,c], 25, axis=1),
                              np.percentile(zvort_mv1[it,c], 75, axis=1), alpha=0.2, color=col2)
+        
+        # ax[0,i].plot(ptime[it], np.max(z_mv1[it,c]/1000, axis=1), col2, linewidth=1)
+        # ax[0,i].plot(ptime[it], np.min(z_mv1[it,c]/1000, axis=1), col2, linewidth=1)
+        # ax[1,i].plot(ptime[it], np.max(b_mv1[it,c], axis=1), col2, linewidth=1)
+        # ax[1,i].plot(ptime[it], np.min(b_mv1[it,c], axis=1), col2, linewidth=1)
+        # ax[2,i].plot(ptime[it], np.max(w_mv1[it,c], axis=1), col2, linewidth=1)
+        # ax[2,i].plot(ptime[it], np.min(w_mv1[it,c], axis=1), col2, linewidth=1)
+        # ax[3,i].plot(ptime[it], np.max(zvort_mv1[it,c], axis=1), col2, linewidth=1)
+        # ax[3,i].plot(ptime[it], np.min(zvort_mv1[it,c], axis=1), col2, linewidth=1)
     
     # QLCS cold pool
     s4, = ax[0,i].plot(ptime[it], np.median(z_mv1[it,c3_mv1],axis=1)/1000, col4, linewidth=2)
@@ -1783,9 +1824,18 @@ if figsave:
 
 #%% zoomed-in time series of w and zeta for mid-level
 
-ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
-ptime = ds.variables['time'][:].data/60
-ds.close()
+fp = '/Users/mschne28/Documents/merger/merger-125m/'
+# ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/cm1out_pdata.nc')
+# ptime = ds.variables['time'][:].data/60
+# ds.close()
+dbfile = open(fp+f"coords.pkl", 'rb')
+coords = pickle.load(dbfile)
+ptime = coords['ptime']/60
+dbfile.close()
+
+dbfile = open(fp+f"traj_MV1.pkl", 'rb')
+traj_mv1 = pickle.load(dbfile)
+dbfile.close()
 
 t1 = 210
 span = 15
@@ -1798,14 +1848,25 @@ itmp1 = np.where(ptime == t2-span)[0][0]
 itmp2 = np.where(ptime > t2)[0][0]
 it2 = slice(itmp1,itmp2)
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{t1:.0f}min_v2.pkl", 'rb')
+t0 = 200
+itmp1 = np.where(ptime == t0-span)[0][0]
+itmp2 = np.where(ptime > t0)[0][0]
+it0 = slice(itmp1,itmp2)
+
+dbfile = open(fp+f"traj_clusters_{t1:.0f}min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc1 = tmp['mv1']
 dbfile.close()
 
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/traj_clusters/traj_clusters_{t2:.0f}min_v2.pkl", 'rb')
+dbfile = open(fp+f"traj_clusters_{t2:.0f}min_v2.pkl", 'rb')
 tmp = pickle.load(dbfile)
 cc2 = tmp['mv1']
+cc2[(cc2 == 4)] = 0
+dbfile.close()
+
+dbfile = open(fp+f"traj_clusters_{t0:.0f}min_v2.pkl", 'rb')
+tmp = pickle.load(dbfile)
+cc0 = tmp['mv1']
 dbfile.close()
 
 
@@ -1902,6 +1963,237 @@ figsave = False
 if figsave:
     fig.savefig('/Users/morgan.schneider/Documents/merger/traj_mv1_timeseries_zoomed.png', dpi=300)
     
+
+
+#% Buoyancy time series to figure out if it's actually all negative
+# (it's not)
+
+b_ll0 = traj_mv1[f"{t0:.0f}min"]['b'][it0,(cc0==0)]
+# b_ml0 = traj_mv1[f"{t0:.0f}min"]['b'][it0,(cc0==1)]
+b_so0 = traj_mv1[f"{t0:.0f}min"]['b'][it0,(cc0==2)]
+# b_qo0 = traj_mv1[f"{t0:.0f}min"]['b'][it0,(cc0==3)]
+
+b_ll1 = traj_mv1[f"{t1:.0f}min"]['b'][it1,(cc1==0)]
+b_ml1 = traj_mv1[f"{t1:.0f}min"]['b'][it1,(cc1==1)]
+b_so1 = traj_mv1[f"{t1:.0f}min"]['b'][it1,(cc1==2)]
+b_qo1 = traj_mv1[f"{t1:.0f}min"]['b'][it1,(cc1==3)]
+
+b_ll2 = traj_mv1[f"{t2:.0f}min"]['b'][it2,(cc2==0)]
+b_ml2 = traj_mv1[f"{t2:.0f}min"]['b'][it2,(cc2==1)]
+b_so2 = traj_mv1[f"{t2:.0f}min"]['b'][it2,(cc2==2)]
+b_qo2 = traj_mv1[f"{t2:.0f}min"]['b'][it2,(cc2==3)]
+
+lw = 1
+
+col1 = 'gold'
+col2 = 'red'
+col3 = 'deepskyblue'
+col4 = 'mediumblue'
+
+fig,ax = plt.subplots(1, 3, figsize=(15,4), sharey=True, layout='constrained')
+
+ax[0].fill_between(ptime[it0], np.min(b_so0, axis=1),
+                   np.max(b_so0, axis=1), alpha=0.1, color=col3)
+ax[0].fill_between(ptime[it0], np.min(b_ll0, axis=1),
+                   np.max(b_ll0, axis=1), alpha=0.1, color=col1)
+ax[0].fill_between(ptime[it0], np.percentile(b_so0, 25, axis=1),
+                   np.percentile(b_so0, 75, axis=1), alpha=0.3, color=col3)
+ax[0].fill_between(ptime[it0], np.percentile(b_ll0, 25, axis=1),
+                   np.percentile(b_ll0, 75, axis=1), alpha=0.3, color=col1)
+ax[0].plot(ptime[it0], np.max(b_so0, axis=1), col3, linewidth=lw)
+ax[0].plot(ptime[it0], np.min(b_so0, axis=1), col3, linewidth=lw)
+ax[0].plot(ptime[it0], np.max(b_ll0, axis=1), col1, linewidth=lw)
+ax[0].plot(ptime[it0], np.min(b_ll0, axis=1), col1, linewidth=lw)
+ax[0].plot(ptime[it0], np.median(b_so0, axis=1), col3, linewidth=2)
+ax[0].plot(ptime[it0], np.median(b_ll0, axis=1), col1, linewidth=2)
+
+ax[1].fill_between(ptime[it1], np.min(b_qo1, axis=1),
+                   np.max(b_qo1, axis=1), alpha=0.1, color=col4)
+ax[1].fill_between(ptime[it1], np.min(b_so1, axis=1),
+                   np.max(b_so1, axis=1), alpha=0.1, color=col3)
+ax[1].fill_between(ptime[it1], np.min(b_ll1, axis=1),
+                   np.max(b_ll1, axis=1), alpha=0.1, color=col1)
+ax[1].fill_between(ptime[it1], np.min(b_ml1, axis=1),
+                   np.max(b_ml1, axis=1), alpha=0.1, color=col2)
+ax[1].fill_between(ptime[it1], np.percentile(b_qo1, 25, axis=1),
+                   np.percentile(b_qo1, 75, axis=1), alpha=0.25, color=col4)
+ax[1].fill_between(ptime[it1], np.percentile(b_so1, 25, axis=1),
+                   np.percentile(b_so1, 75, axis=1), alpha=0.3, color=col3)
+ax[1].fill_between(ptime[it1], np.percentile(b_ll1, 25, axis=1),
+                   np.percentile(b_ll1, 75, axis=1), alpha=0.3, color=col1)
+ax[1].fill_between(ptime[it1], np.percentile(b_ml1, 25, axis=1),
+                   np.percentile(b_ml1, 75, axis=1), alpha=0.3, color=col2)
+ax[1].plot(ptime[it1], np.max(b_qo1, axis=1), col4, linewidth=lw)
+ax[1].plot(ptime[it1], np.min(b_qo1, axis=1), col4, linewidth=lw)
+ax[1].plot(ptime[it1], np.max(b_so1, axis=1), col3, linewidth=lw)
+ax[1].plot(ptime[it1], np.min(b_so1, axis=1), col3, linewidth=lw)
+ax[1].plot(ptime[it1], np.max(b_ll1, axis=1), col1, linewidth=lw)
+ax[1].plot(ptime[it1], np.min(b_ll1, axis=1), col1, linewidth=lw)
+ax[1].plot(ptime[it1], np.max(b_ml1, axis=1), col2, linewidth=lw)
+ax[1].plot(ptime[it1], np.min(b_ml1, axis=1), col2, linewidth=lw)
+l4, = ax[1].plot(ptime[it1], np.median(b_qo1, axis=1), col4, linewidth=2)
+l3, = ax[1].plot(ptime[it1], np.median(b_so1, axis=1), col3, linewidth=2)
+l1, = ax[1].plot(ptime[it1], np.median(b_ll1, axis=1), col1, linewidth=2)
+l2, = ax[1].plot(ptime[it1], np.median(b_ml1, axis=1), col2, linewidth=2)
+
+
+ax[2].fill_between(ptime[it2], np.min(b_qo2, axis=1),
+                   np.max(b_qo2, axis=1), alpha=0.1, color=col4)
+ax[2].fill_between(ptime[it2], np.min(b_so2, axis=1),
+                   np.max(b_so2, axis=1), alpha=0.1, color=col3)
+ax[2].fill_between(ptime[it2], np.min(b_ll2, axis=1),
+                   np.max(b_ll2, axis=1), alpha=0.1, color=col1)
+ax[2].fill_between(ptime[it2], np.min(b_ml2, axis=1),
+                   np.max(b_ml2, axis=1), alpha=0.1, color=col2)
+ax[2].fill_between(ptime[it2], np.percentile(b_qo2, 25, axis=1),
+                   np.percentile(b_qo2, 75, axis=1), alpha=0.25, color=col4)
+ax[2].fill_between(ptime[it2], np.percentile(b_so2, 25, axis=1),
+                   np.percentile(b_so2, 75, axis=1), alpha=0.3, color=col3)
+ax[2].fill_between(ptime[it2], np.percentile(b_ll2, 25, axis=1),
+                   np.percentile(b_ll2, 75, axis=1), alpha=0.3, color=col1)
+ax[2].fill_between(ptime[it2], np.percentile(b_ml2, 25, axis=1),
+                   np.percentile(b_ml2, 75, axis=1), alpha=0.3, color=col2)
+ax[2].plot(ptime[it2], np.max(b_qo2, axis=1), col4, linewidth=lw)
+ax[2].plot(ptime[it2], np.min(b_qo2, axis=1), col4, linewidth=lw)
+ax[2].plot(ptime[it2], np.max(b_so2, axis=1), col3, linewidth=lw)
+ax[2].plot(ptime[it2], np.min(b_so2, axis=1), col3, linewidth=lw)
+ax[2].plot(ptime[it2], np.max(b_ll2, axis=1), col1, linewidth=lw)
+ax[2].plot(ptime[it2], np.min(b_ll2, axis=1), col1, linewidth=lw)
+ax[2].plot(ptime[it2], np.max(b_ml2, axis=1), col2, linewidth=lw)
+ax[2].plot(ptime[it2], np.min(b_ml2, axis=1), col2, linewidth=lw)
+ax[2].plot(ptime[it2], np.median(b_qo2, axis=1), col4, linewidth=2)
+ax[2].plot(ptime[it2], np.median(b_so2, axis=1), col3, linewidth=2)
+ax[2].plot(ptime[it2], np.median(b_ll2, axis=1), col1, linewidth=2)
+ax[2].plot(ptime[it2], np.median(b_ml2, axis=1), col2, linewidth=2)
+
+
+ax[0].set_ylim([-0.5, 0.2])
+ax[0].set_xlim([185, 200])
+ax[1].set_xlim([195, 210])
+ax[2].set_xlim([205, 220])
+ax[0].set_title('Parcel buoyancy - 200 min', fontsize=16)
+ax[1].set_title('Parcel buoyancy - 210 min', fontsize=16)
+ax[2].set_title('Parcel buoyancy - 220 min', fontsize=16)
+ax[0].set_ylabel('Buoyancy', fontsize=16)
+ax[0].set_xlabel('Time', fontsize=16)
+ax[1].set_xlabel('Time', fontsize=16)
+ax[2].set_xlabel('Time', fontsize=16)
+
+ax[0].legend(handles=[l1, l2, l3, l4],
+               labels=['Low-level inflow', 'Mid-level inflow', 'Supercell outflow', 'QLCS outflow'],
+               loc='lower left', fontsize=12)
+
+for i in range(3):
+    ax[i].xaxis.set_major_locator(MultipleLocator(5))
+    ax[i].xaxis.set_minor_locator(MultipleLocator(1))
+    ax[i].yaxis.set_major_locator(MultipleLocator(0.1))
+    ax[i].yaxis.set_minor_locator(MultipleLocator(0.05))
+    ax[i].axhline(0, color='k', linestyle='--', linewidth=1.5)
+    ax[i].tick_params(axis='both', which='major', labelsize=12)
+    ax[i].grid(visible=True, which='major', color='darkgray', linestyle='-')
+    ax[i].grid(visible=True, which='minor', color='lightgray', linestyle='--')
+
+plt.show()
+
+
+
+#%%
+fig,ax = plt.subplots(1, 3, figsize=(15,4), sharey=True, layout='constrained')
+
+ax[0].plot(ptime[it0], b_ll0, col1, linewidth=0.1)
+ax[0].plot(ptime[it0], b_so0, col3, linewidth=0.1)
+
+ax[1].plot(ptime[it1], b_ll1, col1, linewidth=0.1)
+ax[1].plot(ptime[it1], b_qo1, col4, linewidth=0.2)
+ax[1].plot(ptime[it1], b_so1, col3, linewidth=0.1)
+ax[1].plot(ptime[it1], b_ml1, col2, linewidth=0.1)
+
+ax[2].plot(ptime[it2], b_qo2, col4, linewidth=0.1)
+ax[2].plot(ptime[it2], b_so2, col3, linewidth=0.2)
+ax[2].plot(ptime[it2], b_ll2, col1, linewidth=0.2)
+ax[2].plot(ptime[it2], b_ml2, col2, linewidth=0.1)
+
+ax[0].set_ylim([-0.5, 0.1])
+ax[0].set_xlim([185, 200])
+ax[1].set_xlim([195, 210])
+ax[2].set_xlim([205, 220])
+
+plt.show()
+
+
+
+#%% plot dbz of parcels?
+
+fp = '/Users/mschne28/Documents/merger/merger-125m/'
+
+time = 210
+
+
+# ds = nc.Dataset(fp+f"cm1out_pdata.nc")
+# ptime = ds.variables['time'][:].data
+# x = ds.variables['x'][:].data
+# y = ds.variables['y'][:].data
+# z = ds.variables['z'][:].data
+# dbz = ds.variables['dbz'][:].data
+# w = ds.variables['w'][:].data
+# zvort = ds.variables['zvort'][:].data
+# ds.close()
+
+ti = np.where(ptime == time*60)[0][0]
+
+dbfile = open(fp+'boxes_s1.pkl', 'rb')
+box = pickle.load(dbfile)
+x1 = box['x1_pp'][time-181]
+x2 = box['x2_pp'][time-181]
+y1 = box['y1_pp'][time-181]
+y2 = box['y2_pp'][time-181]
+dbfile.close()
+
+
+wvort_cond = (zvort[ti,:]>=0.01) & (w[ti,:]>=5) & (z[ti,:]<=1000) & (z[ti,:]>=100) & (x[ti,:]>=x1*1000) & (x[ti,:]<=x2*1000) & (y[ti,:]>=y1*1000) & (y[ti,:]<=y2*1000)
+
+dbz_mv = dbz[:, wvort_cond]
+w_mv = w[:, wvort_cond]
+z_mv = z[:, wvort_cond]
+
+dbfile = open(fp+'coords.pkl', 'rb')
+coords = pickle.load(dbfile)
+xh = coords['xh']
+yh = coords['yh']
+dbfile.close()
+
+dbfile = open(fp+f"traj_clusters_{time}min_v2.pkl", 'rb')
+cc = pickle.load(dbfile)
+cc = cc['mv1']
+dbfile.close()
+
+
+dbz_ml = dbz_mv[:,(cc==1)]
+w_ml = w_mv[:,(cc==1)]
+z_ml = z_mv[:,(cc==1)]
+
+
+fig,ax = plt.subplots(3, 1, figsize=(6,6), sharex=True, layout='constrained')
+
+ax[0].plot(ptime/60, dbz_ml, 'k', linewidth=0.1)
+# ax[1].scatter(ptime/60, np.median(z_ml/1000, axis=1), c=np.median(dbz_ml, axis=1),
+#            cmap='NWSRef', s=20, vmin=0, vmax=70, edgecolor='none')
+ax[1].scatter(ptime/60, np.median(w_ml, axis=1), c=np.median(dbz_ml, axis=1),
+           cmap='NWSRef', s=20, vmin=0, vmax=70, edgecolor='none')
+
+ax[0].set_xlim([180, time+1])
+ax[0].set_ylim([0, 70])
+ax[0].set_title(f"Reflectivity - {time} min", fontsize=12)
+# ax[1].set_ylim([0, 3])
+# ax[1].set_title(f"Height (colored by dbz) - {time} min", fontsize=12)
+ax[1].set_ylim([-15, 15])
+ax[1].set_title(f"w (colored by dbz) - {time} min", fontsize=12)
+
+plt.show()
+
+
+
+
 
 
 #%% Load stuff for 3D plots of MERGER MV1 trajectories
