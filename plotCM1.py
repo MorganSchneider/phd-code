@@ -540,7 +540,7 @@ ds.close()
 
 
 
-#%%
+#%% plotting w and zvort
 
 iz1km = np.where(z >= 1)[0][0]
 iz2km = np.where(z >= 2)[0][0]
@@ -1557,15 +1557,16 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 figsave = False
 
-if False:
-    if 'T0' not in locals():
-        ds = nc.Dataset('/Volumes/Promise_Pegasus_70TB/merger/merger-125m/base/cm1out_000013.nc')
+if True:
+    # if 'T0' not in locals():
+    if True:
+        ds = nc.Dataset('C:/Users/mschne28/Documents/cm1r21.1/out/test1/cm1out_000001.nc')
         th0 = ds.variables['th0'][:].data[0,:,-1,-1]
         qv0 = ds.variables['qv0'][:].data[0,:,-1,-1]
         prs0 = ds.variables['prs0'][:].data[0,:,-1,-1]
-        u0 = ds.variables['u0'][:].data[0,:,-1,-1]
-        v0 = ds.variables['v0'][:].data[0,:,-1,-1]
-        z = ds.variables['z'][:].data
+        u0 = ds.variables['u0'][:].data[0,:,-1,-1] #+ ds.variables['umove'][:].data[0]
+        v0 = ds.variables['v0'][:].data[0,:,-1,-1] #+ ds.variables['vmove'][:].data[0]
+        z = ds.variables['zh'][:].data
         ds.close()
         
         T0 = th0 * (prs0/100000)**0.286
@@ -1615,15 +1616,15 @@ if False:
     H = Hodograph(ax_hod, component_range=50.)
     H.add_grid(increment=10)
     hod = H.plot_colormapped(u0, v0, z, cmap='HomeyerRainbow', linewidth=3)
-    H.ax.set_xlim([-20,50])
-    H.ax.set_ylim([-20,50])
-    H.ax.set_xticks(np.linspace(-20,50,8))
+    H.ax.set_xlim([-30,30])
+    H.ax.set_ylim([-30,30])
+    # H.ax.set_xticks(np.linspace(-40,40,8))
     H.ax.set_xlabel("u (m s$^{-1}$)", fontsize=14)
     H.ax.set_ylabel("v (m s$^{-1}$)", fontsize=14)
     H.ax.tick_params(axis='both', which='major', labelsize=14)
     cb = plt.colorbar(hod, cax=ax_cb)
     cb.set_label('Height AGL (km)', fontsize=14)
-    cb.set_ticks(np.linspace(0,15,6))
+    cb.set_ticks(np.linspace(0,12,7))
     cb.ax.tick_params(labelsize=14)
     
     # skew.ax.set_title('Base state environment (1959 UTC 30 March 2022 PERiLS IOP2)')

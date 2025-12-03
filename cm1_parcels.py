@@ -2126,7 +2126,7 @@ plt.show()
 
 fp = '/Users/mschne28/Documents/merger/merger-125m/'
 
-time = 210
+time = 220
 
 
 # ds = nc.Dataset(fp+f"cm1out_pdata.nc")
@@ -2173,7 +2173,7 @@ w_ml = w_mv[:,(cc==1)]
 z_ml = z_mv[:,(cc==1)]
 
 
-fig,ax = plt.subplots(3, 1, figsize=(6,6), sharex=True, layout='constrained')
+fig,ax = plt.subplots(2, 1, figsize=(6,6), sharex=True, layout='constrained')
 
 ax[0].plot(ptime/60, dbz_ml, 'k', linewidth=0.1)
 # ax[1].scatter(ptime/60, np.median(z_ml/1000, axis=1), c=np.median(dbz_ml, axis=1),
