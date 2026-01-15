@@ -446,7 +446,7 @@ if False:
     
 
 # CROSS SECTION, 1 PANEL - shade thrpert; contour p'; parcels colored by w
-# ***PAPER FIG*** - runs both times separately, need to combine into two panels in powerpoint
+# runs both times separately, need to combine into two panels in powerpoint
 if False: # this one is True
     # parcel_cm = 'ChaseSpectral'
     import matplotlib as mpl
@@ -517,7 +517,7 @@ if False: # this one is True
 
 
 
-#% Plot plan views ***PAPER FIG***
+#% Plot plan views
 
 dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/cross_sections/MV1_{mv_time}min/plan{stime/60:.0f}.pkl", 'rb')
 pl = pickle.load(dbfile)
@@ -550,7 +550,7 @@ elif mv_time == 225:
 # figsave = False
 
 # PLAN VIEW, 1 PANEL - shade thrpert; parcels colored by w
-# ***PAPER FIG*** - runs both times separately, need to combine into two panels in powerpoint
+# runs both times separately, need to combine into two panels in powerpoint
 if False:
     import matplotlib as mpl
     # parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
@@ -582,7 +582,7 @@ if False:
 
 
 #% Plot trajectories with vorticity and SR velocity vectors 
-# ***PAPER FIG*** - runs both times separately, need to combine into two panels in powerpoint
+# runs both times separately, need to combine into two panels in powerpoint
 
 from matplotlib.patches import FancyArrowPatch
 
