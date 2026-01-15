@@ -3,6 +3,25 @@
 Created on Wed Jan 14 12:16:31 2026
 
 @author: mschne28
+
+Calculate parcel vorticity tilting plan views -- These are parcel-centered composites as in the plan view plots in Figs. 14-16 (as of R1).
+
+This code calculates
+1) Decomposition of zeta tilting term into streamwise and crosswise tilting components
+2) Exchange of omega_H between streamwise and crosswise directions due to parcel heading changes
+
+--FILES NEEDED--
+1) cm1out_000033-000053.nc -- these are on bigbang under /merger/merger-125m
+2) (maybe) cm1out_pdata.nc -- also on bigbang under /merger/merger-125m
+3) traj_MV1.pkl -- Trajectory data of all parcels in the MV every 5 min
+4) traj_clusters_210min_v2.pkl + traj_clusters_220min_v2.pkl -- Indices of parcels in the MV at 210/220 min, clustered by source region
+5) storm_motion.pkl -- Estimated storm motion at every model output time (every 1 min) from my MV boxes
+
+Streamwise/crosswise exchange is formulated from Adlerman et al. 1999 Eq. 2-3 / Schenkman et al. 2014 Eq. 1-2
+This encompasses the calculations in lines 102-117 and 212-215
+
+******Please let me know if I'm calculating anything wrong, especially since I can't test it myself******
+
 """
 
 #%% Load modules
@@ -13,24 +32,7 @@ import netCDF4 as nc
 import pickle
 from scipy.interpolate import RegularGridInterpolator
 
-#%% Calculate parcel vorticity tendency plan views
-
-# These are the parcel-centered composites as in the tendency plan view plots in Figs. 14-16 (as of R1)
-# ***Here, the calculations are
-# 1) Decomposition of zeta tilting term into streamwise and crosswise components
-# 2) Exchange of omega_H between streamwise and crosswise directions due to parcel heading changes
-
-# --FILES NEEDED--
-# cm1out_000033-000053.nc and cm1out_pdata.nc -- these are on bigbang under /merger/merger-125m
-# traj_MV1.pkl -- Trajectory data of all parcels in the MV every 5 min
-# traj_clusters_210min_v2.pkl and traj_clusters_220min_v2.pkl -- Indices of parcels in the MV at 210/220 min, clustered by source region
-# storm_motion.pkl -- Estimated storm motion at every output time (every 1 min) from my MV boxes, smoothed by a moving time average
-
-# Streamwise/crosswise exchange is formulated based on Adlerman et al. 1999 Eq. 2-3 / Schenkman et al. 2014 Eq. 1-2
-# This encompasses the calculations in lines 105-119 and 214-217
-
-# ******Please let me know if I'm calculating anything wrong, especially since I can't test it myself******
-
+#%% User inputs
 
 ####################################
 ### SET THESE VARIABLES YOURSELF ###
@@ -51,16 +53,11 @@ elif mvtime == 220:
     # Need to have CM1 output files 43-53 -- pull from bigbang
 
 
-# Load grid from output file
+# Load model grid from output file
 ds = nc.Dataset(fp + f"cm1out_{fnum:06d}.nc")
 xh = ds.variables['xh'][:].data #Load coordinates
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
-ds.close()
-
-# Load parcel time data from parcel file
-ds = nc.Dataset(fp + "cm1out_pdata.nc")
-ptime = ds.variables['time'][:].data
 ds.close()
 
 
@@ -103,7 +100,8 @@ z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]/1000
 
 
 # Interpolate storm motion from model output freq (60 s) to parcel output freq (15 s)
-mtimes = np.linspace(10800, 14400, 61)
+ptime = np.linspace(10800, 14400, 241) # Parcel output times
+mtimes = np.linspace(10800, 14400, 61) # CM1 output times
 
 u_storm_interp = RegularGridInterpolator((mtimes,), u_storm)
 v_storm_interp = RegularGridInterpolator((mtimes,), v_storm)
@@ -115,7 +113,7 @@ u_ml = traj[f"{mvtime}min"]['u'][:,(cc == 1)]
 v_ml = traj[f"{mvtime}min"]['v'][:,(cc == 1)]
 us_ml = u_ml - np.tile(u_storm_prcl, [len(cc[(cc==1)]), 1]).transpose() #SR parcel velocity
 vs_ml = v_ml - np.tile(v_storm_prcl, [len(cc[(cc==1)]), 1]).transpose()
-psi = np.arctan2(vs_ml, us_ml) #SR parcel direction
+psi = np.arctan2(vs_ml, us_ml) #SR parcel direction (from Adlerman and Schenkman papers)
 dpsi_dt = np.gradient(psi, ptime, axis=0) #time ROC of SR parcel direction
 
 
