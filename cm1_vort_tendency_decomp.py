@@ -13,8 +13,8 @@ This code calculates
 --FILES NEEDED--
 1) cm1out_000033-000053.nc -- these are on bigbang under /merger/merger-125m
 2) (maybe) cm1out_pdata.nc -- also on bigbang under /merger/merger-125m
-3) traj_MV1.pkl -- Trajectory data of all parcels in the MV every 5 min
-4) traj_clusters_210min_v2.pkl + traj_clusters_220min_v2.pkl -- Indices of parcels in the MV at 210/220 min, clustered by source region
+3) traj_MV1.pkl -- Trajectory data of all parcels in the MV every 5 min. The pickles might all be on bigbang under /merger/merger-125m/pickles?
+4) traj_clusters_210min_v2.pkl + traj_clusters_220min_v2.pkl -- Indices of parcels in the MV at 210/220 min clustered by source region
 5) storm_motion.pkl -- Estimated storm motion at every model output time (every 1 min) from my MV boxes
 
 Streamwise/crosswise exchange is formulated from Adlerman et al. 1999 Eq. 2-3 / Schenkman et al. 2014 Eq. 1-2
