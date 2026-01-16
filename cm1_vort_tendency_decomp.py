@@ -118,19 +118,6 @@ dpsi_dt = np.gradient(psi, ptime, axis=0) #time ROC of SR parcel direction
 
 
 
-# # Testing for using a specific layer - just did this for R1 of reviewer responses
-# ti = np.where(ptime == mvtime*60)[0][0]
-# zm = np.round(np.median(z_ml[ti,:]), decimals=-1)
-# dz = 150
-
-# pids_ml = pids_ml[(z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
-# x_ml = x_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
-# y_ml = y_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
-# z_ml = z_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
-
-
-
-
 
 times = np.zeros(shape=(11,), dtype=float) #use the 10 minutes leading up to mvtime
 
@@ -225,7 +212,7 @@ for fn in np.arange(fnum-10, fnum+1):
 if True:
     data = {'time':times, 'tilt_z_sw':t_z_sw, 'tilt_z_cw':t_z_cw,
             'exch_sw_cw':e_sw_cw, 'exch_cw_sw':e_cw_sw} #put all save data into a dict
-    dbfile = open(fp + f"vten_traj_{mvtime}min_decomp.pkl", 'wb') #open new file to save data
+    dbfile = open(fp + f"vten_tilt_{mvtime}min_parcels.pkl", 'wb') #open new file to save data
     pickle.dump(data, dbfile)
     dbfile.close()
 

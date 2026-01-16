@@ -1297,6 +1297,7 @@ ds = nc.Dataset('/Users/morgan.schneider/Documents/merger/merger-125m/temporary/
 xh = ds.variables['xh'][:].data
 yh = ds.variables['yh'][:].data
 zh = ds.variables['z'][:].data
+mtimes = np.linspace(10800, 14400, 61) # CM1 output times
 ds.close()
 
 xh = np.linspace(-179.9375, 179.9375, 2880)
@@ -1326,6 +1327,24 @@ pids_ml = traj[f"{mvtime}min"]['pids'][(cc == 1)]
 x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]/1000
 y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]/1000
 z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]/1000
+
+
+
+# Interpolate storm motion from model output freq (60 s) to parcel output freq (15 s)
+u_storm_interp = RegularGridInterpolator((mtimes,), u_storm)
+v_storm_interp = RegularGridInterpolator((mtimes,), v_storm)
+u_storm_prcl = u_storm_interp((ptime,))
+v_storm_prcl = v_storm_interp((ptime,))
+
+# Calculate SR parcel direction for SW/CW exchange terms
+u_ml = traj[f"{mvtime}min"]['u'][:,(cc == 1)]
+v_ml = traj[f"{mvtime}min"]['v'][:,(cc == 1)]
+us_ml = u_ml - np.tile(u_storm_prcl, [len(cc[(cc==1)]), 1]).transpose() #SR parcel velocity
+vs_ml = v_ml - np.tile(v_storm_prcl, [len(cc[(cc==1)]), 1]).transpose()
+psi = np.arctan2(vs_ml, us_ml) #SR parcel direction (from Adlerman and Schenkman papers)
+dpsi_dt = np.gradient(psi, ptime, axis=0) #time ROC of SR parcel direction
+
+
 
 # # for using a specific layer
 # ti = np.where(ptime == mvtime*60)[0][0]
@@ -1364,14 +1383,20 @@ bcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
 tilt_components = False
 
 if tilt_components: # individual tilting directions
-    t_xy = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-    t_xz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-    t_yx = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-    t_yz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-    t_zx = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-    t_zy = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-    t_zsw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
-    t_zcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+    tx_y = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into x from y
+    tx_z = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into x from z
+    ty_x = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into y from x
+    ty_z = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into y from z
+    tz_x = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into z from x
+    tz_y = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tiltnig into z from y
+    tz_sw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into z from sw
+    tz_cw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into z from cw
+    tsw_z = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into sw from z
+    tsw_cw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into sw from cw
+    esw_cw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #exchange between sw and cw
+    tcw_z = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting from cw into z
+    tcw_sw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting into cw from sw
+    ecw_sw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #exchange between cw and sw
 
 
 m = 0
@@ -1471,18 +1496,30 @@ for fn in np.arange(fnum-10,fnum+1):
         
         if tilt_components:
             # x vorticity components
-            t_xy[p,m,:,:] = yvort[k,j,i] * dudy[k,j,i]
-            t_xz[p,m,:,:] = zvort[k,j,i] * dudz[k,j,i]
+            tx_y[p,m,:,:] = yvort[k,j,i] * dudy[k,j,i]
+            tx_z[p,m,:,:] = zvort[k,j,i] * dudz[k,j,i]
             # y vorticity components
-            t_yx[p,m,:,:] = xvort[k,j,i] * dvdx[k,j,i]
-            t_yz[p,m,:,:] = zvort[k,j,i] * dvdz[k,j,i]
+            ty_x[p,m,:,:] = xvort[k,j,i] * dvdx[k,j,i]
+            ty_z[p,m,:,:] = zvort[k,j,i] * dvdz[k,j,i]
             # z vorticity components
-            t_zx[p,m,:,:] = xvort[k,j,i] * dwdx[k,j,i]
-            t_zy[p,m,:,:] = yvort[k,j,i] * dwdy[k,j,i]
-            t_zsw[p,m,:,:] = svort[k,j,i] * ((u_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] + 
+            tz_x[p,m,:,:] = xvort[k,j,i] * dwdx[k,j,i]
+            tz_y[p,m,:,:] = yvort[k,j,i] * dwdy[k,j,i]
+            tz_sw[p,m,:,:] = svort[k,j,i] * ((u_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] + 
                                            (v_sr[k,j,i]/ws_sr[k,j,i]) * dwdy[k,j,i])
-            t_zcw[p,m,:,:] = cvort[k,j,i] * ((-v_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] +
+            tz_cw[p,m,:,:] = cvort[k,j,i] * ((-v_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] +
                                            (u_sr[k,j,i]/ws_sr[k,j,i]) * dwdy[k,j,i])
+            # streamwise vorticity components
+            tsw_z[p,m,:,:] = zvort[k,j,i] * ((u_sr[k,j,i]/ws_sr[k,j,i]) * dudz[k,j,i] +
+                                             (v_sr[k,j,i]/ws_sr[k,j,i]) * dvdz[k,j,i])
+            tsw_cw[p,m,:,:] = ((u_sr[k,j,i]/ws_sr[k,j,i]) * yvort[k,j,i] * dudy[k,j,i] +
+                               (v_sr[k,j,i]/ws_sr[k,j,i]) * xvort[k,j,i] * dvdx[k,j,i])
+            esw_cw[p,m,:,:] = cvort[k,j,i] * dpsi_dt[it,p]
+            # crosswise vorticity components
+            tcw_z[p,m,:,:] = zvort[k,j,i] * ((-v_sr[k,j,i]/ws_sr[k,j,i]) * dudz[k,j,i] +
+                                             (u_sr[k,j,i]/ws_sr[k,j,i]) * dvdz[k,j,i])
+            tcw_sw[p,m,:,:] = ((-v_sr[k,j,i]/ws_sr[k,j,i]) * (xvort[k,j,i]*dudx[k,j,i] + yvort[k,j,i]*dudy[k,j,i]) +
+                               (u_sr[k,j,i]/ws_sr[k,j,i]) * (xvort[k,j,i]*dvdx[k,j,i] + yvort[k,j,i]*dvdy[k,j,i]))
+            ecw_sw[p,m,:,:] = -svort[k,j,i] * dpsi_dt[it,p]
             
         # Baroclinic
         bx[p,m,:,:] = (1/1.1)**2 * (drdy[k,j,i] * dpdz[k,j,i] - drdz[k,j,i] * dpdy[k,j,i])
@@ -1509,49 +1546,71 @@ if False:
     pickle.dump(data, dbfile)
     dbfile.close()
 
+if False and tilt_components:
+    data = {'time':times, 'tx_y':tx_y, 'tx_z':tx_z, 'ty_x':ty_x, 'ty_z':ty_z,
+            'tz_x':tz_x, 'tz_y':tz_y, 'tz_sw':tz_sw, 'tz_cw':tz_cw,
+            'tsw_z':tsw_z, 'tsw_cw':tsw_cw, 'esw_cw':esw_cw,
+            'tcw_z':tcw_z, 'tcw_sw':tcw_sw, 'ecw_sw':ecw_sw}
+    dbfile = open(ip+f"vten_tilt_{mvtime}min_parcels.pkl", 'wb')
+    pickle.dump(data, dbfile)
+    dbfile.close()
 
-stretch_x = np.mean(sx, axis=0)
-stretch_y = np.mean(sy, axis=0)
-stretch_z = np.mean(sz, axis=0)
-stretch_h = np.mean(sh, axis=0)
-stretch_sw = np.mean(ssw, axis=0)
-stretch_cw = np.mean(scw, axis=0)
+# stretch_x = np.mean(sx, axis=0)
+# stretch_y = np.mean(sy, axis=0)
+# stretch_z = np.mean(sz, axis=0)
+# stretch_h = np.mean(sh, axis=0)
+# stretch_sw = np.mean(ssw, axis=0)
+# stretch_cw = np.mean(scw, axis=0)
     
-tilt_x = np.mean(tx, axis=0)
-tilt_y = np.mean(ty, axis=0)
-tilt_z = np.mean(tz, axis=0)
-tilt_h = np.mean(th, axis=0)
-tilt_sw = np.mean(tsw, axis=0)
-tilt_cw = np.mean(tcw, axis=0)
+# tilt_x = np.mean(tx, axis=0)
+# tilt_y = np.mean(ty, axis=0)
+# tilt_z = np.mean(tz, axis=0)
+# tilt_h = np.mean(th, axis=0)
+# tilt_sw = np.mean(tsw, axis=0)
+# tilt_cw = np.mean(tcw, axis=0)
     
-bcl_x = np.mean(bx, axis=0)
-bcl_y = np.mean(by, axis=0)
-bcl_h = np.mean(bh, axis=0)
-bcl_sw = np.mean(bsw, axis=0)
-bcl_cw = np.mean(bcw, axis=0)
+# bcl_x = np.mean(bx, axis=0)
+# bcl_y = np.mean(by, axis=0)
+# bcl_h = np.mean(bh, axis=0)
+# bcl_sw = np.mean(bsw, axis=0)
+# bcl_cw = np.mean(bcw, axis=0)
 
-if tilt_components:
-    tilt_xy = np.mean(t_xy, axis=0)
-    tilt_xz = np.mean(t_xz, axis=0)
-    tilt_yx = np.mean(t_yx, axis=0)
-    tilt_yz = np.mean(t_yz, axis=0)
-    tilt_zx = np.mean(t_zx, axis=0)
-    tilt_zy = np.mean(t_zy, axis=0)
-    tilt_zsw = np.mean(t_zsw, axis=0)
-    tilt_zcw = np.mean(t_zcw, axis=0)
-    #del t_xy,t_xz,t_yx,t_yz,t_zx,t_zy,t_zsw,t_zcw
+# if tilt_components:
+#     tiltx_y = np.mean(tx_y, axis=0)
+#     tiltx_z = np.mean(tx_z, axis=0)
+#     tilty_x = np.mean(ty_x, axis=0)
+#     tilty_z = np.mean(ty_z, axis=0)
+#     tiltz_x = np.mean(tz_x, axis=0)
+#     tiltz_y = np.mean(tz_y, axis=0)
+#     tiltz_sw = np.mean(tz_sw, axis=0)
+#     tiltz_cw = np.mean(tz_cw, axis=0)
+#     tiltsw_z = np.mean(tsw_z, axis=0)
+#     tiltsw_cw = np.mean(tsw_cw, axis=0)
+#     exchsw_cw = np.mean(esw_cw, axis=0)
+#     tiltcw_z = np.mean(tcw_z, axis=0)
+#     tiltcw_sw = np.mean(tcw_sw, axis=0)
+#     exchcw_sw = np.mean(ecw_sw, axis=0)
+#     #del tx_y,tx_z,ty_x,ty_z,tz_x,tz_y,tz_sw,tz_cw
+#     #del tsw_z,tsw_cw,esw_cw,tcw_z,tcw_sw,ecw_sw
     
-# del sx,sy,sz,sh,ssw,scw,tx,ty,tz,th,tsw,tcw,bx,by,bh,bsw,bcw
+# # del sx,sy,sz,sh,ssw,scw,tx,ty,tz,th,tsw,tcw,bx,by,bh,bsw,bcw
 
-# Save composited terms
-if False:
-    data = {'time':times, 'stretch_x':stretch_x, 'stretch_y':stretch_y, 'stretch_z':stretch_z,
-            'stretch_h':stretch_h, 'stretch_sw':stretch_sw, 'stretch_cw':stretch_cw,
-            'tilt_x':tilt_x, 'tilt_y':tilt_y, 'tilt_z':tilt_z, 'tilt_h':tilt_h,
-            'tilt_sw':tilt_sw, 'tilt_cw':tilt_cw, 'bcl_x':bcl_x, 'bcl_y':bcl_y,
-            'bcl_h':bcl_h, 'bcl_sw':bcl_sw, 'bcl_cw':bcl_cw}
-    save_to_pickle(data, ip+f"vten_traj_{mvtime}min.pkl", new_pkl=True)
+# # Save composited terms
+# if False:
+#     data = {'time':times, 'stretch_x':stretch_x, 'stretch_y':stretch_y, 'stretch_z':stretch_z,
+#             'stretch_h':stretch_h, 'stretch_sw':stretch_sw, 'stretch_cw':stretch_cw,
+#             'tilt_x':tilt_x, 'tilt_y':tilt_y, 'tilt_z':tilt_z, 'tilt_h':tilt_h,
+#             'tilt_sw':tilt_sw, 'tilt_cw':tilt_cw, 'bcl_x':bcl_x, 'bcl_y':bcl_y,
+#             'bcl_h':bcl_h, 'bcl_sw':bcl_sw, 'bcl_cw':bcl_cw}
+#     save_to_pickle(data, ip+f"vten_traj_{mvtime}min.pkl", new_pkl=True)
 
+
+# if False and tilt_components:
+#     data = {'time':times, 'tiltx_y':tiltx_y, 'tiltx_z':tiltx_z, 'tilty_x':tilty_x, 'tilty_z':tilty_z,
+#             'tiltz_x':tiltz_x, 'tiltz_y':tiltz_y, 'tiltz_sw':tiltz_sw, 'tiltz_cw':tiltz_cw,
+#             'tiltsw_z':tiltsw_z, 'tiltsw_cw':tiltsw_cw, 'exchsw_cw':exchsw_cw,
+#             'tiltcw_z':tiltcw_z, 'tiltcw_sw':tiltcw_sw, 'exchcw_sw':exchcw_sw}
+#     save_to_pickle(data, ip+f"vten_tilt_{mvtime}min.pkl", new_pkl=True)
 
 
 
