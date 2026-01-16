@@ -43,7 +43,8 @@ mvtime = 210 #Analysis time - either 210 or 220 min
 fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/' #path to wherever the files are - currently assuming they're all in the same folder
 
 
-#%% Everything else below this line should be automated unless the files are not all saved in the same place, in which case just change wherever 'fp' is
+#%% Everything else below this line should be automated unless the files are not all saved in the same place,
+#   in which case just change 'fp' in nc.Dataset() and open() to the correct directory as needed
 
 if mvtime == 210:
     fnum = 43 #CM1 output file number

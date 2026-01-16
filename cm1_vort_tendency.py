@@ -6,7 +6,7 @@ Created on Mon Jan  6 15:24:56 2025
 @author: morgan.schneider
 
 - PAPER FIGURES -
-composite_zvort (hvort, xvort, yvort, swvort, cwvort)
+composite_zvort, hvort, xvort, yvort, swvort, cwvort tendencies
 
 - Other figures -
 Tendency plan views at single times
