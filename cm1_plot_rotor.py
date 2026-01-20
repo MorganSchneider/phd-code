@@ -9,7 +9,7 @@ Code to investigate the rotor. Will probably look at
     -Horizontal vorticity fields
     -Wind vectors
     -???
-2) Parcel trajectories through the rotor (a la reviewer 3 comments)
+2) Parcel trajectories through the rotor
 
 --FILES NEEDED--
 1) cm1out_000044?-000053.nc -- these are on bigbang under /merger/merger-125m
@@ -310,6 +310,14 @@ side_ax.invert_xaxis()
 plt.suptitle(f"\u03c9$_H$ cross sections, {plottime} min", fontsize=12)
 plt.show()
 # plt.savefig(fp + f"hvort_cross_sections_{plottime}min.png", dpi=300)
+
+
+
+#%% Any other helpful plots?
+
+
+
+
 
 
 
