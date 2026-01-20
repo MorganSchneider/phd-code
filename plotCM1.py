@@ -1071,7 +1071,7 @@ if False:
     side_ax.contour(z[iz], yh[iy], np.mean(thrpert[:,:,ix1-4:ix1+4], axis=2).transpose(), levels=[-8], colors='blue', linewidths=1, linestyles='-')
     side_ax.contour(z[iz], yh[iy], np.mean(winterp[:,:,ix1-4:ix1+4], axis=2).transpose(), levels=[-15,-10,-5,5,10,15], colors='lightgrey', linewidths=1)
     side_ax.contour(z[iz], yh[iy], np.min(OW[:,:,ix1-4:ix1+4], axis=2).transpose(), levels=[-0.01,-0.0025,-0.001], colors='k', linewidths=1, linestyles='-')
-    # side_ax.quiver(z[iz][::qiz], yh[iy][::qix], -1*winterp[::qiz,::qix,ix1].transpose(), uinterp[::qiz,::qix,ix1].transpose(), scale=300, width=0.005, pivot='tail')
+    # side_ax.quiver(z[iz][::qiz], yh[iy][::qix], -1*winterp[::qiz,::qix,ix1].transpose(), vinterp[::qiz,::qix,ix1].transpose(), scale=300, width=0.005, pivot='tail')
     # side_ax.set_xticks(np.arange(0,4))
     side_ax.invert_xaxis()
     
