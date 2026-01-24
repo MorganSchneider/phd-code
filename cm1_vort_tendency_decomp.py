@@ -2,7 +2,7 @@
 """
 Created on Wed Jan 14 12:16:31 2026
 Python version 3.11
-@author: mschne28
+@author: mschne28@uwo.ca
 
 Calculate parcel vorticity tilting plan views -- These are parcel-centered composites as in the plan view plots in Figs. 14-16 (as of R1).
 
@@ -17,7 +17,7 @@ This code calculates
 4) traj_clusters_210min_v2.pkl + traj_clusters_220min_v2.pkl -- Indices of parcels in the MV at 210/220 min clustered by source region
 5) storm_motion.pkl -- Estimated storm motion at every model output time (every 1 min) from my MV boxes
 
-Streamwise/crosswise exchange is formulated from Adlerman et al. 1999 Eq. 2-3 / Schenkman et al. 2014 Eq. 1-2
+Streamwise/crosswise exchange is formulated from Adlerman et al. 1999 eq. 2-3 / Schenkman et al. 2014 1-2
 This encompasses the calculations in lines 102-117 and 212-215
 
 ******Please let me know if I'm calculating anything wrong, especially since I can't test it myself******
@@ -38,12 +38,12 @@ from scipy.interpolate import RegularGridInterpolator
 ### SET THESE VARIABLES YOURSELF ###
 ####################################
 
-mvtime = 210 #Analysis time - either 210 or 220 min
+mvtime = 210 #Analysis time - need 210 and 220 min
 
 fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/' #path to wherever the files are - currently assuming they're all in the same folder
 
 
-#%% Everything else below this line should be automated unless the files are not all saved in the same place,
+#%% Everything else below this line shouldn't need to be changed, unless the files are not all saved in the same place,
 #   in which case just change 'fp' in nc.Dataset() and open() to the correct directory as needed
 
 if mvtime == 210:
@@ -75,21 +75,25 @@ dbfile.close()
 # Trajectory data of all parcels in the MV every 5 min
 dbfile = open(fp + "traj_MV1.pkl", 'rb')
 traj = pickle.load(dbfile)
-# Pickle structure
-#   traj.keys() = dict_keys(['195min', '200min', '205min', '210min', '215min', '220min', '225min', '230min', '235min', '239min'])
-#   traj['210min'].keys() = dict_keys(['pids', 'x', 'y', 'z', 'w', 'zvort', 'b', 'vpg', 'u', 'v'])
 dbfile.close()
+'''
+Pickle structure:
+  traj.keys() = dict_keys(['195min', '200min', '205min', '210min', '215min', '220min', '225min', '230min', '235min', '239min'])
+  traj['210min'].keys() = dict_keys(['pids', 'x', 'y', 'z', 'w', 'zvort', 'b', 'vpg', 'u', 'v'])
+'''
 
 
 # Indices of parcels in the MV at a single time by source region
 dbfile = open(fp + f"traj_clusters_{mvtime}min_v2.pkl", 'rb')
 ccs = pickle.load(dbfile)
 cc = ccs['mv1']
-# cc = 0 -> Low-level environmental inflow
-# cc = 1 -> Mid-level environmental inflow
-# cc = 2 -> Supercell outflow
-# cc = 3 -> QLCS outflow
 dbfile.close()
+'''
+cc = 0 -> Low-level environmental inflow
+cc = 1 -> Mid-level environmental inflow
+cc = 2 -> Supercell outflow
+cc = 3 -> QLCS outflow
+'''
 
 
 # Get mid-level parcels (cc = 1)
@@ -114,13 +118,13 @@ u_ml = traj[f"{mvtime}min"]['u'][:,(cc == 1)]
 v_ml = traj[f"{mvtime}min"]['v'][:,(cc == 1)]
 us_ml = u_ml - np.tile(u_storm_prcl, [len(cc[(cc==1)]), 1]).transpose() #SR parcel velocity
 vs_ml = v_ml - np.tile(v_storm_prcl, [len(cc[(cc==1)]), 1]).transpose()
-psi = np.arctan2(vs_ml, us_ml) #SR parcel direction (from Adlerman and Schenkman papers)
-dpsi_dt = np.gradient(psi, ptime, axis=0) #time ROC of SR parcel direction
+psi = np.arctan2(vs_ml, us_ml) #SR parcel heading (from Adlerman and Schenkman papers)
+dpsi_dt = np.gradient(psi, ptime, axis=0) #time ROC of SR parcel heading
 
 
 
 
-times = np.zeros(shape=(11,), dtype=float) #use the 10 minutes leading up to mvtime
+times = np.zeros(shape=(11,), dtype=float) #the 10 minutes leading up to mvtime
 
 # Initialize arrays for tilting terms - specific tilting/exchange components for streamwise and crosswise
 e_sw_cw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #exchange from crosswise to streamwise (for d_sw/dt)
@@ -129,7 +133,7 @@ t_z_sw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting from s
 t_z_cw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float) #tilting from crosswise to vertical
 
 
-# Loop through CM1 output files
+# Loop through output files
 m = 0
 for fn in np.arange(fnum-10, fnum+1):
     print(f"cm1out_{fn:06d}")
@@ -189,8 +193,8 @@ for fn in np.arange(fnum-10, fnum+1):
         j = slice(iyp-16,iyp+17)
         
         # Indices-
-        # t_* variables are shape (parcel ID, time, y, x) for x-y plan view - indexed [p,m,:,:]
-        # all other variables from model grid are shape (z, y, x) - indexed [k,j,i]
+        # t_* and e_* tendency plan view variables are shape(parcel ID, time, y, x) - indexed [p,m,:,:]
+        # all other variables from model grid are shape(z, y, x) - indexed [k,j,i]
         
         # Vertical vorticity tilting components
         t_z_sw[p,m,:,:] = svort[k,j,i] * ((u_sr[k,j,i]/ws_sr[k,j,i]) * dwdx[k,j,i] + 

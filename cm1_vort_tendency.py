@@ -2814,10 +2814,10 @@ iy3 = slice(i2-8,i2+9)
 
 #%% Load data for composite vorticity tendency plots, all times - parcel-centered composites ***FOR PAPER FIGS***
 
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+ip = 'C:/Users/mesch/Documents/merger/merger-125m/'
 
 # fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
-fp = '/Users/morgan.schneider/Documents/merger/merger-125m/temporary/'
+# fp = '/Users/morgan.schneider/Documents/merger/merger-125m/temporary/'
 
 # Load parcel time
 # if 'ptime' not in locals():
@@ -2861,11 +2861,18 @@ z2_median = np.median(z2_ml, axis=1)
 
 
 # Load model grid
-ds = nc.Dataset(fp+'cm1out_000043.nc')
-xh = ds.variables['xh'][:].data
-yh = ds.variables['yh'][:].data
-zh = ds.variables['z'][:].data
-ds.close()
+# ds = nc.Dataset(fp+'cm1out_000043.nc')
+# xh = ds.variables['xh'][:].data
+# yh = ds.variables['yh'][:].data
+# zh = ds.variables['z'][:].data
+# ds.close()
+
+dbfile = open(ip+'coords.pkl', 'rb')
+tmp = pickle.load(dbfile)
+xh = tmp['xh']
+yh = tmp['yh']
+zh = tmp['zh']
+dbfile.close()
 
 # Load vorticity tendencies
 dbfile = open(ip+f"vten_traj_210min_parcels.pkl", 'rb')
@@ -2880,16 +2887,16 @@ dbfile.close()
 
 
 # Choose parcel ending layer
-dz = 150
+dz = 500
 it210 = np.where(ptime == 210*60)[0][0]
 it220 = np.where(ptime == 220*60)[0][0]
 iz1 = ((z1_ml[it210,:] >= z1_median[it210]-dz) & (z1_ml[it210,:] <= z1_median[it210]+dz))
 iz2 = ((z2_ml[it220,:] >= z2_median[it220]-dz) & (z2_ml[it220,:] <= z2_median[it220]+dz))
 
 ### Choose averaging times ###
-times1 = np.arange(203,209)
+times1 = np.arange(205,209)
 times2 = np.arange(214,219)
-times3 = np.arange(218,220)
+times3 = np.arange(216,220)
 
 
 ### Time 1 ###
@@ -2995,7 +3002,7 @@ ix3 = slice(ixp-8,ixp+9)
 iy3 = slice(iyp-8,iyp+9)
 
 
-#%% Make the tendency plan view plots ***PAPER FIG***
+#%% Make the tendency plan view plots ***OLD PAPER FIG***
 
 from matplotlib.ticker import MultipleLocator
 
@@ -3458,14 +3465,15 @@ if figsave:
 
 
 
-#%% Plan views of my chosen times ***PAPER FIGS?***
+#%% Plan views of my chosen times ***PAPER FIGS***
 
-fp = '/Users/mschne28/Documents/merger/merger-125m/'
+fp = 'C:/Users/mesch/Documents/merger/merger-125m/'
 
 time = 220
 
 ### Choose averaging times ###
-times = np.arange(218,221)
+times = np.arange(216,220)
+# times = np.arange(217,220)
 
 figsave = False
 
@@ -3641,6 +3649,7 @@ a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
 c = plot_contourf(xx, yy, stretch_z, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[1], extend='both')
@@ -3649,7 +3658,7 @@ cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
 cb.formatter.set_powerlimits((0,0))
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].text(-0.2, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
+ax[1].text(-0.25, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
 # ax[1].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
@@ -3740,7 +3749,7 @@ a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-
+ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
 plot_contourf(xx, yy, stretch_sw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
@@ -3779,7 +3788,7 @@ for i in range(3):
 if figsave:
     plt.savefig(fp+f"figs/swvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
 
-
+#%%
 
 ### Crosswise ###
 fig,ax = plt.subplots(1, 3, figsize=(9.5,3), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
