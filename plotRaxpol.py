@@ -327,6 +327,8 @@ for vn in range(len(vol_nums)):
                 #     v2 = d['vel'][ind+1,:]
                 # zvort_tmp[ii,int(ix),:] = 1/(r*1000) * (v2-v1)/(np.pi/180) # 2/r * dVr/dphi
                 
+                
+                # Doppler vertical vorticity and divergence (based on Wagner et al. 2025 appendix)
                 for ir in range(len(r)-1):
                     if ix == 0:
                         v1 = d['vel'][ind,ir+1]
@@ -350,7 +352,7 @@ for vn in range(len(vol_nums)):
     
     hvort_tmp = -2/(r*1000) * np.gradient(vel_tmp, el_tmp*np.pi/180, axis=0) # -2/r * dVr/dtheta
     vort3d_tmp = np.sqrt(zvort_tmp**2 + hvort_tmp**2)
-    div_tmp = np.gradient(vel_tmp, r*1000, axis=2)
+    # div_tmp = np.gradient(vel_tmp, r*1000, axis=2)
     
     vol[vn].update({'dbz':dbz_tmp, 'vel':vel_tmp, 'sw':sw_tmp, 'zdr':zdr_tmp, 'rhohv':rhohv_tmp,
                     'xx':xx_tmp, 'yy':yy_tmp, 'zz':zz_tmp, 'az':az_tmp, 'elev':el_tmp, 'r':r,
@@ -508,7 +510,7 @@ else:
 
 
 
-#%% Actual dissertation/paper figures
+#%% Old dissertation/paper figures
 
 xls = [[-2.75, -1.25], [-2.5, -1.0], [-2.25, -0.75], [-2.0, -0.5], [-1.25, 0.25], 
        [-0.75, 0.75], [-0.5, 1.0], [0.0, 1.5], [0.25, 1.75], [0.25, 1.75]]
@@ -1039,7 +1041,7 @@ for vn in range(len(vols)):
     # zvort_metadata = {'long_name':'vertical pseudovorticity', 'standard_name':'inferred vertical pseudovorticity',
     #                   'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
     #                   'data':zvort}
-    zvort_metadata = {'long_name':'Doppler vorticity', 'standard_name':'Doppler vertical vorticity',
+    zvort_metadata = {'long_name':'Doppler vorticity', 'standard_name':'Doppler vorticity',
                       'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
                       'data':zvort}
     div_metadata = {'long_name':'Doppler divergence', 'standard_name':'Doppler divergence',
