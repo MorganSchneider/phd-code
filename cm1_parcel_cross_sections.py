@@ -949,7 +949,9 @@ if False:
     ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
     thrpert = ds.variables['thrpert'][:].data[iz,iy,ix]
     prspert = (ds.variables['prs'][:].data[0,iz,iy,ix] - prs0)/100
+    # uinterp = ds.variables['uinterp'][:].data[0,iz,iy,ix]
     # winterp = ds.variables['winterp'][:].data[0,iz,iy,ix]
+    # yvort = ds.variables['yvort'][:].data[0,iz,iy,ix]
     ds.close()
     
     wl = [-15,10]

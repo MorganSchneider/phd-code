@@ -316,16 +316,32 @@ for vn in range(len(vol_nums)):
                 yy_tmp[ii,int(ix),:] = d['yy'][ind,:]
                 zz_tmp[ii,int(ix),:] = d['zz'][ind,:]
                 
-                if ix == 0:
-                    v1 = d['vel'][-1,:]
-                    v2 = d['vel'][ind+1,:]
-                elif ix == 359:
-                    v1 = d['vel'][ind-1,:]
-                    v2 = d['vel'][0,:]
-                else:
-                    v1 = d['vel'][ind-1,:]
-                    v2 = d['vel'][ind+1,:]
-                zvort_tmp[ii,int(ix),:] = 1/(r*1000) * (v2-v1)/(np.pi/180) # 2/r * dVr/dphi
+                # if ix == 0:
+                #     v1 = d['vel'][-1,:]
+                #     v2 = d['vel'][ind+1,:]
+                # elif ix == 359:
+                #     v1 = d['vel'][ind-1,:]
+                #     v2 = d['vel'][0,:]
+                # else:
+                #     v1 = d['vel'][ind-1,:]
+                #     v2 = d['vel'][ind+1,:]
+                # zvort_tmp[ii,int(ix),:] = 1/(r*1000) * (v2-v1)/(np.pi/180) # 2/r * dVr/dphi
+                
+                for ir in range(len(r)-1):
+                    if ix == 0:
+                        v1 = d['vel'][ind,ir+1]
+                        v2 = d['vel'][-1,ir+1]
+                        v3 = d['vel'][ind,ir]
+                        v4 = d['vel'][-1,ir]
+                    else:
+                        v1 = d['vel'][ind,ir+1]
+                        v2 = d['vel'][ind-1,ir+1]
+                        v3 = d['vel'][ind,ir]
+                        v4 = d['vel'][ind-1,ir]
+                    W = 1000 * r[ir] * np.sin(np.pi/180)
+                    dr = 1000 * (r[ir+1] - r[ir])
+                    zvort_tmp[ii,int(ix),ir] = ((v1-v2) + (v3-v4)) / (2*W)
+                    div_tmp[ii,int(ix),ir] = ((v1-v3) + (v2-v4)) / (2*dr)
             else:
                 az_tmp[ii,int(ix)] = ix
                 xx_tmp[ii,int(ix),:] = r * np.sin(ix*np.pi/180) * np.cos(d['elev']*np.pi/180)
@@ -338,7 +354,8 @@ for vn in range(len(vol_nums)):
     
     vol[vn].update({'dbz':dbz_tmp, 'vel':vel_tmp, 'sw':sw_tmp, 'zdr':zdr_tmp, 'rhohv':rhohv_tmp,
                     'xx':xx_tmp, 'yy':yy_tmp, 'zz':zz_tmp, 'az':az_tmp, 'elev':el_tmp, 'r':r,
-                    'zvort':zvort_tmp, 'hvort':hvort_tmp, 'vort3d':vort3d_tmp, 'div':div_tmp,
+                    'zvort':zvort_tmp, 'div':div_tmp,
+                    'hvort':hvort_tmp, 'vort3d':vort3d_tmp,
                     'scan_time':time_tmp, 'vol_num':vol_nums[vn], 'filename':fname_tmp, 'va':d['va'],
                     'lat':d['lat'], 'lon':d['lon']})
     
@@ -957,9 +974,10 @@ for vn in range(len(vols)):
     gate_y = np.zeros(shape=(len(files)*360,1246), dtype=float)
     gate_z = np.zeros(shape=(len(files)*360,1246), dtype=float)
     sweep_times = ['' for i in range(len(files))]
-    zvort = np.zeros(shape=(len(files)*360,1246,), dtype=float) # vertical pseudovorticity
-    # hvort = np.zeros(shape=(len(files)*360,1246,), dtype=float) # cross-radial horizontal pseudovorticity
-    # vort3d_tmp = np.zeros(shape=(len(files)*360,1246,), dtype=float) # "3D" (really 2D) pseudovorticity magnitude
+    zvort = np.zeros(shape=(len(files)*360,1246), dtype=float) # vertical pseudovorticity
+    # hvort = np.zeros(shape=(len(files)*360,1246), dtype=float) # cross-radial horizontal pseudovorticity
+    # vort3d_tmp = np.zeros(shape=(len(files)*360,1246), dtype=float) # "3D" (really 2D) pseudovorticity magnitude
+    div = np.zeros(shape=(len(files)*360,1246), dtype=float)
     
     xmax,xmin = meso_x[vn]+(delta*nx/2), meso_x[vn]-(delta*nx/2)
     ymax,ymin = meso_y[vn]+(delta*ny/2), meso_y[vn]-(delta*ny/2)
@@ -991,20 +1009,43 @@ for vn in range(len(vols)):
                 gate_y[int(i*360+ix),:] = y_tmp[ind,:]
                 gate_z[int(i*360+ix),:] = z_tmp[ind,:]
                 
-                if ind == 0:
-                    v1 = vel_tmp[-1,:]
-                    v2 = vel_tmp[ind+1,:]
-                elif ind == len(az_tmp)-1:
-                    v1 = vel_tmp[ind-1,:]
-                    v2 = vel_tmp[0,:]
-                else:
-                    v1 = vel_tmp[ind-1,:]
-                    v2 = vel_tmp[ind+1,:]
-                zvort[int(i*360+ix),:] = 1/r * (v2-v1)/(np.pi/180) # 2/r * dVr/dphi
+                # if ind == 0:
+                #     v1 = vel_tmp[-1,:]
+                #     v2 = vel_tmp[ind+1,:]
+                # elif ind == len(az_tmp)-1:
+                #     v1 = vel_tmp[ind-1,:]
+                #     v2 = vel_tmp[0,:]
+                # else:
+                #     v1 = vel_tmp[ind-1,:]
+                #     v2 = vel_tmp[ind+1,:]
+                # zvort[int(i*360+ix),:] = 1/r * (v2-v1)/(np.pi/180) # 2/r * dVr/dphi
+                
+                for ir in range(len(r)-1):
+                    if ind == 0:
+                        v1 = vel_tmp[ind,ir+1]
+                        v2 = vel_tmp[-1,ir+1]
+                        v3 = vel_tmp[ind,ir]
+                        v4 = vel_tmp[-1,ir]
+                    else:
+                        v1 = vel_tmp[ind,ir+1]
+                        v2 = vel_tmp[ind-1,ir+1]
+                        v3 = vel_tmp[ind,ir]
+                        v4 = vel_tmp[ind-1,ir]
+                    W = 1000 * r[ir] * np.sin(np.pi/180)
+                    dr = 1000 * (r[ir+1] - r[ir])
+                    zvort[int(i*360+ix),ir] = ((v1-v2) + (v3-v4)) / (2*W)
+                    div[int(i*360+ix),ir] = ((v1-v3) + (v2-v4)) / (2*dr)
     
-    zvort_metadata = {'long_name':'vertical pseudovorticity', 'standard_name':'inferred vertical pseudovorticity',
+    # zvort_metadata = {'long_name':'vertical pseudovorticity', 'standard_name':'inferred vertical pseudovorticity',
+    #                   'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
+    #                   'data':zvort}
+    zvort_metadata = {'long_name':'Doppler vorticity', 'standard_name':'Doppler vertical vorticity',
                       'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
                       'data':zvort}
+    div_metadata = {'long_name':'Doppler divergence', 'standard_name':'Doppler divergence',
+                    'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
+                    'data':div}
+    
     
     dbz = np.ma.masked_array(dbz, dbz < 1)
     dbz[:, :10] = np.ma.masked
@@ -1019,6 +1060,7 @@ for vn in range(len(vols)):
     radar.fields['DBZ']['data'] = dbz
     radar.fields['VEL']['data'] = vel
     radar.add_field('ZVORT', zvort_metadata)
+    radar.add_field('DIV', div_metadata)
     radar.elevation['data'] = elev
     radar.azimuth['data'] = azim
     center_time = sweep_times[center_ind]
@@ -1029,9 +1071,11 @@ for vn in range(len(vols)):
     gatefilter.exclude_masked('DBZ')
     
     grid = pyart.map.grid_from_radars((radar,), grid_shape=(nz,ny,nx), gatefilters=(gatefilter,),
-                                      grid_limits=((0,zmax), (ymin,ymax), (xmin,xmax)), fields=['DBZ','VEL','ZVORT'])
+                                      grid_limits=((0,zmax), (ymin,ymax), (xmin,xmax)), fields=['DBZ','VEL','ZVORT','DIV'])
     
-    data = {'dbz_grid':grid.fields['DBZ']['data'], 'vel_grid':grid.fields['VEL']['data'], 'zvort_grid':grid.fields['ZVORT']['data'],
+    data = {'dbz_grid':grid.fields['DBZ']['data'], 'vel_grid':grid.fields['VEL']['data'],
+            'zvort_grid':grid.fields['ZVORT']['data'],
+            'div_grid':grid.fields['DIV']['data'],
             'volume_time':volume_time, 'center_time':center_time, 'sweep_times':sweep_times,
             'x_grid':grid.x['data'], 'y_grid':grid.y['data'], 'z_grid':grid.z['data']}
     
@@ -1090,9 +1134,10 @@ for vn in range(len(vols)):
     elev = np.zeros(shape=(len(files)*360,), dtype=float)
     azim = np.zeros(shape=(len(files)*360,), dtype=float)
     sweep_times = ['' for i in range(len(files))]
-    zvort = np.zeros(shape=(len(files)*360,1246,), dtype=float) # vertical pseudovorticity
-    # hvort = np.zeros(shape=(len(files)*360,1246,), dtype=float) # cross-radial horizontal pseudovorticity
-    # vort3d_tmp = np.zeros(shape=(len(files)*360,1246,), dtype=float) # "3D" (really 2D) pseudovorticity magnitude
+    zvort = np.zeros(shape=(len(files)*360,1246), dtype=float) # vertical pseudovorticity
+    # hvort = np.zeros(shape=(len(files)*360,1246), dtype=float) # cross-radial horizontal pseudovorticity
+    # vort3d_tmp = np.zeros(shape=(len(files)*360,1246), dtype=float) # "3D" (really 2D) pseudovorticity magnitude
+    div = np.zeros(shape=(len(files)*360,1246), dtype=float)
     
     # cartesian domain limits
     xmax,xmin = meso_x[vn]+(delta*nx/2), meso_x[vn]-(delta*nx/2)
@@ -1134,20 +1179,42 @@ for vn in range(len(vols)):
                 elev[int(i*360+ix)] = el_tmp[ind]
                 azim[int(i*360+ix)] = az_tmp[ind]
                 
-                if ind == 0:
-                    v1 = vel_tmp[-1,:]
-                    v2 = vel_tmp[ind+1,:]
-                elif ind == len(az_tmp)-1:
-                    v1 = vel_tmp[ind-1,:]
-                    v2 = vel_tmp[0,:]
-                else:
-                    v1 = vel_tmp[ind-1,:]
-                    v2 = vel_tmp[ind+1,:]
-                zvort[int(i*360+ix),:] = 1/r * (v2-v1)/(np.pi/180) # 2/r * dVr/dphi
+                # if ind == 0:
+                #     v1 = vel_tmp[-1,:]
+                #     v2 = vel_tmp[ind+1,:]
+                # elif ind == len(az_tmp)-1:
+                #     v1 = vel_tmp[ind-1,:]
+                #     v2 = vel_tmp[0,:]
+                # else:
+                #     v1 = vel_tmp[ind-1,:]
+                #     v2 = vel_tmp[ind+1,:]
+                # zvort[int(i*360+ix),:] = 1/r * (v2-v1)/(np.pi/180) # 2/r * dVr/dphi
+                
+                for ir in range(len(r)-1):
+                    if ind == 0:
+                        v1 = vel_tmp[ind,ir+1]
+                        v2 = vel_tmp[-1,ir+1]
+                        v3 = vel_tmp[ind,ir]
+                        v4 = vel_tmp[-1,ir]
+                    else:
+                        v1 = vel_tmp[ind,ir+1]
+                        v2 = vel_tmp[ind-1,ir+1]
+                        v3 = vel_tmp[ind,ir]
+                        v4 = vel_tmp[ind-1,ir]
+                    W = 1000 * r[ir] * np.sin(np.pi/180)
+                    dr = 1000 * (r[ir+1] - r[ir])
+                    zvort[int(i*360+ix),ir] = ((v1-v2) + (v3-v4)) / (2*W)
+                    div[int(i*360+ix),ir] = ((v1-v3) + (v2-v4)) / (2*dr)
     
-    zvort_metadata = {'long_name':'vertical pseudovorticity', 'standard_name':'inferred vertical pseudovorticity',
+    # zvort_metadata = {'long_name':'vertical pseudovorticity', 'standard_name':'inferred vertical pseudovorticity',
+    #                   'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
+    #                   'data':zvort}
+    zvort_metadata = {'long_name':'Doppler vorticity', 'standard_name':'Doppler vertical vorticity',
                       'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
                       'data':zvort}
+    div_metadata = {'long_name':'Doppler divergence', 'standard_name':'Doppler divergence',
+                    'units':'1/s', '_FillValue':-32768, 'grid_mapping':'grid_mapping', 'coordinates':'time range',
+                    'data':div}
     
     dbz = np.ma.masked_array(dbz, dbz<1) # mask low SNR
     dbz[:, :10] = np.ma.masked # mask first 10 range gates (300 m)
@@ -1161,6 +1228,7 @@ for vn in range(len(vols)):
     radar.fields['DBZ']['data'] = dbz # overwrite sweep dbz/vel with the 3d fields
     radar.fields['VEL']['data'] = vel
     radar.add_field('ZVORT', zvort_metadata) # add zvort field to radar object
+    radar.add_field('DIV', div_metadata)
     radar.elevation['data'] = elev
     radar.azimuth['data'] = azim
     center_time = sweep_times[int(center_ind)]
@@ -1174,10 +1242,12 @@ for vn in range(len(vols)):
     # Regrid with advection-corrected fields
     print('...Regridding...')
     grid = pyart.map.grid_from_radars((radar,), grid_shape=(nz,ny,nx), gatefilters=(gatefilter,),
-                                      grid_limits=((0,zmax), (ymin,ymax), (xmin,xmax)), fields=['DBZ','VEL','ZVORT'])
+                                      grid_limits=((0,zmax), (ymin,ymax), (xmin,xmax)), fields=['DBZ','VEL','ZVORT','DIV'])
     
     # save to pickle
-    data = {'dbz_grid':grid.fields['DBZ']['data'], 'vel_grid':grid.fields['VEL']['data'], 'zvort_grid':grid.fields['ZVORT']['data'],
+    data = {'dbz_grid':grid.fields['DBZ']['data'], 'vel_grid':grid.fields['VEL']['data'],
+            'zvort_grid':grid.fields['ZVORT']['data'],
+            'div_grid':grid.fields['DIV']['data'],
             'volume_time':volume_time, 'center_time':center_time, 'sweep_times':sweep_times,
             'x_grid':grid.x['data'], 'y_grid':grid.y['data'], 'z_grid':grid.z['data']}
     
@@ -1203,6 +1273,7 @@ dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/vel_gri
 data = pickle.load(dbfile)
 vel = data['vel_grid']
 zvort = data['zvort_grid']
+div = data['div_grid']
 xx = data['x_grid']
 yy = data['y_grid']
 zz = data['z_grid']
@@ -1281,6 +1352,7 @@ data = pickle.load(dbfile)
 dbz_advected = data['dbz_grid']
 vel_advected = data['vel_grid']
 zvort_advected = data['zvort_grid']
+div_advected = data['div_grid']
 dbfile.close()
 
 

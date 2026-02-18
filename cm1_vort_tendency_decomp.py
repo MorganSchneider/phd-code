@@ -233,9 +233,9 @@ time = 220
 
 ### Choose averaging times ###
 if time == 210:
-    times = np.arange(206,209)
+    times = np.arange(203,207)
 elif time == 220:
-    times = np.arange(217,220)
+    times = np.arange(213,218)
 
 
 figsave = False
@@ -402,8 +402,9 @@ def add_vectors(ax, x, y, dx, dy, lengthscale=10, *args, **kwargs):
 
 xx = np.linspace(-2, 2, 33)
 yy = np.linspace(-2, 2, 33)
-lims = [-2e-4, 2e-4]
-levs = np.linspace(lims[0], lims[1], 41)
+lims = [-2.5e-4, 2.5e-4]
+# lims = [-5e-4, 5e-4]
+levs = np.linspace(lims[0], lims[1], 51)
 levs = np.append(np.append([-0.01], levs), [0.01])
 xl = [-1, 1]
 yl = [-1, 1]
@@ -425,23 +426,21 @@ plot_contourf(xx, yy, tilt_z, 'zvort', ax[0], levels=levs, datalims=lims, xlims=
 ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0].set_xlabel('x (km)', fontsize=14)
 ax[0].set_ylabel('y (km)', fontsize=14)
-ax[0].text(0.2, -0.9, 'Tilting', color='k', fontsize=18, fontweight='bold')
-# ax[0].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
+# ax[0].text(0.2, 0.8, 'Tilting', color='k', fontsize=18, fontweight='bold')
 a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+# ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
 c = plot_contourf(xx, yy, stretch_z, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[1], extend='both')
 cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
-# cb.set_ticks(np.linspace(-3e-4, 3e-4, 7))
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
 cb.formatter.set_powerlimits((0,0))
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].text(-0.25, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
-# ax[1].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
+# ax[1].text(-0.25, 0.8, 'Stretching', color='k', fontsize=18, fontweight='bold')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
@@ -454,36 +453,33 @@ for i in range(2):
     ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
     ax[i].tick_params(axis='both', labelsize=12)
 
-# plt.suptitle(f" Composite \u03B6 tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
-plt.suptitle(f"Vertical - {times[0]}-{times[-1]} min", fontsize=16)
+plt.suptitle(f"{times[0]}-{times[-1]} min", fontsize=16)
 
 if figsave:
-    plt.savefig(fp+f"figs/zvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
+    plt.savefig(fp+f"figs/new_vort_figs/zvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
 
 
 
 
 
-fig,ax = plt.subplots(1, 3, figsize=(9.5,3), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+fig,ax = plt.subplots(1, 3, figsize=(9.5,2.98), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
 plot_contourf(xx, yy, tilt_z_sw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0].set_xlabel('x (km)', fontsize=14)
 ax[0].set_ylabel('y (km)', fontsize=14)
-ax[0].text(-0.4, -0.9, "Tilting (SW)", color='k', fontsize=16, fontweight='bold')
-# ax[0].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
+# ax[0].text(-0.4, 0.8, "Tilting (SW)", color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+# ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
 plot_contourf(xx, yy, tilt_z_cw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].set_title(f"Vertical - {times[0]}-{times[-1]} min", fontsize=16)
-ax[1].text(-0.4, -0.9, "Tilting (CW)", color='k', fontsize=16, fontweight='bold')
-# ax[1].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
+ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
+# ax[1].text(-0.4, 0.8, "Tilting (CW)", color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
@@ -492,11 +488,11 @@ a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
 c = plot_contourf(xx, yy, stretch_z, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[2], extend='both')
 cb.set_label("d\u03B6/dt (s$^{-2}$)", fontsize=12)
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
 cb.formatter.set_powerlimits((0,0))
 ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2].set_xlabel('x (km)', fontsize=14)
-ax[2].text(-0.25, -0.9, 'Stretching', color='k', fontsize=16, fontweight='bold')
-# ax[2].quiver(0, 0, xvort, yvort, color='k', scale=0.1, width=0.02, pivot='tail')
+# ax[2].text(-0.25, 0.8, "Stretching", color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
@@ -509,11 +505,8 @@ for i in range(3):
     ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
     ax[i].tick_params(axis='both', labelsize=12)
 
-# plt.suptitle(f" Composite |\u03c9$_H$| tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
-# plt.suptitle(f"{times[0]}-{times[-1]} min", fontsize=16)
-
 if figsave:
-    plt.savefig(fp+f"figs/zvort_composite_{times[0]}-{times[-1]}min_v2.png", dpi=300)
+    plt.savefig(fp+f"figs/new_vort_figs/zvort_composite_{times[0]}-{times[-1]}min_decomposed.png", dpi=300)
 
 
 #%% Plot hvort tendency
@@ -523,28 +516,24 @@ figsave = False
 
 
 ### Horizontal ###
-fig,ax = plt.subplots(1, 3, figsize=(9.5,3), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+fig,ax = plt.subplots(1, 3, figsize=(9.5,2.98), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
 plot_contourf(xx, yy, tilt_h, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0].set_xlabel('x (km)', fontsize=14)
 ax[0].set_ylabel('y (km)', fontsize=14)
-ax[0].text(0.2, -0.9, 'Tilting', color='k', fontsize=16, fontweight='bold')
+# ax[0].text(0.2, 0.8, 'Tilting', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-# a_swvort = add_vectors(ax[0], [0], [0], [swvort_x], [swvort_y],
-#             lengthscale=20, arrowstyle='simple', mutation_scale=12, ec='k', fc='magenta', lw=1)
-# a_cwvort = add_vectors(ax[0], [0], [0], [cwvort_x], [cwvort_y],
-#             lengthscale=20, arrowstyle='simple', mutation_scale=12, ec='k', fc='blue', lw=1)
-ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+# ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
 plot_contourf(xx, yy, stretch_h, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
-ax[1].set_title(f"Horizontal - {times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].text(-0.25, -0.9, 'Stretching', color='k', fontsize=16, fontweight='bold')
+# ax[1].text(-0.25, 0.8, 'Stretching', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
@@ -553,11 +542,11 @@ a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
 c = plot_contourf(xx, yy, bcl_h, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[2], extend='both')
 cb.set_label("d\u03c9$_H$/dt (s$^{-2}$)", fontsize=12)
-# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
 cb.formatter.set_powerlimits((0,0))
 ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2].set_xlabel('x (km)', fontsize=14)
-ax[2].text(-0.2, -0.9, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
+# ax[2].text(-0.2, 0.8, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
@@ -570,11 +559,8 @@ for i in range(3):
     ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
     ax[i].tick_params(axis='both', labelsize=12)
 
-# plt.suptitle(f" Composite |\u03c9$_H$| tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
-# plt.suptitle(f"{times[0]}-{times[-1]} min", fontsize=16)
-
 if figsave:
-    plt.savefig(fp+f"figs/hvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
+    plt.savefig(fp+f"figs/new_vort_figs/hvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
 
 
 
@@ -585,13 +571,13 @@ figsave = False
 
 
 ### Streamwise ###
-fig,ax = plt.subplots(1, 3, figsize=(9.5,3), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+fig,ax = plt.subplots(1, 3, figsize=(9.5,2.98), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
 plot_contourf(xx, yy, tilt_sw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0].set_xlabel('x (km)', fontsize=14)
 ax[0].set_ylabel('y (km)', fontsize=14)
-ax[0].text(0.15, -0.9, 'Tilting', color='k', fontsize=18, fontweight='bold')
+ax[0].text(0.2, 0.8, 'Tilting', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
@@ -600,28 +586,26 @@ ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='low
 
 plot_contourf(xx, yy, stretch_sw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
-ax[1].set_title(f"Streamwise v1 - {times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].text(-0.4, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
+ax[1].text(-0.25, 0.8, 'Stretching', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
 
-
 c = plot_contourf(xx, yy, bcl_sw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[2], extend='both')
 cb.set_label("d\u03c9$_{{sw}}$/dt (s$^{-2}$)", fontsize=12)
-# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
 cb.formatter.set_powerlimits((0,0))
 ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2].set_xlabel('x (km)', fontsize=14)
-ax[2].text(-0.3, -0.9, 'Baroclinic', color='k', fontsize=18, fontweight='bold')
+ax[2].text(-0.2, 0.8, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-
 
 for i in range(3):
     ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
@@ -630,34 +614,32 @@ for i in range(3):
     ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
     ax[i].tick_params(axis='both', labelsize=12)
 
-# plt.suptitle(f" Composite \u03c9$_{{sw}}$ tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
-
 if figsave:
-    plt.savefig(fp+f"figs/swvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
+    plt.savefig(fp+f"figs/new_vort_figs/swvort_composite_{times[0]}-{times[-1]}min_tilting.png", dpi=300)
 
 
 
 
 
 
-fig,ax = plt.subplots(1, 3, figsize=(9.5,3), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+fig,ax = plt.subplots(1, 3, figsize=(9.5,2.98), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
 plot_contourf(xx, yy, exch_sw_cw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0].set_xlabel('x (km)', fontsize=14)
 ax[0].set_ylabel('y (km)', fontsize=14)
-ax[0].text(-0.2, -0.9, 'Exchange', color='k', fontsize=16, fontweight='bold')
+# ax[0].text(-0.15, 0.8, 'Exchange', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+# ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
 plot_contourf(xx, yy, stretch_sw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
-ax[1].set_title(f"Streamwise v2 - {times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].text(-0.25, -0.9, 'Stretching', color='k', fontsize=16, fontweight='bold')
+# ax[1].text(-0.25, 0.8, 'Stretching', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
@@ -667,16 +649,15 @@ a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
 c = plot_contourf(xx, yy, bcl_sw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[2], extend='both')
 cb.set_label("d\u03c9$_{{sw}}$/dt (s$^{-2}$)", fontsize=12)
-# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
 cb.formatter.set_powerlimits((0,0))
 ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2].set_xlabel('x (km)', fontsize=14)
-ax[2].text(-0.2, -0.9, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
+# ax[2].text(-0.2, 0.8, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-
 
 for i in range(3):
     ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
@@ -685,11 +666,68 @@ for i in range(3):
     ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
     ax[i].tick_params(axis='both', labelsize=12)
 
-# plt.suptitle(f" Composite \u03c9$_{{sw}}$ tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
+if figsave:
+    plt.savefig(fp+f"figs/new_vort_figs/swvort_composite_{times[0]}-{times[-1]}min_exchange.png", dpi=300)
+
+
+#%%
+
+fig,ax = plt.subplots(1, 4, figsize=(12,2.94), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xx, yy, exch_sw_cw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+ax[0].text(-0.2, 0.8, 'Exchange', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+
+plot_contourf(xx, yy, tilt_sw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1].set_xlabel('x (km)', fontsize=12)
+# ax[1].set_title(f"                                     {times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_title(f"                                  Streamwise - {times[0]}-{times[-1]} min", fontsize=18)
+ax[1].text(0.2, 0.8, 'Tilting', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+plot_contourf(xx, yy, stretch_sw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[2].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
+ax[2].set_xlabel('x (km)', fontsize=12)
+ax[2].text(-0.3, 0.8, 'Stretching', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+c = plot_contourf(xx, yy, bcl_sw, 'zvort', ax[3], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+cb = plt.colorbar(c, ax=ax[3], extend='both')
+cb.set_label("d\u03c9$_{{sw}}$/dt (s$^{-2}$)", fontsize=12)
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
+cb.formatter.set_powerlimits((0,0))
+ax[3].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[3].set_xlabel('x (km)', fontsize=12)
+ax[3].text(-0.2, 0.8, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[3], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[3], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+for i in range(4):
+    ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].xaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].yaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].tick_params(axis='both', labelsize=12)
 
 if figsave:
-    plt.savefig(fp+f"figs/swvort_composite_{times[0]}-{times[-1]}min_v2.png", dpi=300)
-
+    plt.savefig(fp+f"figs/new_vort_figs/swvort_composite_{times[0]}-{times[-1]}min_all.png", dpi=300)
 
 
 #%% Plot crosswise vort tendency
@@ -699,43 +737,41 @@ figsave = False
 
 
 ### Crosswise ###
-fig,ax = plt.subplots(1, 3, figsize=(9.5,3), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+fig,ax = plt.subplots(1, 3, figsize=(9.5,2.98), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xx, yy, tilt_cw2, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+plot_contourf(xx, yy, tilt_cw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0].set_xlabel('x (km)', fontsize=14)
 ax[0].set_ylabel('y (km)', fontsize=14)
-ax[0].text(0.15, -0.9, 'Tilting', color='k', fontsize=18, fontweight='bold')
+# ax[0].text(0.2, 0.8, 'Tilting', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+# ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
-plot_contourf(xx, yy, stretch_cw2, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+plot_contourf(xx, yy, stretch_cw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
-ax[1].set_title(f"Crosswise v1 - {times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].text(-0.4, -0.9, 'Stretching', color='k', fontsize=18, fontweight='bold')
+# ax[1].text(-0.25, 0.8, 'Stretching', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
 
-
-c = plot_contourf(xx, yy, bcl_cw2, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+c = plot_contourf(xx, yy, bcl_cw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[2], extend='both')
 cb.set_label("d\u03c9$_{{cw}}$/dt (s$^{-2}$)", fontsize=12)
-# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
 cb.formatter.set_powerlimits((0,0))
 ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2].set_xlabel('x (km)', fontsize=14)
-ax[2].text(-0.3, -0.9, 'Baroclinic', color='k', fontsize=18, fontweight='bold')
+# ax[2].text(-0.2, 0.8, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-
 
 for i in range(3):
     ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
@@ -744,52 +780,48 @@ for i in range(3):
     ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
     ax[i].tick_params(axis='both', labelsize=12)
 
-# plt.suptitle(f" Composite \u03c9$_{{cw}}$ tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
-
 if figsave:
-    plt.savefig(fp+f"figs/cwvort_composite_{times[0]}-{times[-1]}min.png", dpi=300)
+    plt.savefig(fp+f"figs/new_vort_figs/cwvort_composite_{times[0]}-{times[-1]}min_tilting.png", dpi=300)
 
 
 
 
 
-fig,ax = plt.subplots(1, 3, figsize=(9.5,3), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+fig,ax = plt.subplots(1, 3, figsize=(9.5,2.98), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
 
-plot_contourf(xx, yy, exch_cw2, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+plot_contourf(xx, yy, exch_cw_sw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[0].set_xlabel('x (km)', fontsize=14)
 ax[0].set_ylabel('y (km)', fontsize=14)
-ax[0].text(-0.2, -0.9, 'Exchange', color='k', fontsize=16, fontweight='bold')
+# ax[0].text(-0.2, 0.8, 'Exchange', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+# ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
 
-plot_contourf(xx, yy, stretch_cw2, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+plot_contourf(xx, yy, stretch_cw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
-ax[1].set_title(f"Crosswise v2 - {times[0]}-{times[-1]} min", fontsize=16)
+ax[1].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
 ax[1].set_xlabel('x (km)', fontsize=14)
-ax[1].text(-0.25, -0.9, 'Stretching', color='k', fontsize=16, fontweight='bold')
+# ax[1].text(-0.25, 0.8, 'Stretching', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
 
-
-c = plot_contourf(xx, yy, bcl_cw2, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+c = plot_contourf(xx, yy, bcl_cw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
 cb = plt.colorbar(c, ax=ax[2], extend='both')
 cb.set_label("d\u03c9$_{{cw}}$/dt (s$^{-2}$)", fontsize=12)
-# cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 5))
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
 cb.formatter.set_powerlimits((0,0))
 ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
 ax[2].set_xlabel('x (km)', fontsize=14)
-ax[2].text(-0.2, -0.9, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
+# ax[2].text(-0.2, 0.8, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
 a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
             lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
-
 
 for i in range(3):
     ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
@@ -798,13 +830,71 @@ for i in range(3):
     ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
     ax[i].tick_params(axis='both', labelsize=12)
 
-# plt.suptitle(f" Composite \u03c9$_{{cw}}$ tendency (parcel-centered) \n {times[0]}-{times[-1]} min ", fontsize=16)
+if figsave:
+    plt.savefig(fp+f"figs/new_vort_figs/cwvort_composite_{times[0]}-{times[-1]}min_exchange.png", dpi=300)
+
+
+#%%
+
+figsave = False
+
+
+
+fig,ax = plt.subplots(1, 4, figsize=(12,2.94), sharex=True, sharey=True, layout='constrained', subplot_kw=dict(box_aspect=1))
+
+plot_contourf(xx, yy, exch_cw_sw, 'zvort', ax[0], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[0].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[0].set_xlabel('x (km)', fontsize=12)
+ax[0].set_ylabel('y (km)', fontsize=12)
+# ax[0].text(-0.2, 0.8, 'Exchange', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[0], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[0], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+# ax[0].legend(handles=[a_vort,a_wind], labels=["\u03c9$_H$","V$_{SR}$"], loc='lower left', fontsize=10)
+
+plot_contourf(xx, yy, tilt_cw, 'zvort', ax[1], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[1].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[1].set_xlabel('x (km)', fontsize=12)
+ax[1].set_title(f"                                   {times[0]}-{times[-1]} min", fontsize=18)
+# ax[1].text(0.2, 0.8, 'Tilting', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[1], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[1], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+plot_contourf(xx, yy, stretch_cw, 'zvort', ax[2], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+ax[2].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+# ax[2].set_title(f"{times[0]}-{times[-1]} min", fontsize=16)
+ax[2].set_xlabel('x (km)', fontsize=12)
+# ax[2].text(-0.3, 0.8, 'Stretching', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[2], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[2], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+c = plot_contourf(xx, yy, bcl_cw, 'zvort', ax[3], levels=levs, datalims=lims, xlims=xl, ylims=yl, cmap=cm, cbar=False)
+cb = plt.colorbar(c, ax=ax[3], extend='both')
+cb.set_label("d\u03c9$_{{cw}}$/dt (s$^{-2}$)", fontsize=12)
+cb.set_ticks(np.linspace(-2.5e-4, 2.5e-4, 11))
+cb.formatter.set_powerlimits((0,0))
+ax[3].scatter(0, 0, s=80, edgecolor='k', facecolor='w', marker='o', linewidth=1.5)
+ax[3].set_xlabel('x (km)', fontsize=12)
+# ax[3].text(-0.2, 0.8, 'Baroclinic', color='k', fontsize=16, fontweight='bold')
+a_wind = add_vectors(ax[3], [0], [0], [u_sr], [v_sr],
+            lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
+a_vort = add_vectors(ax[3], [0], [0], [xvort], [yvort],
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+
+for i in range(4):
+    ax[i].xaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].xaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].yaxis.set_major_locator(MultipleLocator(0.5))
+    ax[i].yaxis.set_minor_locator(MultipleLocator(0.25))
+    ax[i].tick_params(axis='both', labelsize=12)
 
 if figsave:
-    plt.savefig(fp+f"figs/cwvort_composite_{times[0]}-{times[-1]}min_v2.png", dpi=300)
-
-
-
+    plt.savefig(fp+f"figs/new_vort_figs/cwvort_composite_{times[0]}-{times[-1]}min_all.png", dpi=300)
 
 
 
