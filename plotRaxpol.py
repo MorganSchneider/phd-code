@@ -1405,17 +1405,17 @@ yi1 = np.where(np.abs(yy) == np.min(np.abs(yy)))[0][0]
 xi2 = np.where(np.abs(xx-x_ray) == np.min(np.abs(xx-x_ray)))[0][0]
 yi2 = np.where(np.abs(yy-y_ray) == np.min(np.abs(yy-y_ray)))[0][0]
 
-xy = wrf.xy(vel, start_point=(xi1,yi1), end_point=(xi2,yi2))
-vel_cs = wrf.interp2dxy(vel, xy) # original velocity field
-vel_rhi = vel_cs.data
+# xy = wrf.xy(vel, start_point=(xi1,yi1), end_point=(xi2,yi2))
+# vel_cs = wrf.interp2dxy(vel, xy) # original velocity field
+# vel_rhi = vel_cs.data
 
-xy = wrf.xy(vel_advected, start_point=(xi1,yi1), end_point=(xi2,yi2))
-vel_adv_cs = wrf.interp2dxy(vel_advected, xy) # advection-corrected velocity field
-vel_adv_rhi = vel_adv_cs.data
+# xy = wrf.xy(vel_advected, start_point=(xi1,yi1), end_point=(xi2,yi2))
+# vel_adv_cs = wrf.interp2dxy(vel_advected, xy) # advection-corrected velocity field
+# vel_adv_rhi = vel_adv_cs.data
 
-xy = wrf.xy(zvort_advected, start_point=(xi1,yi1), end_point=(xi2,yi2))
-zvort_adv_cs = wrf.interp2dxy(zvort_advected, xy) # advection-corrected velocity field
-zvort_adv_rhi = zvort_adv_cs.data
+# xy = wrf.xy(zvort_advected, start_point=(xi1,yi1), end_point=(xi2,yi2))
+# zvort_adv_cs = wrf.interp2dxy(zvort_advected, xy) # advection-corrected velocity field
+# zvort_adv_rhi = zvort_adv_cs.data
 
 rr = np.linspace(0, r_ray, vel_rhi.shape[1])
 R = np.sqrt(xx**2 + yy**2)
@@ -1479,6 +1479,23 @@ if False:
     cb.ax.tick_params(labelsize=12)
     if figsave:
         plt.savefig(ip+f"{vol_time}_vortCS_advected.png", dpi=300)
+    
+    
+    # Surface Doppler divergence PPI
+    fig,ax = plt.subplots(1, 1, figsize=(8,6), subplot_kw=dict(box_aspect=1), layout='constrained')
+    plot_cfill(xx, yy, div_advected[1,:,:], 'vort', ax, datalims=[-0.1,0.1],
+               xlims=xl, ylims=yl, cbfs=12, cmap='balance')
+    ax.scatter(x_rot, y_rot, s=30, marker='o', facecolor='w', edgecolor='k')
+    ax.set_xlabel('E-W distance from radar (km)', fontsize=14)
+    ax.set_ylabel('N-S distance from radar (km)', fontsize=14)
+    ax.plot([0,x_rot[0]], [0,y_rot[0]], '-k', linewidth=3)
+    ax.plot([0,x_rot[-1]], [0,y_rot[-1]], '-k', linewidth=3)
+    ax.plot([0,x_rot[irot]], [0,y_rot[irot]], '--k', linewidth=3)
+    ax.set_xlabel('x distance from radar (km)', fontsize=12)
+    ax.set_ylabel('y distance from radar (km)', fontsize=12)
+    # ax.set_title(f"{vol_time}z near-surface Doppler divergence (advection-corrected)", fontsize=12)
+    if figsave:
+        plt.savefig(ip+f"{vol_time}_divPPI_advected.png", dpi=300)
 
 
 
