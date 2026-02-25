@@ -1685,6 +1685,7 @@ dbfile = open(f"/Users/morgan.schneider/Documents/perils2023/iop2/raxpol/vel_gri
 data = pickle.load(dbfile)
 vel_grid = data['vel_grid']
 zvort_grid = data['zvort_grid']
+div_grid = data['div_grid']
 xx = data['x_grid']/1000
 yy = data['y_grid']/1000
 zz = data['z_grid']/1000
@@ -1697,6 +1698,7 @@ data = pickle.load(dbfile)
 dbz_advected = data['dbz_grid']
 vel_advected = data['vel_grid']
 zvort_advected = data['zvort_grid']
+div_advected = data['div_grid']
 dbfile.close()
 
 cref = np.max(dbz_advected, axis=0)

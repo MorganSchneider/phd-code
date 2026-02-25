@@ -233,9 +233,11 @@ time = 220
 
 ### Choose averaging times ###
 if time == 210:
-    times = np.arange(203,207)
+    # times = np.arange(203,207) # crosswise
+    times = np.arange(208,209) # streamwise
 elif time == 220:
-    times = np.arange(213,218)
+    # times = np.arange(213,218) # crosswise
+    times = np.arange(219,220) # streamwise
 
 
 figsave = False
