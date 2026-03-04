@@ -89,8 +89,8 @@ c2 = pyart.graph.RadarDisplay(cow)
 
 fig = plt.figure(figsize=(7.5,6))
 ax = fig.add_subplot(111)
-c2.plot('DBZHCC', 0, vmin=0, vmax=70, cmap='NWSRef')
-# c2.plot('VEL', 0, vmin=-30, vmax=30, cmap='Carbone42')
+c2.plot('DBZHCC', 0, vmin=0, vmax=70, cmap='HomeyerRainbow')
+# c2.plot('VEL', 0, vmin=-30, vmax=30, cmap='balance')
 # c2.plot('RHOHV', 0, vmin=0.8, vmax=1, cmap='LangRainbow12')
 # c2.plot('ZDRC', 0, vmin=-5, vmax=5, cmap=nwsdmap)
 # c2.plot_range_rings([20, 40, 60, 80])
@@ -385,6 +385,7 @@ if True:
     del data
 
 del az_tmp,dbz_tmp,vel_tmp,sw_tmp,zdr_tmp,rhohv_tmp,xx_tmp,yy_tmp,zz_tmp,zvort_tmp,hvort_tmp,vort3d_tmp,div_tmp,el_tmp,fname_tmp,time_tmp,files,xx1,yy1,xx2,yy2,P1,P2,d
+
 
 #%% IOP2 plot reconstructed RHIs and azimuth-height cross sections
 
