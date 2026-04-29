@@ -895,9 +895,9 @@ if True:
     ax.set_xlabel('x (km)', fontsize=12)
     ax.set_ylabel('y (km)', fontsize=12)
     # ax.set_title(f"Parcels in the MV at {mv_time} min", fontsize=13)
-    # ax.set_xlim(xlp)
-    # ax.set_ylim(ylp)
-    # ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
+    ax.set_xlim(xlp)
+    ax.set_ylim(ylp)
+    ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
     # plt.legend(handles=[l,a_vort,a_wind], labels=['30 dBZ',"\u03c9$_H$","SR wind"], loc=1, fontsize=10)
     plt.legend(handles=[l,a_vort], labels=['30 dBZ',"\u03c9$_H$"], loc=1, fontsize=10)
     
