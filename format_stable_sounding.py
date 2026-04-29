@@ -13,6 +13,7 @@ from CM1utils import *
 from metpy.plots import SkewT, Hodograph
 import metpy.calc as mc
 from metpy.units import units
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 #%%
 
@@ -91,7 +92,7 @@ fn = fp+'cm1out_000001.nc'
 
 ds = nc.Dataset(fn)
 
-z = ds.variables['z'][:].data # km
+z = ds.variables['zh'][:].data # km
 u0 = ds.variables['u0'][:].data[0,:,0,0] # m/s
 v0 = ds.variables['v0'][:].data[0,:,0,0] # m/s
 th0 = ds.variables['th0'][:].data[0,:,0,0] # K
@@ -299,34 +300,58 @@ print(f"Significant tornado:  {STP:.1f}")
 #%%
 figsave = False
 
+fp = 'C:/Users/mschne28/Documents/cm1out/cwe/semislip_nssl_500m/'
+fn = fp+'cm1out_000001.nc'
+#ds = read_cm1out(fn,['z','th','qv','prs','u0','v0','th0','qv0','prs0'])
+
+ds = nc.Dataset(fn)
+
+zh = ds.variables['zh'][:].data # km
+u0 = ds.variables['u0'][:].data[0,:,0,0] # m/s
+v0 = ds.variables['v0'][:].data[0,:,0,0] # m/s
+th0 = ds.variables['th0'][:].data[0,:,0,0] # K
+qv0 = ds.variables['qv0'][:].data[0,:,0,0] # kg/kg
+prs0 = ds.variables['prs0'][:].data[0,:,0,0] # Pa
+umove = ds.variables['umove'][:].data
+vmove = ds.variables['vmove'][:].data
+ds.close()
+
+
+
+T0 = th0 * (prs0/100000.)**0.286
+e0 = (qv0 * prs0/100) / (0.622+qv0)
+Td0 = 243.5 / ((17.67/(np.log(e0/6.112)))-1) + 273.15
+
+# fig = plt.figure(figsize=(8,8))
+
+# skew = SkewT(fig=fig)
+# skew.plot(sndsp, (sndst-273.15), '-r', linewidth=2)
+# skew.plot(sndsp, (sndtd-273.15), '-g', linewidth=2)
+# skew.plot(sndsp, np.array(T_parcel_snd.magnitude[:])-273.15, '-k', linewidth=2)
+# skew.plot_dry_adiabats()
+# skew.plot_moist_adiabats()
+# skew.plot_mixing_lines()
+# skew.ax.set_ylim(1000, 100)
+# skew.ax.set_xlim(-40, 30)
+# plt.title('Input sounding')
+# ax_hod = inset_axes(skew.ax, '42%', '42%', loc=1)
+# H = Hodograph(ax_hod, component_range=60.)
+# H.add_grid(increment=20)
+# H.plot(sndsu, sndsv, color='k', linewidth=1.5)
+
+# plt.show()
+# if figsave:
+#     plt.savefig(fp+'input_sounding.png', dpi=300)
+
+umove = 16
+vmove = 2
+
 fig = plt.figure(figsize=(8,8))
 
 skew = SkewT(fig=fig)
-skew.plot(sndsp, (sndst-273.15), '-r', linewidth=2)
-skew.plot(sndsp, (sndtd-273.15), '-g', linewidth=2)
-skew.plot(sndsp, np.array(T_parcel_snd.magnitude[:])-273.15, '-k', linewidth=2)
-skew.plot_dry_adiabats()
-skew.plot_moist_adiabats()
-skew.plot_mixing_lines()
-skew.ax.set_ylim(1000, 100)
-skew.ax.set_xlim(-40, 30)
-plt.title('Input sounding')
-ax_hod = inset_axes(skew.ax, '42%', '42%', loc=1)
-H = Hodograph(ax_hod, component_range=60.)
-H.add_grid(increment=20)
-H.plot(sndsu, sndsv, color='k', linewidth=1.5)
-
-plt.show()
-if figsave:
-    plt.savefig(fp+'input_sounding.png', dpi=300)
-
-
-fig = plt.figure(figsize=(8,8))
-
-skew = SkewT(fig=fig)
-skew.plot(prs0[0,:,0,0]/100., (T0-273.15), '-r', linewidth=2)
-skew.plot(prs0[0,:,0,0]/100., (Td0-273.15), '-g', linewidth=2)
-skew.plot(prs0[0,:,0,0]/100., np.array(T_parcel.magnitude[:])-273.15, '-k', linewidth=2)
+skew.plot(prs0/100., (T0-273.15), '-r', linewidth=2)
+skew.plot(prs0/100., (Td0-273.15), '-g', linewidth=2)
+skew.plot(prs0/100., np.array(T_parcel.magnitude[:])-273.15, '-k', linewidth=2)
 skew.plot_dry_adiabats()
 skew.plot_moist_adiabats()
 skew.plot_mixing_lines()
@@ -336,9 +361,9 @@ plt.title('Base state')
 ax_hod = inset_axes(skew.ax, '42%', '42%', loc=1)
 H = Hodograph(ax_hod, component_range=60.)
 H.add_grid(increment=20)
-H.plot(u0[0,:,0,0]+umove, v0[0,:,0,0], color='k', linewidth=1.5)
+H.plot(u0+umove, v0+vmove, color='k', linewidth=1.5)
 
-plt.show()
+# plt.show()
 if figsave:
     plt.savefig(fp+'base_state.png', dpi=300)
 

@@ -689,10 +689,12 @@ if figsave:
 from scipy.interpolate import interp1d
 from matplotlib.ticker import MultipleLocator
 
-fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
-ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+# fp = '/Volumes/Promise_Pegasus_70TB/merger/merger-125m/'
+# ip = '/Users/morgan.schneider/Documents/merger/merger-125m/'
+fp = 'C:/Users/mschne28/Documents/merger/merger-125m/'
+ip = 'C:/Users/mschne28/Documents/merger/merger-125m/figs/'
 
-mv_time = 220
+mv_time = 210
 
 if mv_time == 210:
     fn = 41
@@ -703,15 +705,24 @@ elif mv_time == 220:
 
 
 # Load parcel time
-ds = nc.Dataset(fp+'cm1out_pdata.nc')
-ptime = ds.variables['time'][:].data
-ds.close()
+# ds = nc.Dataset(fp+'cm1out_pdata.nc')
+# ptime = ds.variables['time'][:].data
+# ds.close()
+
+dbfile = open(fp+'coords.pkl', 'rb')
+co = pickle.load(dbfile)
+xh = co['xh']
+yh = co['yh']
+z = co['zh']
+ptime = co['ptime']
+dbfile.close()
+
 
 ti = np.where(ptime == mv_time*60)[0][0]
 ti0 = np.where(ptime == 180*60)[0][0]
 
 # Load MV parcel data
-dbfile = open('/Users/morgan.schneider/Documents/merger/traj_MV1.pkl', 'rb')
+dbfile = open(fp+'traj_MV1.pkl', 'rb')
 traj = pickle.load(dbfile)
 pids_mv = traj[f"{mv_time}min"]['pids']
 x_mv = traj[f"{mv_time}min"]['x']
@@ -723,7 +734,7 @@ w_mv = traj[f"{mv_time}min"]['w']
 dbfile.close()
 
 # Load parcel source region clusters
-dbfile = open(ip+f"traj_clusters/traj_clusters_{mv_time}min_v2.pkl", 'rb')
+dbfile = open(fp+f"traj_clusters_{mv_time}min_v2.pkl", 'rb')
 c = pickle.load(dbfile)
 cc = c['mv1']
 dbfile.close()
@@ -739,7 +750,7 @@ w_ml = w_mv[:,(cc==1)]
 
 
 # Load saved storm motion estimates
-dbfile = open('/Users/morgan.schneider/Documents/merger/merger-125m/storm_motion.pkl', 'rb')
+dbfile = open(fp+'storm_motion.pkl', 'rb')
 sm = pickle.load(dbfile)
 u_storm = sm['u_storm']
 v_storm = sm['v_storm']
@@ -781,7 +792,7 @@ v_median = np.median(v_ml[ti0:ti+1,:], axis=1)
 w_median = np.median(w_ml[ti0:ti+1,:], axis=1)
 
 # Load saved parcel trajectory vorticity (interpolated from model fields)
-dbfile = open(f"/Users/morgan.schneider/Documents/merger/merger-125m/hvort_traj_{mv_time}min.pkl", 'rb')
+dbfile = open(fp+f"hvort_traj_{mv_time}min.pkl", 'rb')
 vort_traj = pickle.load(dbfile)
 xvort_ml = vort_traj['xvort_ml']
 yvort_ml = vort_traj['yvort_ml']
@@ -797,11 +808,11 @@ v_sr = v_median[::qit] - v_storm[:len(x_median[::qit])]
 
 
 
-ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
-xh = ds.variables['xh'][:].data
-yh = ds.variables['yh'][:].data
-z = ds.variables['z'][:].data
-ds.close()
+# ds = nc.Dataset(fp+f"cm1out_{fn:06d}.nc")
+# xh = ds.variables['xh'][:].data
+# yh = ds.variables['yh'][:].data
+# z = ds.variables['z'][:].data
+# ds.close()
 
 
 
@@ -809,9 +820,16 @@ ds.close()
 figsave = False
 
 
+import matplotlib as mpl
+parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',
+                    np.vstack((pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.1,0.5,154)),
+                    pyart.graph.cmweather.cm_colorblind.ChaseSpectral(np.linspace(0.5,1,102)))))
+
+wl = [-15,10]
+
 
 ### TRAJECTORIES WITH VORTICITY VECTORS
-if False:
+if True:
     from matplotlib.patches import FancyArrowPatch
     
     def add_vectors(ax, x, y, dx, dy, z, lengthscale=10, *args, **kwargs):
@@ -841,13 +859,15 @@ if False:
         iy = slice(np.where(yh >= -80)[0][0], np.where(xh >= -40)[0][1])
     
     ds = nc.Dataset(fp+f"cm1out_{fn+2:06d}.nc")
-    dbz = ds.variables['dbz'][:].data[0,0,iy,ix]
+    dbz = ds.variables['dbz'][:].data[0,0,:,:]
     ds.close()
     
     if mv_time == 210:
         xlp = [-25,15]
+        ylp = [-85,-45]
     elif mv_time == 220:
         xlp = [-20,20]
+        ylp = [-80,-40]
     elif mv_time == 225:
         xlp = [-16.5,8.5]
     
@@ -855,7 +875,7 @@ if False:
     fig,ax = plt.subplots(1,1, figsize=(7,5), subplot_kw=dict(box_aspect=1), layout='constrained')
     
     l, = ax.plot([xh[0], xh[1]], [yh[0], yh[1]], 'gray', linewidth=1)
-    ax.contour(xh[ix], yh[iy], dbz, levels=[30], colors='gray', linewidths=1, zorder=0)
+    ax.contour(xh, yh, dbz, levels=[30], colors='gray', linewidths=1, zorder=0)
     p = ax.scatter(x_median, y_median, s=80, c=z_median, cmap=cmap, vmin=0, vmax=3)
     cb = plt.colorbar(p, ax=ax, extend='max')
     cb.set_label("Parcel height (km)", fontsize=13)
@@ -865,17 +885,24 @@ if False:
     #             lengthscale=0.2, arrowstyle='simple', mutation_scale=5, ec='k', fc='k', lw=0.5)
     a_vort = add_vectors(ax, x_median[::qit], y_median[::qit]+0.5, xvort_median[::qit], yvort_median[::qit], z_median[::qit],
                 lengthscale=275, arrowstyle='simple', mutation_scale=9, ec='k', fc='lightgray', lw=0.75)
+    ax.scatter(x_median[::20], y_median[::20], s=80, c=w_median[::20], cmap=parcel_cm, edgecolor='k', linewidth=1.5, vmin=wl[0], vmax=wl[1])
+    for i in range(len(x_median[::20])):
+        t = ptime[ti0:ti+1][::20][i]/60
+        if mv_time == 210:
+            ax.text(x_median[::20][i]-1.5, y_median[::20][i]-2, f"{t:.0f}", fontsize=11, fontweight='bold')
+        elif mv_time == 220:
+            ax.text(x_median[::20][i]-1.5, y_median[::20][i]-2, f"{t:.0f}", fontsize=11, fontweight='bold')
     ax.set_xlabel('x (km)', fontsize=12)
     ax.set_ylabel('y (km)', fontsize=12)
     # ax.set_title(f"Parcels in the MV at {mv_time} min", fontsize=13)
-    ax.set_xlim(xlp)
-    ax.set_ylim(ylp)
-    ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
+    # ax.set_xlim(xlp)
+    # ax.set_ylim(ylp)
+    # ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
     # plt.legend(handles=[l,a_vort,a_wind], labels=['30 dBZ',"\u03c9$_H$","SR wind"], loc=1, fontsize=10)
     plt.legend(handles=[l,a_vort], labels=['30 dBZ',"\u03c9$_H$"], loc=1, fontsize=10)
     
     if figsave:
-        plt.savefig(f"/Users/morgan.schneider/Documents/merger/traj_vort2d_parcelheight_{mv_time:.0f}min_SR.png", dpi=300)
+        plt.savefig(ip+f"traj_vort2d_parcelheight_{mv_time:.0f}min_SR.png", dpi=300)
 
 
 
