@@ -694,7 +694,7 @@ from matplotlib.ticker import MultipleLocator
 fp = 'C:/Users/mschne28/Documents/merger/merger-125m/'
 ip = 'C:/Users/mschne28/Documents/merger/merger-125m/figs/'
 
-mv_time = 210
+mv_time = 220
 
 if mv_time == 210:
     fn = 41
@@ -871,6 +871,17 @@ if True:
     elif mv_time == 225:
         xlp = [-16.5,8.5]
     
+    if mv_time == 210:
+        xtext = x_median[::20] - 1.5
+        ytext = y_median[::20] - 2
+    elif mv_time == 220:
+        xtext = [6.4302, 3.8357, 1.9924, 0.2539,
+                 -2.0005, -4.0435, -5.2405, -8.9186,
+                 -12.0974]
+        ytext = [-74.5646, -71.5491, -68.0880, -65.2039,
+                 -62.9254, -57.4512, -54.4987, -53.0514,
+                 -56.2514]
+    
     
     fig,ax = plt.subplots(1,1, figsize=(7,5), subplot_kw=dict(box_aspect=1), layout='constrained')
     
@@ -879,33 +890,33 @@ if True:
     p = ax.scatter(x_median, y_median, s=80, c=z_median, cmap=cmap, vmin=0, vmax=3)
     cb = plt.colorbar(p, ax=ax, extend='max')
     cb.set_label("Parcel height (km)", fontsize=13)
-    # p = ax.scatter(x_median, y_median, s=30, c=zvort_median, cmap='ChaseSpectral', vmin=-0.04, vmax=0.04)
-    # cb = plt.colorbar(p, ax=ax, label="Parcel \u03B6 (s$^{-1}$)", extend='both')
-    # a_wind = add_vectors(ax, x_median[::qit], y_median[::qit], u_sr, v_sr, z_median[::qit],
-    #             lengthscale=0.2, arrowstyle='simple', mutation_scale=5, ec='k', fc='k', lw=0.5)
+    ax.scatter(x_median[::20], y_median[::20], s=60, c=z_median[::20], cmap=cmap, edgecolor='k', linewidth=1.5, vmin=0, vmax=3)
     a_vort = add_vectors(ax, x_median[::qit], y_median[::qit]+0.5, xvort_median[::qit], yvort_median[::qit], z_median[::qit],
                 lengthscale=275, arrowstyle='simple', mutation_scale=9, ec='k', fc='lightgray', lw=0.75)
-    ax.scatter(x_median[::20], y_median[::20], s=80, c=w_median[::20], cmap=parcel_cm, edgecolor='k', linewidth=1.5, vmin=wl[0], vmax=wl[1])
     for i in range(len(x_median[::20])):
         t = ptime[ti0:ti+1][::20][i]/60
-        if mv_time == 210:
-            ax.text(x_median[::20][i]-1.5, y_median[::20][i]-2, f"{t:.0f}", fontsize=11, fontweight='bold')
-        elif mv_time == 220:
-            ax.text(x_median[::20][i]-1.5, y_median[::20][i]-2, f"{t:.0f}", fontsize=11, fontweight='bold')
+        # if mv_time == 210:
+        #     ax.text(x_median[::20][i]-1.5, y_median[::20][i]-2, f"{t:.0f}", fontsize=11, fontweight='bold')
+        # elif mv_time == 220:
+        #     ax.text(x_median[::20][i]-0.7, y_median[::20][i]-2, f"{t:.0f}", fontsize=11, fontweight='bold')
+        ax.text(xtext[i], ytext[i], f"{t:.0f}", fontsize=11, fontweight='bold')
     ax.set_xlabel('x (km)', fontsize=12)
     ax.set_ylabel('y (km)', fontsize=12)
     # ax.set_title(f"Parcels in the MV at {mv_time} min", fontsize=13)
     ax.set_xlim(xlp)
     ax.set_ylim(ylp)
     ax.set_yticks(np.arange(ylp[0], ylp[1]+5, 5))
-    # plt.legend(handles=[l,a_vort,a_wind], labels=['30 dBZ',"\u03c9$_H$","SR wind"], loc=1, fontsize=10)
     plt.legend(handles=[l,a_vort], labels=['30 dBZ',"\u03c9$_H$"], loc=1, fontsize=10)
+    
+    # fig.patch.set_facecolor('none')
+    # ax.set_facecolor((0,0,0,0))
     
     if figsave:
         plt.savefig(ip+f"traj_vort2d_parcelheight_{mv_time:.0f}min_SR.png", dpi=300)
+        # plt.savefig(ip+f"traj_vort2d_{mv_time:.0f}min_layer2.png", dpi=300)
 
 
-
+#%%
 
 import matplotlib as mpl
 parcel_cm = mpl.colors.LinearSegmentedColormap.from_list('parcel_cm',

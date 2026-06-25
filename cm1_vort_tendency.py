@@ -1341,7 +1341,7 @@ u_ml = traj[f"{mvtime}min"]['u'][:,(cc == 1)]
 v_ml = traj[f"{mvtime}min"]['v'][:,(cc == 1)]
 us_ml = u_ml - np.tile(u_storm_prcl, [len(cc[(cc==1)]), 1]).transpose() #SR parcel velocity
 vs_ml = v_ml - np.tile(v_storm_prcl, [len(cc[(cc==1)]), 1]).transpose()
-psi = np.arctan2(vs_ml, us_ml) #SR parcel direction (from Adlerman and Schenkman papers)
+psi = np.unwrap(np.arctan2(vs_ml, us_ml)) #SR parcel direction (from Adlerman and Schenkman papers)
 dpsi_dt = np.gradient(psi, ptime, axis=0) #time ROC of SR parcel direction
 
 

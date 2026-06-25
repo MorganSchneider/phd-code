@@ -63,7 +63,7 @@ def movmean(data, npts):
     return data_mean
 
 
-# Convert lat/lon coordinates to x/y distances relative to an origin point
+# Convert lat/lon coordinates to x/y distances relative to an origin point (in km)
 def latlon2xy(lat, lon, lat_o, lon_o):
     # lat, lon:     1-D vectors of lat/lon in decimal degrees N/deg E
     # lat_o, lon_o: lat/lon of origin in decimal degrees N/deg E
