@@ -727,7 +727,7 @@ if figsave:
 
 
 
-#% Plot crosswise vort tendency
+#%% Plot crosswise vort tendency
 
 # figsave = False
 
@@ -748,7 +748,7 @@ ax[0].set_ylabel('y (km)', fontsize=12)
 a_wind = add_vectors(ax[0], [0], [0], [u_src], [v_src],
             lengthscale=0.03, arrowstyle='simple', mutation_scale=15, ec='k', fc='k', lw=1)
 a_vort = add_vectors(ax[0], [0], [0], [xvortc], [yvortc],
-            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1)
+            lengthscale=20, arrowstyle='simple', mutation_scale=15, ec='k', fc='lightgray', lw=1) #lengthscale 50 for 213-217 min
 if time == 210:
     ax[0].text(-0.2, 0.8, 'Exchange', color='k', fontsize=16, fontweight='bold',
                bbox=dict(facecolor='w', alpha=0.6, edgecolor='w', boxstyle='Square, pad=0.15'))
