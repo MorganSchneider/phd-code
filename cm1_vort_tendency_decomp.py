@@ -246,7 +246,7 @@ if time == 210:
     # times = np.arange(203,207) #crosswise
     times_cw = np.arange(203,207) #crosswise
 elif time == 220:
-    times = np.arange(217,220)
+    times = np.arange(219,221)
     # times = np.arange(213,218) #crosswise
     times_cw = np.arange(213,218) #crosswise
 
@@ -311,15 +311,15 @@ it = slice(it0,itf+1)
 itc = slice(np.argmin(abs(stime-times_cw[0])), np.argmin(abs(stime-times_cw[-1]))+1)
 
 
-stretch_x = np.mean(vten['stretch_x'][iz,it,:,:], axis=(0,1))
-stretch_y = np.mean(vten['stretch_y'][iz,it,:,:], axis=(0,1))
+# stretch_x = np.mean(vten['stretch_x'][iz,it,:,:], axis=(0,1))
+# stretch_y = np.mean(vten['stretch_y'][iz,it,:,:], axis=(0,1))
 stretch_z = np.mean(vten['stretch_z'][iz,it,:,:], axis=(0,1))
 stretch_h = np.mean(vten['stretch_h'][iz,it,:,:], axis=(0,1))
 stretch_sw = np.mean(vten['stretch_sw'][iz,it,:,:], axis=(0,1))
 stretch_cw = np.mean(vten['stretch_cw'][iz,itc,:,:], axis=(0,1))
 
-tilt_x = np.mean(vten['tilt_x'][iz,it,:,:], axis=(0,1))
-tilt_y = np.mean(vten['tilt_y'][iz,it,:,:], axis=(0,1))
+# tilt_x = np.mean(vten['tilt_x'][iz,it,:,:], axis=(0,1))
+# tilt_y = np.mean(vten['tilt_y'][iz,it,:,:], axis=(0,1))
 tilt_z = np.mean(vten['tilt_z'][iz,it,:,:], axis=(0,1))
 tilt_z_sw = np.mean(vten2['tilt_z_sw'][iz,it,:,:], axis=(0,1))
 tilt_z_cw = np.mean(vten2['tilt_z_cw'][iz,it,:,:], axis=(0,1))
@@ -331,8 +331,8 @@ exch_cw_sw = np.mean(vten2['exch_cw_sw'][iz,itc,:,:], axis=(0,1))
 exch3_sw_cw = np.mean(vten3['exch_sw_cw'][iz,it,:,:], axis=(0,1))
 exch3_cw_sw = np.mean(vten3['exch_cw_sw'][iz,itc,:,:], axis=(0,1))
 
-bcl_x = np.mean(vten['bcl_x'][iz,it,:,:], axis=(0,1))
-bcl_y = np.mean(vten['bcl_y'][iz,it,:,:], axis=(0,1))
+# bcl_x = np.mean(vten['bcl_x'][iz,it,:,:], axis=(0,1))
+# bcl_y = np.mean(vten['bcl_y'][iz,it,:,:], axis=(0,1))
 bcl_h = np.mean(vten['bcl_h'][iz,it,:,:], axis=(0,1))
 bcl_sw = np.mean(vten['bcl_sw'][iz,it,:,:], axis=(0,1))
 bcl_cw = np.mean(vten['bcl_cw'][iz,itc,:,:], axis=(0,1))
@@ -388,8 +388,8 @@ exch2_cw_sw = np.mean(ecw_new[iz,itc,:,:], axis=(0,1))
 # does each term contribute positively or negatively to crosswise vorticity in its current direction (AKA magnitude)
 dbfile = open(fp+f"hvort_traj_{time}min.pkl", 'rb')
 vort_traj = pickle.load(dbfile)
-vort_x = vort_traj['xvort_ml']
-vort_y = vort_traj['yvort_ml']
+# vort_x = vort_traj['xvort_ml']
+# vort_y = vort_traj['yvort_ml']
 vort_sw = vort_traj['vort_sw_ml']
 vort_cw = vort_traj['vort_cw_ml']
 dbfile.close()
@@ -407,8 +407,8 @@ cw_sign = vort_cw / np.abs(vort_cw)
 scw = vten['stretch_cw'][iz,itc,:,:]
 tcw = vten['tilt_cw'][iz,itc,:,:]
 bcw = vten['bcl_cw'][iz,itc,:,:]
-# ecw = vten2['exch_cw_sw'][iz,itc,:,:]
-ecw = ecw_new[iz,itc,:,:]
+ecw = vten3['exch_cw_sw'][iz,itc,:,:]
+# ecw = ecw_new[iz,itc,:,:]
 
 for i in range(len(times_cw)):
     for j in range(len(iz[(iz)])):
@@ -417,15 +417,15 @@ for i in range(len(times_cw)):
         bcw[j,i,:,:] = bcw[j,i,:,:] * cw_sign[i,j]
         ecw[j,i,:,:] = ecw[j,i,:,:] * cw_sign[i,j]
 
-stretch_cw2 = np.mean(scw, axis=(0,1))
-tilt_cw2 = np.mean(tcw, axis=(0,1))
-bcl_cw2 = np.mean(bcw, axis=(0,1))
-exch_cw2 = np.mean(ecw, axis=(0,1))
+stretch4_cw = np.mean(scw, axis=(0,1))
+tilt4_cw = np.mean(tcw, axis=(0,1))
+bcl4_cw = np.mean(bcw, axis=(0,1))
+exch4_cw_sw = np.mean(ecw, axis=(0,1))
 
 xvort = np.mean(np.median(vort_x[itp,iz], axis=0))
 yvort = np.mean(np.median(vort_y[itp,iz], axis=0))
-xvortc = np.mean(np.median(vort_x[itpc,iz], axis=0))
-yvortc = np.mean(np.median(vort_y[itpc,iz], axis=0))
+xvortc = np.mean(np.mean(vort_x[itpc,iz], axis=0))
+yvortc = np.mean(np.mean(vort_y[itpc,iz], axis=0))
 
 # Load storm motion
 dbfile = open(fp+'storm_motion.pkl', 'rb')
@@ -729,11 +729,11 @@ if figsave:
 
 #%% Plot crosswise vort tendency
 
-# figsave = False
+figsave = False
 
-# lims = [-1e-4, 1e-4]
-# levs = np.linspace(lims[0], lims[1], 41)
-# levs = np.append(np.append([-0.01], levs), [0.01])
+lims = [-1.5e-4, 1.5e-4]
+levs = np.linspace(lims[0], lims[1], 41)
+levs = np.append(np.append([-0.01], levs), [0.01])
 
 
 
@@ -811,6 +811,8 @@ if figsave:
 
 from CM1utils import *
 
+fp = 'C:/Users/mschne28/Documents/merger/merger-125m/'
+
 
 mvtime = 210
 
@@ -820,11 +822,249 @@ elif mvtime == 220:
     fnum = 53
 
 calc_zvort = False
-calc_xvort = False
-calc_yvort = False
 calc_hvort = False
 calc_swvort = False
 calc_cwvort = False
+calc_all = False
+
+
+dbfile = open(fp+'coords.pkl', 'rb')
+co = pickle.load(dbfile)
+xh = co['xh']
+yh = co['yh']
+zh = co['zh']
+ptime = co['ptime']
+mtimes = np.linspace(10800, 14400, 61) # CM1 output times
+ds.close()
+
+dbfile = open(fp+'storm_motion.pkl', 'rb')
+sm = pickle.load(dbfile)
+u_storm = sm['u_storm']
+v_storm = sm['v_storm']
+dbfile.close()
+
+dbfile = open(fp+"traj_MV1.pkl", 'rb')
+traj = pickle.load(dbfile)
+dbfile.close()
+
+dbfile = open(fp+f"traj_clusters_{mvtime}min_v2.pkl", 'rb')
+ccs = pickle.load(dbfile)
+cc = ccs['mv1']
+dbfile.close()
+
+pids_ml = traj[f"{mvtime}min"]['pids'][(cc == 1)]
+x_ml = traj[f"{mvtime}min"]['x'][:,(cc == 1)]/1000
+y_ml = traj[f"{mvtime}min"]['y'][:,(cc == 1)]/1000
+z_ml = traj[f"{mvtime}min"]['z'][:,(cc == 1)]/1000
+
+
+
+# Interpolate storm motion from model output freq (60 s) to parcel output freq (15 s)
+u_storm_interp = RegularGridInterpolator((mtimes,), u_storm)
+v_storm_interp = RegularGridInterpolator((mtimes,), v_storm)
+u_storm_prcl = u_storm_interp((ptime,))
+v_storm_prcl = v_storm_interp((ptime,))
+
+# Calculate SR parcel direction for SW/CW exchange terms
+u_ml = traj[f"{mvtime}min"]['u'][:,(cc == 1)]
+v_ml = traj[f"{mvtime}min"]['v'][:,(cc == 1)]
+us_ml = u_ml - np.tile(u_storm_prcl, [len(cc[(cc==1)]), 1]).transpose() #SR parcel velocity
+vs_ml = v_ml - np.tile(v_storm_prcl, [len(cc[(cc==1)]), 1]).transpose()
+psi = np.unwrap(np.arctan2(vs_ml, us_ml)) #SR parcel direction (from Adlerman and Schenkman papers)
+dpsi_dt = np.gradient(psi, ptime, axis=0) #time ROC of SR parcel direction
+
+
+
+# # for using a specific layer
+# ti = np.where(ptime == mvtime*60)[0][0]
+# zm = np.round(np.median(z_ml[ti,:]), decimals=-1)
+# dz = 150
+
+# pids_ml = pids_ml[(z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+# x_ml = x_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+# y_ml = y_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+# z_ml = z_ml[:, (z_ml[ti,:] >= zm-dz) & (z_ml[ti,:] <= zm+dz)]
+
+tzsw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+tzcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+sz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bz = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+
+th = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+sh = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bh = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+
+tsw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+esw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+ssw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bsw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+
+tcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+ecw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+scw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+bcw = np.zeros(shape=(len(pids_ml), 11, 33, 33), dtype=float)
+
+
+
+times = np.zeros(shape=(11,), dtype=float)
+
+
+m = 0
+
+for fn in np.arange(fnum-10, fnum+1):
+    print(f"cm1out_{fn:06d}")
+    
+    # Open CM1 output files
+    ds = nc.Dataset(fp + f"cm1out_{fn:06d}.nc")
+    mtime = ds.variables['time'][:].data[0] #model time
+    it = np.where(ptime == mtime)[0][0] #where parcel time = model time
+    
+    # Get max/min x, y, and z positions of all ML parcels at model time + indices of closest grid point
+    xmin = np.min(x_ml[it,:]);  ix1 = np.abs(xh - xmin).argmin()
+    xmax = np.max(x_ml[it,:]);  ix2 = np.abs(xh - xmax).argmin()
+    ymin = np.min(y_ml[it,:]);  iy1 = np.abs(yh - ymin).argmin()
+    ymax = np.max(y_ml[it,:]);  iy2 = np.abs(yh - ymax).argmin()
+    zmax = np.max(z_ml[it,:]);  iz1 = np.abs(zh - zmax).argmin()
+    ix = slice(ix1-20, ix2+21) #2.5 km buffer surrounding all ML parcels at each file time
+    iy = slice(iy1-20, iy2+21)
+    iz = slice(0, iz1+8) #upper buffer above all ML parcels of ??? km idk it's stretched
+    
+    u = ds.variables['uinterp'][:].data[0,iz,iy,ix]
+    v = ds.variables['vinterp'][:].data[0,iz,iy,ix]
+    w = ds.variables['winterp'][:].data[0,iz,iy,ix]
+    xvort = ds.variables['xvort'][:].data[0,iz,iy,ix]
+    yvort = ds.variables['yvort'][:].data[0,iz,iy,ix]
+    zvort = ds.variables['zvort'][:].data[0,iz,iy,ix]
+    rho = ds.variables['rho'][:].data[0,iz,iy,ix]
+    prs = ds.variables['prs'][:].data[0,iz,iy,ix]
+    
+    u_sr = u - u_storm[fn-13]
+    v_sr = v - v_storm[fn-13]
+    ws_sr = np.sqrt(u_sr**2 + v_sr**2)
+    hvort = np.sqrt(xvort**2 + yvort**2)
+    svort = (u_sr/ws_sr) * xvort + (v_sr/ws_sr) * yvort
+    cvort = (-v_sr/ws_sr) * xvort + (u_sr/ws_sr) * yvort
+    
+    ds.close()
+    
+    
+    duds = (u_sr/ws_sr)*np.gradient(u, xh[ix]*1000, axis=2) + (v_sr/ws_sr)*np.gradient(u, yh[iy]*1000, axis=1)
+    dudn = (-v_sr/ws_sr)*np.gradient(u, xh[ix]*1000, axis=2) + (u_sr/ws_sr)*np.gradient(u, yh[iy]*1000, axis=1)
+    dudz = np.gradient(u, zh[iz]*1000, axis=0)
+    
+    dvds = (u_sr/ws_sr)*np.gradient(v, xh[ix]*1000, axis=2) + (v_sr/ws_sr)*np.gradient(v, yh[iy]*1000, axis=1)
+    dvdn = (-v_sr/ws_sr)*np.gradient(v, xh[ix]*1000, axis=2) + (u_sr/ws_sr)*np.gradient(v, yh[iy]*1000, axis=1)
+    dvdz = np.gradient(v, zh[iz]*1000, axis=0)
+    
+    dwds = (u_sr/ws_sr)*np.gradient(w, xh[ix]*1000, axis=2) + (v_sr/ws_sr)*np.gradient(w, yh[iy]*1000, axis=1)
+    dwdn = (-v_sr/ws_sr)*np.gradient(w, xh[ix]*1000, axis=2) + (u_sr/ws_sr)*np.gradient(w, yh[iy]*1000, axis=1)
+    dwdz = np.gradient(w, zh[iz]*1000, axis=0)
+    
+    drds = (u_sr/ws_sr)*np.gradient(rho, xh[ix]*1000, axis=2) + (v_sr/ws_sr)*np.gradient(rho, yh[iy]*1000, axis=1)
+    drdn = (-v_sr/ws_sr)*np.gradient(rho, xh[ix]*1000, axis=2) + (u_sr/ws_sr)*np.gradient(rho, yh[iy]*1000, axis=1)
+    drdz = np.gradient(rho, zh[iz]*1000, axis=0)
+    
+    dpds = (u_sr/ws_sr)*np.gradient(prs, xh[ix]*1000, axis=2) + (v_sr/ws_sr)*np.gradient(prs, yh[iy]*1000, axis=1)
+    dpdn = (-v_sr/ws_sr)*np.gradient(prs, xh[ix]*1000, axis=2) + (u_sr/ws_sr)*np.gradient(prs, yh[iy]*1000, axis=1)
+    dpdz = np.gradient(prs, zh[iz]*1000, axis=0)
+    
+    # dvhds = (u_sr/ws_sr)*np.gradient(ws_sr, xh[ix]*1000, axis=2) + (v_sr/ws_sr)*np.gradient(ws_sr, yh[iy]*1000, axis=1)
+    # dvhdn = (-v_sr/ws_sr)*np.gradient(ws_sr, xh[ix]*1000, axis=2) + (u_sr/ws_sr)*np.gradient(ws_sr, yh[iy]*1000, axis=1)
+    # dvhdz = np.gradient(ws_sr, zh[iz]*1000, axis=0)
+    
+    # dpsids = (u_sr/ws_sr)*np.gradient(psi2, xh[ix]*1000, axis=2) + (v_sr/ws_sr)*np.gradient(psi2, yh[iy]*1000, axis=1)
+    # dpsidn = (-v_sr/ws_sr)*np.gradient(psi2, xh[ix]*1000, axis=2) + (u_sr/ws_sr)*np.gradient(psi2, yh[iy]*1000, axis=1)
+    # dpsidz = np.gradient(psi2, zh[iz]*1000, axis=0)
+    
+    dvhds = (u_sr/ws_sr)*duds + (v_sr/ws_sr)*dvds
+    dvhdn = (u_sr/ws_sr)*dudn + (v_sr/ws_sr)*dvdn
+    dvhdz = (u_sr/ws_sr)*dudz + (v_sr/ws_sr)*dvdz
+    
+    dpsids = (-v_sr/(ws_sr**2))*duds + (u_sr/(ws_sr**2))*dvds
+    dpsidn = (-v_sr/(ws_sr**2))*dudn + (u_sr/(ws_sr**2))*dvdn
+    dpsidz = (-v_sr/(ws_sr**2))*dudz + (u_sr/(ws_sr**2))*dvdz
+    
+    del u,v,w,rho,prs
+    
+    
+    # Loop through ML parcels
+    for p in range(len(pids_ml)):
+        xp = x_ml[it,p] #x position of individual ML parcel at ptime=mtime
+        yp = y_ml[it,p]
+        zp = z_ml[it,p]
+        
+        ixp = np.abs(xh[ix]-xp).argmin() #indices of model grid point closest to parcel position
+        iyp = np.abs(yh[iy]-yp).argmin()
+        k = np.abs(zh[iz]-zp).argmin()
+        i = slice(ixp-16,ixp+17) #2 km buffer surrounding parcel
+        j = slice(iyp-16,iyp+17)
+        
+        # Indices-
+        # t_* variables are shape (parcel ID, time, y, x) for x-y plan view - indexed [p,m,:,:]
+        # all other variables from model grid are shape (z, y, x) - indexed [k,j,i]
+        
+        
+        ### Vertical vorticity
+        print("... calculating zvort tendencies ...")
+        # Stretching
+        sz[p,m,:,:] = zvort[k,j,i] * dwdz[k,j,i]
+        # Tilting
+        tzsw[p,m,:,:] = svort[k,j,i] * dwds[k,j,i]
+        tzcw[p,m,:,:] = cvort[k,j,i] * dwdn[k,j,i]
+            
+        
+        ### Streamwise vorticity
+        print("... calculating streamwise tendencies ...")
+        # Exchange
+        esw[p,m,:,:] = cvort[k,j,i] * dpsi_dt[it,p]
+        # Tilting
+        tsw[p,m,:,:] = (cvort[k,j,i] * dvhdn[k,j,i]) + (zvort[k,j,i] * dvhdz[k,j,i])
+        # Stretching
+        ssw[p,m,:,:] = svort[k,j,i] * dvhds[k,j,i]
+        # Baroclinic
+        bsw[p,m,:,:] = (1/1.1)**2 * (drdn[k,j,i]*dpdz[k,j,i] - drdz[k,j,i]*dpdn[k,j,i])
+        
+        
+        ### Crosswise vorticity
+        print("... calculating crosswise tendencies ...")
+        # Exchange
+        ecw[p,m,:,:] = -svort[k,j,i] * dpsi_dt[it,p]
+        # Tilting
+        tcw[p,m,:,:] = (svort[k,j,i] * ws_sr[k,j,i] * dpsids[k,j,i]) + (zvort[k,j,i] * ws_sr[k,j,i] * dpsidz[k,j,i])
+        # Stretching
+        scw[p,m,:,:] = cvort[k,j,i] * ws_sr[k,j,i] * dpsidn[k,j,i]
+        # Baroclinic
+        bcw[p,m,:,:] = (1/1.1)**2 * (drdz[k,j,i]*dpds[k,j,i] - drds[k,j,i]*dpdz[k,j,i])
+        
+        
+        ### Horizontal vorticity
+        print("... calculating horizontal tendencies ...")
+        # Tilting
+        th[p,m,:,:] = (svort[k,j,i]/hvort[k,j,i])*tsw[p,m,:,:] + (cvort[k,j,i]/hvort[k,j,i])*tcw[p,m,:,:]
+        # Stretching
+        sh[p,m,:,:] = (svort[k,j,i]/hvort[k,j,i])*ssw[p,m,:,:] + (cvort[k,j,i]/hvort[k,j,i])*scw[p,m,:,:]
+        # Baroclinic
+        bh[p,m,:,:] = (svort[k,j,i]/hvort[k,j,i])*bsw[p,m,:,:] + (cvort[k,j,i]/hvort[k,j,i])*bcw[p,m,:,:]
+        
+        
+    times[m] = mtime/60
+    m = m+1
+        
+    del u_sr,v_sr,ws_sr,xvort,yvort,zvort,hvort,svort,cvort
+    del duds,dudn,dudz,dvds,dvdn,dvdz,dwds,dwdn,dwdz,drds,drdn,drdz,dpds,dpdn,dpdz,dvhds,dvhdn,dvhdz,dpsids,dpsidn,dpsidz
+
+
+if True:
+    data = {'time':times, 'tilt_z_sw':tzsw, 'tilt_z_cw':tzcw, 'stretch_z':sz,
+            'tilt_h':th, 'stretch_h':sh, 'bcl_h':bh,
+            'exch_sw_cw':esw, 'tilt_sw':tsw, 'stretch_sw':ssw, 'bcl_sw':bsw,
+            'exch_cw_sw':ecw, 'tilt_cw':tcw, 'stretch_cw':scw, 'bcl_cw':bcw}
+    dbfile = open(fp+f"vten_traj_{mvtime}min_parcels_v2.pkl", 'wb')
+    pickle.dump(data, dbfile)
+    dbfile.close()
+
+
+
 
 
 
